@@ -15,11 +15,11 @@ def initialize_connection(server_ip: str) -> (socket.socket, PriorityQueue, int)
 	"""
 
 	# Create the socket - TODO
-	server_socket: socket.socket
+	server_socket: socket.socket = None  # CHANGE LATER - TODO
 	pass
 
 	# Establish some synchronization stuff - TODO
-	initial_update_seq: int
+	initial_update_seq: int = None  # CHANGE LATER - TODO
 	pass
 
 	# Start the packets-handler thread & initialize the queue
@@ -45,8 +45,9 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: PriorityQueu
 	"""
 	while True:
 		# Get a packet from the server; convert it to a ServerMessage object.
+		continue  # REMOVE LATER - TODO
 		msg: ServerMessage = ServerMessage(get_server_pkt(server_socket))
-		updates_queue.put(msg.get_seq(), msg)
+		updates_queue.put((msg.get_seq(), msg))
 
 
 def update_game(update_msg: ServerMessage, changes: deque) -> None:
@@ -66,6 +67,7 @@ def initialize_game() -> None:  # TODO
 	Initializes the game.
 	:return: None
 	"""
+	pygame.init()
 	pass
 
 
@@ -96,7 +98,8 @@ def run_game(*args) -> None:  # TODO
 	while running:
 		for event in pygame.event.get():
 			if event.type == update_required_event:
-				update_game()
+				changes: deque  # temporarily here, to be implemented later by Goni
+				update_game(event.msg, changes)
 
 		# Check if an update is needed
 		if not update_queue.empty():
@@ -119,8 +122,13 @@ def run_game(*args) -> None:  # TODO
 			pygame.event.post(pygame.event.Event(update_required_event, {"msg": update_msg}))
 
 
+def close_game(server_socket: socket.socket) -> None:
+	"""Closes the game"""
+	server_socket.close()
+
+
 def main():
-	server_ip: str = input("Server IP: ")  # TEMPORARY
+	server_ip: str = '127.0.0.1'  # TEMPORARY
 
 	# Initialize the connection with the server
 	server_socket: socket.socket
@@ -133,6 +141,7 @@ def main():
 
 	# Run the main game
 	run_game(server_socket, updates_queue, initial_update_seq)
+	close_game()
 
 
 if __name__ == '__main__':
