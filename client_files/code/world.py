@@ -1,7 +1,7 @@
 import pygame
-from settings import *
-from tile import Tile
-from player import Player
+from client_files.code.settings import *
+from client_files.code.tile import Tile
+from client_files.code.player import Player
 
 
 class World:

@@ -1,5 +1,5 @@
 import pygame
-from settings import *
+from client_files.code.settings import *
 
 
 class Tile(pygame.sprite.Sprite):

@@ -1,15 +1,15 @@
 import socket  # Socket
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
-from queue import PriorityQueue, Empty  # Multi-threaded sorted queue
+from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
 from time import time  # Current time
-from structures import *  # Some custom structures
-from settings import *
-from world import World
+from client_files.code.structures import *  # Some custom structures
+from client_files.code.settings import *
+from client_files.code.world import World
 
 
-def initialize_connection(server_ip: str) -> (socket.socket, PriorityQueue, int):
+def initialize_connection(server_ip: str) -> (socket.socket, Queue):
     """
     Initializes the connection to the server, and starts the packets-handler thread.
     :param server_ip: The IP address of the server.
@@ -21,15 +21,14 @@ def initialize_connection(server_ip: str) -> (socket.socket, PriorityQueue, int)
     pass
 
     # Establish some synchronization stuff - TODO
-    initial_update_seq: int = None  # CHANGE LATER - TODO
     pass
 
     # Start the packets-handler thread & initialize the queue
-    updates_queue: PriorityQueue = PriorityQueue()
+    updates_queue: Queue = Queue()
     pkts_handler: Thread = Thread(target=handle_server_pkts, args=(server_socket, updates_queue))
     pkts_handler.start()
 
-    return server_socket, updates_queue, initial_update_seq
+    return server_socket, updates_queue
 
 
 def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
@@ -40,7 +39,7 @@ def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
     pass
 
 
-def handle_server_pkts(server_socket: socket.socket, updates_queue: PriorityQueue) -> None:
+def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> None:
     """
     Handles the packets which are received from the server, and adds them to the updates priority queue.
     :return: None
@@ -49,7 +48,7 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: PriorityQueu
         # Get a packet from the server; convert it to a ServerMessage object.
         continue  # REMOVE LATER - TODO
         msg: ServerMessage = ServerMessage(get_server_pkt(server_socket))
-        updates_queue.put((msg.get_seq(), msg))
+        updates_queue.put(msg)
 
 
 def update_game(update_msg: ServerMessage, changes: deque) -> None:
@@ -105,7 +104,7 @@ def run_game(*args) -> None:  # TODO
     """
 
     # Check for invalid number of arguments; Should be okay to delete this in the final version - TODO
-    if len(args) != 6:
+    if len(args) != 5:
         print('you did smth wrong smh')
         return
 
@@ -114,8 +113,7 @@ def run_game(*args) -> None:  # TODO
     screen = pygame.Surface = args[1]
     clock = pygame.time.Clock = args[2]
     world: World = args[3]
-    update_queue: PriorityQueue = args[4]
-    current_update_seq: int = args[5]
+    update_queue: Queue = args[4]
 
     # Create custom events
     update_required_event = pygame.USEREVENT + 1
@@ -148,14 +146,6 @@ def run_game(*args) -> None:  # TODO
             except Empty:
                 continue
 
-            # Check that the message's seq number is valid; Make sure that messages were not lost
-            if update_msg.get_seq() != current_update_seq:
-                update_queue.put((update_msg.get_seq(), update_msg))
-                continue
-
-            # Update the expected update sequence number
-            current_update_seq += 1
-
             # Post the event
             pygame.event.post(pygame.event.Event(update_required_event, {"msg": update_msg}))
 
@@ -177,12 +167,13 @@ def main():
 
     # Initialize the connection with the server
     server_socket: socket.socket
-    updates_queue: PriorityQueue
-    initial_update_seq: int
-    server_socket, updates_queue, initial_update_seq = initialize_connection(server_ip)
+    updates_queue: Queue
+    server_socket, updates_queue = initialize_connection(server_ip)
 
     # Run the main game
-    run_game(server_socket, screen, clock, world, updates_queue, initial_update_seq)
+    run_game(server_socket, screen, clock, world, updates_queue)
+
+    # Close the game
     close_game(server_socket)
 
 
