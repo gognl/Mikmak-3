@@ -8,14 +8,9 @@ class ServerMessage:  # TODO
 		pass
 		self.timestamp = time()
 		self.ack: int
-		self.seq: int
 
 		self.entities_positions: list
 		self.entities_actions: list
-
-	def get_seq(self) -> int:
-		"""Returns the sequence number of the message"""
-		return self.seq
 
 	def get_ack(self) -> int:
 		"""Returns the sequence number of the last accepted cmd at the time of sending the server message"""

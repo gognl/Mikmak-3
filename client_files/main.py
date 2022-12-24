@@ -1,13 +1,13 @@
 import socket  # Socket
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
-from queue import PriorityQueue, Empty  # Multi-threaded sorted queue
+from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
 from time import time  # Current time
 from client_files.structures import *  # Some custom structures
 
 
-def initialize_connection(server_ip: str) -> (socket.socket, PriorityQueue, int):
+def initialize_connection(server_ip: str) -> (socket.socket, Queue):
 	"""
 	Initializes the connection to the server, and starts the packets-handler thread.
 	:param server_ip: The IP address of the server.
@@ -19,15 +19,14 @@ def initialize_connection(server_ip: str) -> (socket.socket, PriorityQueue, int)
 	pass
 
 	# Establish some synchronization stuff - TODO
-	initial_update_seq: int = None  # CHANGE LATER - TODO
 	pass
 
 	# Start the packets-handler thread & initialize the queue
-	updates_queue: PriorityQueue = PriorityQueue()
+	updates_queue: Queue = Queue()
 	pkts_handler: Thread = Thread(target=handle_server_pkts, args=(server_socket, updates_queue))
 	pkts_handler.start()
 
-	return server_socket, updates_queue, initial_update_seq
+	return server_socket, updates_queue
 
 
 def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
@@ -38,7 +37,7 @@ def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
 	pass
 
 
-def handle_server_pkts(server_socket: socket.socket, updates_queue: PriorityQueue) -> None:
+def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> None:
 	"""
 	Handles the packets which are received from the server, and adds them to the updates priority queue.
 	:return: None
@@ -47,7 +46,7 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: PriorityQueu
 		# Get a packet from the server; convert it to a ServerMessage object.
 		continue  # REMOVE LATER - TODO
 		msg: ServerMessage = ServerMessage(get_server_pkt(server_socket))
-		updates_queue.put((msg.get_seq(), msg))
+		updates_queue.put(msg)
 
 
 def update_game(update_msg: ServerMessage, changes: deque) -> None:
@@ -78,14 +77,13 @@ def run_game(*args) -> None:  # TODO
 	"""
 
 	# Check for invalid number of arguments; Should be okay to delete this in the final version - TODO
-	if len(args) != 3:
+	if len(args) != 2:
 		print('you did smth wrong smh')
 		return
 
 	# Unpack the arguments
 	server_socket: socket.socket = args[0]
-	update_queue: PriorityQueue = args[1]
-	current_update_seq: int = args[2]
+	update_queue: Queue = args[1]
 
 	# Create custom events
 	update_required_event = pygame.USEREVENT + 1
@@ -110,14 +108,6 @@ def run_game(*args) -> None:  # TODO
 			except Empty:
 				continue
 
-			# Check that the message's seq number is valid; Make sure that messages were not lost
-			if update_msg.get_seq() != current_update_seq:
-				update_queue.put((update_msg.get_seq(), update_msg))
-				continue
-
-			# Update the expected update sequence number
-			current_update_seq += 1
-
 			# Post the event
 			pygame.event.post(pygame.event.Event(update_required_event, {"msg": update_msg}))
 
@@ -130,18 +120,17 @@ def close_game(server_socket: socket.socket) -> None:
 def main():
 	server_ip: str = '127.0.0.1'  # TEMPORARY
 
-	# Initialize the connection with the server
-	server_socket: socket.socket
-	updates_queue: PriorityQueue
-	initial_update_seq: int
-	server_socket, updates_queue, initial_update_seq = initialize_connection(server_ip)
-
 	# Initialize the game
 	initialize_game()
 
+	# Initialize the connection with the server
+	server_socket: socket.socket
+	updates_queue: Queue
+	server_socket, updates_queue = initialize_connection(server_ip)
+
 	# Run the main game
-	run_game(server_socket, updates_queue, initial_update_seq)
-	close_game()
+	run_game(server_socket, updates_queue)
+	close_game(server_socket)
 
 
 if __name__ == '__main__':
