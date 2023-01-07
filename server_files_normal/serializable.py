@@ -1,9 +1,8 @@
 import json
 import struct
-from collections import deque
 
 class Serializable:
-	"""An entity class"""
+	"""An serializable class. To be inherited by any class that should be serialized."""
 
 	def serialize(self, attributes: tuple, formatting: str = 'json', fixes: dict = {}) -> bytes:
 		"""
