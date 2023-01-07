@@ -1,4 +1,4 @@
-from server_files_normal.Entity import Entity
+from server_files_normal.serializable import Entity
 
 class LBMsg:
 	"""TODO - A class of incoming messages from the load-balancing server"""

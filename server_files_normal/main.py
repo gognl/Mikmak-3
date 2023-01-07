@@ -15,7 +15,7 @@ TODO:
 """
 
 import socket
-from server_files_normal.LoadBalancerManager import LoadBalancerManager
+from server_files_normal.lb_manager import LoadBalancerManager
 
 
 def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socket.socket, LoadBalancerManager):

@@ -2,7 +2,7 @@ import socket
 import threading
 from collections import deque
 from server_files_normal.structures import LBMsg
-from server_files_normal.Entity import Entity
+from server_files_normal.serializable import Entity
 
 class LoadBalancerManager(threading.Thread):
 	"""Handles the interactions with the load-balancing server"""
