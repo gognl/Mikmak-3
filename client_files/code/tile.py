@@ -11,3 +11,6 @@ class Tile(pygame.sprite.Sprite):
 
         # Position of the tile
         self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
+
+        # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
+        self.hitbox = self.rect.inflate(0, -10)

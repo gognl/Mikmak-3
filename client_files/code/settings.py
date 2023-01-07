@@ -2,6 +2,8 @@ SCREEN_WIDTH: int = 1280
 SCREEN_HEIGHT: int = 720
 FPS: int = 120
 TILESIZE: int = 64
+CAMERA_DISTANCE_FROM_PLAYER: tuple[int] = (300, 100)
+
 
 WORLD_MAP: list[list[chr]] = [
     ['x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'],
