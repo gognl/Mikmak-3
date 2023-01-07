@@ -1,5 +1,5 @@
 import pygame
-from client_files.code.settings import *
+from client_demo_files.code.settings import *
 
 
 class Player(pygame.sprite.Sprite):
@@ -57,10 +57,10 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.direction.y * speed
         self.collision('vertical')  # Check collisions in the vertical axis
 
-    def collision(self, direction: str) -> None:
+    def collision(self, direction: pygame.Vector2) -> None:
         """
         Apply collisions to the player, each axis separately
-        :param direction: A string representing the direction the player is going
+        :param direction: Vector2 of the direction the player is going
         :return: None
         """
         if direction == 'horizontal':
