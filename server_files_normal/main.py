@@ -7,7 +7,7 @@ Each manager "lives" in its own thread. ClientManager has multiple instances, de
 						information about movement of entities and clients to and from the server's region.
 
 TODO:
-- ClientManager - responsible for communication with the client. Updates a list that contains client inputs, and
+- ClientManager - responsible for communication with the client. Updates a list (deque) that contains client inputs, and
 				  sends the game state to the client if needed.
 - GameManager - responsible for running the game, with the inputs it gets from the ClientManagers
 - main - responsible for accepting new clients, managing the managers (shutting down client threads if their clients
