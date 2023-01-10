@@ -155,28 +155,33 @@ class Serializable:
 			var_len = int(type_id[2:])
 
 			# Signed integers are a little more confusing to work with, so added some stuff just in case
+			output: bytes = None
 
 			if length == 1:
-				serialized_value = {
-					1: struct.pack(f'<b', value),
-					2: struct.pack(f'<h', value),
-					4: struct.pack(f'<i', value),
-					8: struct.pack(f'<q', value)
-				}.get(var_len, None)
+				if var_len == 1:
+					output = struct.pack(f'<b', value)
+				elif var_len == 2:
+					output = struct.pack(f'<h', value)
+				elif var_len == 4:
+					output = struct.pack(f'<i', value)
+				elif var_len == 8:
+					output = struct.pack(f'<q', value)
 			else:
-				serialized_value = {
-					1: struct.pack(f'<{length}b', *value),
-					2: struct.pack(f'<{length}h', *value),
-					4: struct.pack(f'<{length}i', *value),
-					8: struct.pack(f'<{length}q', *value)
-				}.get(var_len, None)
+				if var_len == 1:
+					output = struct.pack(f'<{length}b', *value)
+				elif var_len == 2:
+					output = struct.pack(f'<{length}h', *value)
+				elif var_len == 4:
+					output = struct.pack(f'<{length}i', *value)
+				elif var_len == 8:
+					output = struct.pack(f'<{length}q', *value)
 
-			if serialized_value is None:
+			if output is None:
 				print(
 					'WARNING: You are trying to serialize a signed value to an arbitrary byte amount. Make sure it works as expected.')
 				return struct.pack('<q', value)[:var_len]
 			else:
-				return serialized_value
+				return output
 
 		# a float number with known length.
 		elif type_id[:2] == 'f_':
@@ -192,17 +197,19 @@ class Serializable:
 				return None
 
 			if length == 1:
-				return {
-					2: struct.pack(f'<e', value),
-					4: struct.pack(f'<f', value),
-					8: struct.pack(f'<d', value)
-				}.get(var_len)
+				if var_len == 2:
+					return struct.pack(f'<e', value)
+				if var_len == 4:
+					return struct.pack(f'<f', value)
+				if var_len == 8:
+					return struct.pack(f'<d', value)
 			else:
-				return {
-					2: struct.pack(f'<{length}e', *value),
-					4: struct.pack(f'<{length}f', *value),
-					8: struct.pack(f'<{length}d', *value)
-				}.get(var_len)
+				if var_len == 2:
+					return struct.pack(f'<{length}e', *value)
+				if var_len == 4:
+					return struct.pack(f'<{length}f', *value)
+				if var_len == 8:
+					return struct.pack(f'<{length}d', *value)
 
 		# bool
 		elif type_id == 'b':
@@ -271,18 +278,19 @@ class Serializable:
 class Entity(Serializable):
 	def __init__(self):
 		super().__init__()
-		self.x = 5
+		self.x = 3
+		self.y = -129
 		self.y = 3
 		self.hi = 'hi'
-		self.lis = [1, 2, 'yes']
+		self.lis = [1, -300, 'yes']
 		self.dic = {1: 'a', 2: 'b'}
 		self.inher = Item()
 
 	def get_attr(self) -> dict:
 		d: dict = self.get_attr_default()
-		d['x'] = 's_1'
-		d['y'] = 's_1'
-		d['lis'] = 'iteN_1'
+		d['x'] = 'u_1'
+		d['y'] = 's_2'
+		d['lis'] = 'iteN_d'
 		d['dic'] = 'iteN_1'
 		return d
 
