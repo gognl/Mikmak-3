@@ -127,8 +127,15 @@ class Serializable:
 		"""
 
 		# especially for strings (since their element is always a string too)
-		if type(value) == str:
-			return struct.pack(f'<{len(value)}s', value.encode())
+		if isinstance(value, str):
+			if type_id[:5] == 'iter_':
+				return struct.pack(f'<{len(value)}s', value.encode())
+			elif type_id[:5] == 'iteN_':
+				return struct.pack(f'<h', len(value)) + struct.pack(f'<{len(value)}s', value.encode())
+
+		# especially for dicts
+		if isinstance(value, dict):
+			value = list(value.items())
 
 		# an unsigned integer
 		if type_id[:2] == 'u_':
@@ -216,7 +223,7 @@ class Serializable:
 				return b'0000'  # length is 0
 
 			# if all items in the iterable are of the same primitive type
-			if all(isinstance(item, (type(value[0]))) for item in value):
+			if all(isinstance(item, (type(value[0]))) for item in value) and not hasattr(value[0], '__iter__'):
 				var_tsid = self.get_type_identifier(value[0])
 				if type_id[5] != 'd':
 					if var_tsid[:5] == 'iteN_':
@@ -267,7 +274,8 @@ class Entity(Serializable):
 		self.x = 5
 		self.y = 3
 		self.hi = 'hi'
-		self.lis = [0, 1, 2, 3]
+		self.lis = [1, 2, 'yes']
+		self.dic = {1: 'a', 2: 'b'}
 		self.inher = Item()
 
 	def get_attr(self) -> dict:
@@ -275,6 +283,7 @@ class Entity(Serializable):
 		d['x'] = 's_1'
 		d['y'] = 's_1'
 		d['lis'] = 'iteN_1'
+		d['dic'] = 'iteN_1'
 		return d
 
 
