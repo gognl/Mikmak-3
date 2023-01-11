@@ -1,5 +1,4 @@
-from pip._internal.utils.misc import enum
-
+from enum import Enum
 from server_files_normal.Entity import Entity
 
 
@@ -28,5 +27,5 @@ class ClientInputMsg:
         pass
 
 
-class GameState(enum):
+class GameState(Enum):
     pass
