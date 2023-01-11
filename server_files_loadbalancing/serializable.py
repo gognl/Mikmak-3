@@ -1,14 +1,38 @@
 import json
 import struct
+from typing import Union, Iterable
+
 
 # USE PYTHON VERSION 3.7+ FOR THIS CLASS TO WORK PROPERLY
 
 class Serializable:
 	"""A serializable class. To be inherited by any class that should be serialized."""
-	def __init__(self):
-		self.serialized_attr: dict = self.get_attr()
 
-	def get_type_identifier(self, value) -> str:
+	def __init__(self, ser: bytes = None):
+		"""If ser is not None,
+		creates an object of the subclass based on the serialized input, and the attributes from get_attr()"""
+		# On the sender side
+		if ser is None:
+			self.serialized_attr: dict = self._get_attr()
+			return
+
+		# On the receiver side
+		self.__deserialize(ser)
+
+	def __deserialize(self, ser: bytes) -> None:
+		"""Deserializes the input ser and builds an object of the subclass based on it and on get_attr()"""
+		attributes: dict = self.__dict__
+		req_attr: dict = self._get_attr()
+
+		for attr, tsid in req_attr.items():
+
+			# Check that the attribute actually exists
+			if not hasattr(self, attr):
+				continue
+
+	# deserialize here
+
+	def __get_type_identifier(self, value) -> str:
 		"""
 		Returns the variable type size identifier (see get_attr() docs for more info).
 		:param value: The value
@@ -26,7 +50,7 @@ class Serializable:
 			bool: 'b',
 		}.get(type(value), 'o_N')
 
-	def get_attr(self) -> dict:
+	def _get_attr(self) -> dict:
 		"""
 		A function that should be overridden. Provides information about the attributes to serialize, and their size.
 		:return: A dictionary describing the parameters to serialize and their size.
@@ -50,14 +74,16 @@ class Serializable:
 						should have a size of 1 byte; and rooms is a list.
 		"""
 		# By default, serialize all of the attributes
-		return {name: self.get_type_identifier(value) for name, value in self.__dict__.items() if name != 'serialized_attr'}
+		return {name: self.__get_type_identifier(value) for name, value in self.__dict__.items() if
+				name != 'serialized_attr'}
 
-	def get_attr_default(self) -> dict:
+	def _get_attr_default(self) -> dict:
 		"""
 		Returns the default get_attr() dict (users can use this
 		function in get_attr() and override specific attributes).
 		"""
-		return {name: self.get_type_identifier(value) for name, value in self.__dict__.items() if name != 'serialized_attr'}
+		return {name: self.__get_type_identifier(value) for name, value in self.__dict__.items() if
+				name != 'serialized_attr'}
 
 	def serialize(self, formatting='fixed') -> bytes:
 		"""
@@ -66,13 +92,13 @@ class Serializable:
 		:return: The serialized version of the object.
 		"""
 
-		self.serialized_attr: dict = self.get_attr()  # update serialized_attr
+		self.serialized_attr: dict = self._get_attr()  # update serialized_attr
 
 		# JSON formatting (not recommended, mainly for debugging)
 		if formatting == 'json':
 			return json.dumps(self, default=lambda
-									o: {k: v for k, v in o.__dict__.items()
-										if k in self.serialized_attr.keys()}
+				o: {k: v for k, v in o.__dict__.items()
+					if k in self.serialized_attr.keys()}
 							  ).encode()
 
 		# fixed formatting (recommended)
@@ -95,7 +121,8 @@ class Serializable:
 				if isinstance(value, Serializable):
 					output += value.serialize()
 				else:
-					print(f'ERROR: Cannot serialize attribute {attr} of type {type(value)} since it does not inherit Serializable')
+					print(
+						f'ERROR: Cannot serialize attribute {attr} of type {type(value)} since it does not inherit Serializable')
 
 			# an object (which inherits Serializable): do write its length - in 2 bytes (always).
 			elif type_id == 'o_N':
@@ -106,17 +133,18 @@ class Serializable:
 						continue
 					output += struct.pack('<h', len(serialized_value)) + serialized_value
 				else:
-					print(f'ERROR: Cannot serialize attribute {attr} of type {type(value)} since it does not inherit Serializable')
+					print(
+						f'ERROR: Cannot serialize attribute {attr} of type {type(value)} since it does not inherit Serializable')
 
 			# Not an object: a primitive type or an iterable
 			else:
-				serialized_primitive = self.serialize_primitive(attr, value, type_id)
+				serialized_primitive = self.__serialize_primitive(attr, value, type_id)
 				if serialized_primitive is not None:
 					output += serialized_primitive
 
 		return output
 
-	def serialize_primitive(self, attr: str, value, type_id: str, length: int = 1) -> bytes:
+	def __serialize_primitive(self, attr: str, value, type_id: str, length: int = 1) -> bytes:
 		"""
 		Serializes primitive types (numbers and iterables).
 		:param attr: The attribute name (for debugging and error messages).
@@ -126,152 +154,180 @@ class Serializable:
 		:return: The serialized value if possible; else None.
 		"""
 
-		# especially for strings (since their element is always a string too)
-		if isinstance(value, str):
-			if type_id[:5] == 'iter_':
-				return struct.pack(f'<{len(value)}s', value.encode())
-			elif type_id[:5] == 'iteN_':
-				return struct.pack(f'<h', len(value)) + struct.pack(f'<{len(value)}s', value.encode())
-
 		# especially for dicts
 		if isinstance(value, dict):
 			value = list(value.items())
 
+		# especially for strings (since their element is always a string too)
+		if isinstance(value, str):
+			return self.__serialize_str(value, type_id)
+
 		# an unsigned integer
-		if type_id[:2] == 'u_':
-			if not type_id[2:].isdigit():  # Make sure that the TSID is valid
-				print(
-					f'ERROR: Invalid attribute type size identifier\nAttribute: {attr}\nValue: {value}\nTSID: {type_id}')
-				return
-			var_len = int(type_id[2:])
-			return struct.pack(f'<{length}Q', value)[:var_len]
+		elif type_id[:2] == 'u_':
+			return self.__serialize_unsigned(value, type_id, length)
 
 		# a signed integer
 		elif type_id[:2] == 's_':
-			if not type_id[2:].isdigit():  # Make sure that the TSID is valid
-				print(
-					f'ERROR: Invalid attribute type size identifier\nAttribute: {attr}\nValue: {value}\nTSID: {type_id}')
-				return
-			var_len = int(type_id[2:])
-
-			# Signed integers are a little more confusing to work with, so added some stuff just in case
-			output: bytes = None
-
-			if length == 1:
-				if var_len == 1:
-					output = struct.pack(f'<b', value)
-				elif var_len == 2:
-					output = struct.pack(f'<h', value)
-				elif var_len == 4:
-					output = struct.pack(f'<i', value)
-				elif var_len == 8:
-					output = struct.pack(f'<q', value)
-			else:
-				if var_len == 1:
-					output = struct.pack(f'<{length}b', *value)
-				elif var_len == 2:
-					output = struct.pack(f'<{length}h', *value)
-				elif var_len == 4:
-					output = struct.pack(f'<{length}i', *value)
-				elif var_len == 8:
-					output = struct.pack(f'<{length}q', *value)
-
-			if output is None:
-				print(
-					'WARNING: You are trying to serialize a signed value to an arbitrary byte amount. Make sure it works as expected.')
-				return struct.pack('<q', value)[:var_len]
-			else:
-				return output
+			return self.__serialize_signed(value, type_id, length)
 
 		# a float number with known length.
 		elif type_id[:2] == 'f_':
-			if not type_id[2:].isdigit():  # Make sure that the TSID is valid
-				print(
-					f'ERROR: Invalid attribute type size identifier\nAttribute: {attr}\nValue: {value}\nTSID: {type_id}')
-				return
-			var_len = int(type_id[2:])
-
-			if var_len not in (2, 4, 8):
-				print(f'ERROR: Invalid attribute type size identifier (float size can only be 2/4/8)'
-					  f'\nAttribute: {attr}\nValue: {value}\nTSID: {type_id}')
-				return None
-
-			if length == 1:
-				if var_len == 2:
-					return struct.pack(f'<e', value)
-				if var_len == 4:
-					return struct.pack(f'<f', value)
-				if var_len == 8:
-					return struct.pack(f'<d', value)
-			else:
-				if var_len == 2:
-					return struct.pack(f'<{length}e', *value)
-				if var_len == 4:
-					return struct.pack(f'<{length}f', *value)
-				if var_len == 8:
-					return struct.pack(f'<{length}d', *value)
+			return self.__serialize_float(value, type_id, length)
 
 		# bool
 		elif type_id == 'b':
-			if length == 1:
-				return struct.pack(f'<?', value)
-			else:
-				return struct.pack(f'<{length}?', *value)
+			return self.__serialize_bool(value, length)
 
 		# a string/iterable: length is written before the iterable attribute in 2 bytes.
 		elif type_id[:3] == 'ite':
-			if type_id[:5] == 'iteN_' and (not type_id[5:].isdigit() and type_id[5] != 'd'):  # Make sure that the TSID is valid if iteN_x
-				print(
-					f'ERROR: Invalid attribute type size identifier\nAttribute: {attr}\nValue: {value}\nTSID: {type_id}')
+			return self.__serialize_iterable(attr, value, type_id, length)
+
+	@staticmethod
+	def __serialize_str(value: str, type_id: str) -> bytes:
+		if type_id[:5] == 'iter_':
+			return struct.pack(f'<{len(value)}s', value.encode())
+		elif type_id[:5] == 'iteN_':
+			return struct.pack(f'<h', len(value)) + struct.pack(f'<{len(value)}s', value.encode())
+
+	@staticmethod
+	def __serialize_unsigned(value: Union[int, Iterable], type_id: str, length: int) -> bytes:
+		if not type_id[2:].isdigit():  # Make sure that the TSID is valid
+			print(
+				f'ERROR: Invalid attribute type size identifier\nValue: {value}\nTSID: {type_id}')
+			return
+		var_len = int(type_id[2:])
+		return struct.pack(f'<{length}Q', value)[:var_len]
+
+	@staticmethod
+	def __serialize_signed(value: Union[int, Iterable], type_id: str, length: int) -> bytes:
+		if not type_id[2:].isdigit():  # Make sure that the TSID is valid
+			print(
+				f'ERROR: Invalid attribute type size identifier\nValue: {value}\nTSID: {type_id}')
+			return
+		var_len = int(type_id[2:])
+
+		# Signed integers are a little more confusing to work with, so added some stuff just in case
+		output: bytes = None
+
+		if length == 1:
+			if var_len == 1:
+				output = struct.pack(f'<b', value)
+			elif var_len == 2:
+				output = struct.pack(f'<h', value)
+			elif var_len == 4:
+				output = struct.pack(f'<i', value)
+			elif var_len == 8:
+				output = struct.pack(f'<q', value)
+		else:
+			if var_len == 1:
+				output = struct.pack(f'<{length}b', *value)
+			elif var_len == 2:
+				output = struct.pack(f'<{length}h', *value)
+			elif var_len == 4:
+				output = struct.pack(f'<{length}i', *value)
+			elif var_len == 8:
+				output = struct.pack(f'<{length}q', *value)
+
+		if output is None:
+			print(
+				'WARNING: You are trying to serialize a signed value to an arbitrary byte amount. Make sure it works as expected.')
+			return struct.pack('<q', value)[:var_len]
+		else:
+			return output
+
+	@staticmethod
+	def __serialize_float(value: Union[int, Iterable], type_id: str, length: int) -> bytes:
+		if not type_id[2:].isdigit():  # Make sure that the TSID is valid
+			print(
+				f'ERROR: Invalid attribute type size identifier\nnValue: {value}\nTSID: {type_id}')
+			return
+		var_len = int(type_id[2:])
+
+		if var_len not in (2, 4, 8):
+			print(f'ERROR: Invalid attribute type size identifier (float size can only be 2/4/8)'
+				  f'\nValue: {value}\nTSID: {type_id}')
+			return None
+
+		if length == 1:
+			if var_len == 2:
+				return struct.pack(f'<e', value)
+			if var_len == 4:
+				return struct.pack(f'<f', value)
+			if var_len == 8:
+				return struct.pack(f'<d', value)
+		else:
+			if var_len == 2:
+				return struct.pack(f'<{length}e', *value)
+			if var_len == 4:
+				return struct.pack(f'<{length}f', *value)
+			if var_len == 8:
+				return struct.pack(f'<{length}d', *value)
+
+	@staticmethod
+	def __serialize_bool(value: Union[int, Iterable], length: int) -> bytes:
+		if length == 1:
+			return struct.pack(f'<?', value)
+		else:
+			return struct.pack(f'<{length}?', *value)
+
+	def __serialize_iterable(self, attr: str, value: Iterable, type_id: str, length: int) -> bytes:
+		if type_id[:5] == 'iteN_' and (
+				not type_id[5:].isdigit() and type_id[5] != 'd'):  # Make sure that the TSID is valid if iteN_x
+			print(
+				f'ERROR: Invalid attribute type size identifier\nAttribute: {attr}\nValue: {value}\nTSID: {type_id}')
+			return
+
+		# Check if the iterable is empty
+		if not value:
+			return b'0000'  # length is 0
+
+		# if all items in the iterable are of the same primitive type
+		if all(isinstance(item, (type(value[0]))) for item in value) and not hasattr(value[0], '__iter__'):
+			var_tsid = self.__get_type_identifier(value[0])
+			if type_id[5] != 'd':
+				if var_tsid[:5] == 'iteN_':
+					var_tsid = var_tsid[:5] + type_id[
+											  5:]  # the iterable's items are iterables themselves - pass the size
+				elif var_tsid[:5] == 'iter_':
+					var_tsid = var_tsid[:5] + type_id[
+											  5:]  # the iterable's items are iterables themselves - pass the size
+				elif var_tsid[:2] in ('u_', 'f_'):
+					var_tsid = var_tsid[:2] + type_id[5:]  # the iterable's items are primitive types
+
+			# Make sure that not all the iterable's items are objects and entered this if by accident
+			if var_tsid not in ('o', 'o_N') and var_tsid[:2] != 's_':
+				output: bytes = self.__serialize_primitive(attr + '.', value, var_tsid, len(value))
+				if type_id[:5] == 'iteN':
+					if len(output) > 0xffff:  # Length should be 2 bytes, so make sure it isn't more than that
+						print(f'Length of serialized attribute {attr} (type {type(value)}) is too long')
+						return
+					return struct.pack('<h', len(output)) + output  # add length if iteN_x
+				return output  # don't add length if iter_
+
+		output: bytes = b''
+		for item in value:
+			var_tsid = self.__get_type_identifier(item)
+			if var_tsid == 'o_N':
+				output += item.serialize()
+				continue
+			if type_id[5] != 'd':
+				if var_tsid[:5] == 'iteN_':
+					var_tsid = var_tsid[:5] + type_id[
+											  5:]  # the iterable's items are iterables themselves - pass the size
+				elif var_tsid[:5] == 'iter_':
+					var_tsid = var_tsid[:5] + type_id[
+											  5:]  # the iterable's items are iterables themselves - pass the size
+				elif var_tsid[:2] in ('u_', 's_', 'f_'):
+					var_tsid = var_tsid[:2] + type_id[5:]  # the iterable's items are primitive types
+
+			output += self.__serialize_primitive(attr + '.', item, var_tsid)
+
+		if type_id[:5] == 'iteN_':
+			if len(output) > 0xffff:  # Length should be 2 bytes, so make sure it isn't more than that
+				print(f'Length of serialized attribute {attr} (type {type(value)}) is too long')
 				return
-
-			# Check if the iterable is empty
-			if not value:
-				return b'0000'  # length is 0
-
-			# if all items in the iterable are of the same primitive type
-			if all(isinstance(item, (type(value[0]))) for item in value) and not hasattr(value[0], '__iter__'):
-				var_tsid = self.get_type_identifier(value[0])
-				if type_id[5] != 'd':
-					if var_tsid[:5] == 'iteN_':
-						var_tsid = var_tsid[:5] + type_id[5:]  # the iterable's items are iterables themselves - pass the size
-					elif var_tsid[:5] == 'iter_':
-						var_tsid = var_tsid[:5] + type_id[5:]  # the iterable's items are iterables themselves - pass the size
-					elif var_tsid[:2] in ('u_', 'f_'):
-						var_tsid = var_tsid[:2] + type_id[5:]  # the iterable's items are primitive types
-
-				# Make sure that not all the iterable's items are objects and entered this if by accident
-				if var_tsid not in ('o', 'o_N') and var_tsid[:2] != 's_':
-					output: bytes = self.serialize_primitive(attr+'.', value, var_tsid, len(value))
-					if type_id[:5] == 'iteN':
-						if len(output) > 0xffff:  # Length should be 2 bytes, so make sure it isn't more than that
-							print(f'Length of serialized attribute {attr} (type {type(value)}) is too long')
-							return
-						return struct.pack('<h', len(output)) + output  # add length if iteN_x
-					return output  # don't add length if iter_
-
-			output: bytes = b''
-			for item in value:
-				var_tsid = self.get_type_identifier(item)
-				if var_tsid == 'o_N':
-					output += item.serialize()
-					continue
-				if type_id[5] != 'd':
-					if var_tsid[:5] == 'iteN_':
-						var_tsid = var_tsid[:5] + type_id[5:]  # the iterable's items are iterables themselves - pass the size
-					elif var_tsid[:5] == 'iter_':
-						var_tsid = var_tsid[:5] + type_id[5:]  # the iterable's items are iterables themselves - pass the size
-					elif var_tsid[:2] in ('u_', 's_', 'f_'):
-						var_tsid = var_tsid[:2] + type_id[5:]  # the iterable's items are primitive types
-
-				output += self.serialize_primitive(attr+'.', item, var_tsid)
-
-			if type_id[:5] == 'iteN_':
-				if len(output) > 0xffff:  # Length should be 2 bytes, so make sure it isn't more than that
-					print(f'Length of serialized attribute {attr} (type {type(value)}) is too long')
-					return
-				return struct.pack('<h', len(output)) + output  # add length if iteN_x
-			return output  # don't add length if iter_
+			return struct.pack('<h', len(output)) + output  # add length if iteN_x
+		return output  # don't add length if iter_
 
 
 # test class
@@ -280,18 +336,19 @@ class Entity(Serializable):
 		super().__init__()
 		self.x = 3
 		self.y = -129
-		self.y = 3
-		self.hi = 'hi'
-		self.lis = [1, -300, 'yes']
-		self.dic = {1: 'a', 2: 'b'}
-		self.inher = Item()
+
+	# self.y = 3
+	# self.hi = 'hi'
+	# self.lis = [1, -300, 'yes']
+	# self.dic = {1: 'a', 2: 'b'}
+	# self.inher = Item()
 
 	def get_attr(self) -> dict:
 		d: dict = self.get_attr_default()
 		d['x'] = 'u_1'
-		d['y'] = 's_2'
-		d['lis'] = 'iteN_d'
-		d['dic'] = 'iteN_1'
+		d['y'] = 's_1'
+		# d['lis'] = 'iteN_d'
+		# d['dic'] = 'iteN_1'
 		return d
 
 
