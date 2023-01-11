@@ -1,4 +1,3 @@
-from enum import Enum
 from server_files_normal.Entity import Entity
 
 
@@ -23,9 +22,11 @@ class LBMsg:
 
 class ClientInputMsg:
     """ A class of messages from the client - inputs"""
-    def __int__(self, pkt: bytes):
+    def __init__(self, pkt: bytes):
         pass
 
-
-class GameState(Enum):
-    pass
+class GameState():
+    """ A class that describes the current state of each entity in the game"""
+    #For future references, this class will describe the changes in the game state
+    def __init__(self, pkt: bytes):
+        pass
