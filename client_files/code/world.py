@@ -2,6 +2,7 @@ import pygame
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
+from client_files.code.support import *
 
 
 class World:
@@ -25,21 +26,36 @@ class World:
 
     def create_map(self) -> None:
         """
-        Load every tile from settings.py and add it to relevant groups
+        load map from tilemap
         :return: None
         """
-        # For every tile in the world map from settings.py:
-        for r, row in enumerate(WORLD_MAP):
-            for c, col in enumerate(row):
-                # Get x and y coordinates of the tile
-                x: int = c * TILESIZE
-                y: int = r * TILESIZE
 
-                # Figure out what tile it is
-                if col == 'x':  # Rock
-                    Tile((x, y), [self.visible_sprites, self.obstacle_sprites])
-                if col == 'p':  # Player
-                    self.player = Player((x, y), [self.visible_sprites], self.obstacle_sprites)
+        # All layout csv files from Tiled
+        layout: dict[str: list(list(int))] = {
+            'boundary': import_csv_layout('../graphics/map/map_Barriers.csv'),
+            'objects': import_csv_layout('../graphics/map/map_Objects.csv')
+        }
+
+        # All graphics groups
+        graphics: dict[str: list(pygame.Surface)] = {
+            'objects': import_folder('../graphics/Objects')
+        }
+
+        for style, layout in layout.items():
+            for row_index, row in enumerate(layout):
+                for col_index, col in enumerate(row):
+                    if col != '-1':  # -1 in csv means no tile
+                        x: int = col_index * TILESIZE
+                        y: int = row_index * TILESIZE
+
+                        if style == 'boundary':
+                            Tile((x, y), [self.obstacle_sprites], "barrier")
+                        if style == 'objects':
+                            surface: pygame.Surface = graphics['objects'][int(col) - 3]  # Tile id is offseted by 3 (not always, might need to be changed)
+                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surface)
+
+        # Create player with starting position
+        self.player = Player((650, 2700), [self.visible_sprites], self.obstacle_sprites)
 
     def run(self) -> None:
         """
@@ -65,6 +81,10 @@ class YSortCameraGroup(pygame.sprite.Group):
 
         # Camera position for drawing offset
         self.camera = pygame.math.Vector2()
+
+        # Creating the floor
+        self.floor_surface = pygame.image.load('../graphics/ground.png').convert()
+        self.floor_rect = self.floor_surface.get_rect(topleft=(0, 0))
 
     def center_camera(self, player: Player) -> None:
         """
@@ -97,6 +117,9 @@ class YSortCameraGroup(pygame.sprite.Group):
                 self.camera.y = player.rect.centery - CAMERA_DISTANCE_FROM_PLAYER[1]
             else:  # Move the camera from to the bottom of the bound if it's further down than the player
                 self.camera.y = player.rect.centery + CAMERA_DISTANCE_FROM_PLAYER[1]
+
+        # Drawing the floor
+        self.display_surface.blit(self.floor_surface, self.floor_rect.topleft - self.camera + self.screen_center)
 
         # For every visible sprite, from top to bottom
         for sprite in sorted(self.sprites(), key=lambda x: x.rect.centery):
