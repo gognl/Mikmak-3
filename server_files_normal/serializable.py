@@ -2,7 +2,6 @@ import json
 import struct
 from typing import Union, Iterable
 
-
 # USE PYTHON VERSION 3.7+ FOR THIS CLASS TO WORK PROPERLY
 
 class Serializable:
@@ -15,7 +14,6 @@ class Serializable:
 		if ser is None:
 			self.serialized_attr: dict = self._get_attr()
 			return
-
 		# On the receiver side
 		self.__deserialize(ser)
 
@@ -23,16 +21,89 @@ class Serializable:
 		"""Deserializes the input ser and builds an object of the subclass based on it and on get_attr()"""
 		attributes: dict = self.__dict__
 		req_attr: dict = self._get_attr()
-
 		for attr, tsid in req_attr.items():
 
-			# Check that the attribute actually exists
-			if not hasattr(self, attr):
-				continue
+			# attr: str - the name of the attribute
+			# tsid: str - the type size id, as described in get_attr()
 
-	# deserialize here
+			if tsid == 'o':
+				# TODO: an object. do an object id thing
+				pass
 
-	def __get_type_identifier(self, value) -> str:
+			# an object (which inherits Serializable): do write its length - in 2 bytes (always).
+			elif tsid == 'o_N':
+				# TODO: an object. do an object id thing
+				pass
+
+			# Not an object: a primitive type or an iterable
+			else:
+				value, size = self.__deserialize_primitive(ser, attr, tsid)
+				self.__setattr__(attr, value)
+				ser = ser[size:]
+
+	def __deserialize_primitive(self, ser: bytes, attr: str, tsid: str):
+
+		# unsigned integers
+		if tsid[:2] == 'u_':
+			value, size = self.__deserialize_unsigned(ser, tsid)
+			return value[0], size
+
+		if tsid[:2] == 's_':
+			value, size = self.__deserialize_signed(ser, tsid)
+			return value[0], size
+
+		if tsid[:2] == 'f_':
+			value, size = self.__deserialize_float(ser, tsid)
+			return value[0], size
+
+	@staticmethod
+	def __deserialize_unsigned(ser: bytes, tsid: str):
+		size: int = int(tsid[2:])
+		if size == 1:
+			return struct.unpack(f'<B', ser[:1]), size
+		if size <= 2:
+			return struct.unpack(f'<H', ser[:2]), size
+		if size <= 4:
+			return struct.unpack(f'<I', ser[:4]+(4-size)*b'\x00'), size
+		if size <= 8:
+			return struct.unpack(f'<Q', ser[:8]+(8-size)*b'\x00'), size
+		return None
+
+	@staticmethod
+	def __deserialize_signed(ser: bytes, tsid: str):
+		size: int = int(tsid[2:])
+		if size == 1:
+			return struct.unpack(f'<b', ser[:1]), size
+		if size <= 2:
+			return struct.unpack(f'<h', ser[:2]), size
+		if size <= 4:
+			return struct.unpack(f'<i', ser[:4] + (4 - size) * bytes(ser[3])), size
+		if size <= 8:
+			return struct.unpack(f'<q', ser[:8] + (8 - size) * bytes(ser[7])), size
+		return None
+
+	@staticmethod
+	def __deserialize_float(ser: bytes, tsid: str):
+		size: int = int(tsid[2:])
+		if size == 2:
+			return struct.unpack(f'<e', ser[:2]), size
+		if size == 4:
+			return struct.unpack(f'<f', ser[:4]), size
+		if size == 8:
+			return struct.unpack(f'<d', ser[:8]), size
+		return None
+
+	@staticmethod
+	def __deserialize_bool(ser: bytes, tsid: str):
+		return struct.unpack(f'<?', ser[:1]), 1
+
+	def __deserialize_iterable(self, ser: bytes, tsid: str):
+		# Houston, we have a problem
+		# TODO: do ite<N/r>_u_1 instead
+		pass
+
+	@staticmethod
+	def __get_type_identifier(value) -> str:
 		"""
 		Returns the variable type size identifier (see get_attr() docs for more info).
 		:param value: The value
@@ -153,7 +224,6 @@ class Serializable:
 		:param length: Used for iterables recursively. Ignore it.
 		:return: The serialized value if possible; else None.
 		"""
-
 		# especially for dicts
 		if isinstance(value, dict):
 			value = list(value.items())
@@ -329,41 +399,42 @@ class Serializable:
 			return struct.pack('<h', len(output)) + output  # add length if iteN_x
 		return output  # don't add length if iter_
 
-
 # test class
 class Entity(Serializable):
-	def __init__(self):
-		super().__init__()
-		self.x = 3
-		self.y = -129
+	def __init__(self, ser: bytes = None):
+		super().__init__(ser)
+		if ser is None:
+			self.x = 3
+			self.y = 0.65
+			self.z = -300
+			#self.hi = 'hi'
+			#self.lis = [1, -300, 'yes']
+			#self.dic = {1: 'a', 2: 'b'}
+			#self.inher = Item()
 
-	# self.y = 3
-	# self.hi = 'hi'
-	# self.lis = [1, -300, 'yes']
-	# self.dic = {1: 'a', 2: 'b'}
-	# self.inher = Item()
+	def _get_attr(self) -> dict:
+		#d: dict = self._get_attr_default()
+		#d['lis'] = 'iteN_d'
+		#d['dic'] = 'iteN_1'
 
-	def get_attr(self) -> dict:
-		d: dict = self.get_attr_default()
-		d['x'] = 'u_1'
-		d['y'] = 's_1'
-		# d['lis'] = 'iteN_d'
-		# d['dic'] = 'iteN_1'
-		return d
+		return {'x': 'u_1', 'y': 'f_8', 'z': 's_2'}
 
 
 class Item(Serializable):
-	def __init__(self):
-		super().__init__()
+	def __init__(self, *args):
+		super().__init__(args)
 		self.hello = 5
 		self.s = 'string'
 
-	def get_attr(self) -> tuple:
-		d: dict = self.get_attr_default()
+	def _get_attr(self) -> dict:
+		d: dict = super()._get_attr_default()
 		d['hello'] = 's_1'
 		return d
 
 
 if __name__ == '__main__':
-	e = Entity()
-	print(e.serialize())
+	e1 = Entity()
+	ser = e1.serialize()
+	print(ser)
+	e2 = Entity(ser)
+	print(e2.__dict__)
