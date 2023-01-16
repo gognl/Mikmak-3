@@ -16,6 +16,8 @@ TODO:
 
 import socket
 from server_files_normal.LoadBalancerManager import LoadBalancerManager
+from server_files_normal.ClientManager import ClientManager
+from server_files_normal.GameManager import GameManager
 
 
 def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socket.socket, LoadBalancerManager):
@@ -39,16 +41,32 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 	return login_sock, lb_manager
 
 
+def accept_new_client(server_sock):
+	return server_sock.accept()
+
+
 def main():
 	# Change later
 	login_addr: (str, int) = ('127.0.0.1', 56793)
 	lb_addr: (str, int) = ('127.0.0.1', 31578)
 
 	# Initialize the connection to the login & load-balancing servers
-	login_sock: socket.socket
+	server_sock: socket.socket
 	lb_manager: LoadBalancerManager
-	login_sock, lb_manager = initialize_connection(login_addr, lb_addr)
+	server_sock, lb_manager = initialize_connection(login_addr, lb_addr)
 
+	server_sock.listen()
+	server_sock.bind(('0.0.0.0', 17120))
+
+	client_managers: list[ClientManager] = []
+	game_manager = GameManager(client_managers)
+	game_manager.start()
+
+	while True:
+		client_sock = server_sock.accept()
+		new_client_manager = ClientManager(client_sock)
+		client_managers.append(new_client_manager)
+		new_client_manager.start()
 
 if __name__ == '__main__':
 	main()

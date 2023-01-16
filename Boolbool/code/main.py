@@ -4,9 +4,9 @@ from threading import Thread  # Multi-threading
 from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
 from time import time  # Current time
-from client_demo_files.code.structures import *  # Some custom structures
-from client_demo_files.code.settings import *
-from client_demo_files.code.world import World
+from Boolbool.code.structures import *  # Some custom structures
+from Boolbool.code.settings import *
+from Boolbool.code.world import World
 
 
 def initialize_connection(server_ip: str) -> (socket.socket, Queue):
@@ -126,7 +126,7 @@ def run_game(*args) -> None:  # TODO
     while running:
         for event in pygame.event.get():
             if event.type == update_required_event:
-                changes: deque  # temporarily here, to be implemented later by Goni
+                changes: deque  # temporarily here, to be implemented later - TODO
                 update_game(event.msg, changes)
             elif event.type == pygame.QUIT:
                 running = False

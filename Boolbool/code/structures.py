@@ -4,6 +4,7 @@ class ServerMessage:  # TODO
 
 	def __init__(self, pkt: bytes):
 		"""Unpacks the packet, creates the object"""
+		pass
 		self.ack: int
 
 	def get_ack(self) -> int:

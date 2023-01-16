@@ -1,5 +1,5 @@
 from server_files_normal.Entity import Entity
-
+from server_files_normal.ClientManager import ClientManager
 
 class LBMsg:
     """TODO - A class of incoming messages from the load-balancing server"""
@@ -22,8 +22,9 @@ class LBMsg:
 
 class ClientInputMsg:
     """ A class of messages from the client - inputs"""
-    def __init__(self, pkt: bytes):
-        pass
+    def __init__(self, pkt: bytes, client_manager: ClientManager):
+        self.pkt_bytes: bytes = pkt
+        self.client_manager: ClientManager = client_manager
 
 class GameState():
     """ A class that describes the current state of each entity in the game"""

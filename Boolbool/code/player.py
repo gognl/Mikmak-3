@@ -1,5 +1,5 @@
 import pygame
-from client_demo_files.code.settings import *
+from Boolbool.code.settings import *
 
 
 class Player(pygame.sprite.Sprite):
@@ -11,9 +11,6 @@ class Player(pygame.sprite.Sprite):
 
         # Position of player
         self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
-
-        # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
-        self.hitbox = self.rect.inflate(0, -26)
 
         # Direction of the player
         self.direction: pygame.Vector2 = pygame.math.Vector2()
@@ -55,33 +52,32 @@ class Player(pygame.sprite.Sprite):
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
 
-        self.hitbox.x += self.direction.x * speed
+        self.rect.x += self.direction.x * speed
         self.collision('horizontal')  # Check collisions in the horizontal axis
-        self.hitbox.y += self.direction.y * speed
+        self.rect.y += self.direction.y * speed
         self.collision('vertical')  # Check collisions in the vertical axis
-        self.rect.center = self.hitbox.center
 
-    def collision(self, direction: str) -> None:
+    def collision(self, direction: pygame.Vector2) -> None:
         """
         Apply collisions to the player, each axis separately
-        :param direction: A string representing the direction the player is going
+        :param direction: Vector2 of the direction the player is going
         :return: None
         """
         if direction == 'horizontal':
             for sprite in self.obstacle_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
+                if sprite.rect.colliderect(self.rect):
                     if self.direction.x > 0:  # Player going right
-                        self.hitbox.right = sprite.hitbox.left
+                        self.rect.right = sprite.rect.left
                     if self.direction.x < 0:  # Player going left
-                        self.hitbox.left = sprite.hitbox.right
+                        self.rect.left = sprite.rect.right
 
         if direction == 'vertical':
             for sprite in self.obstacle_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
+                if sprite.rect.colliderect(self.rect):
                     if self.direction.y > 0:  # Player going down
-                        self.hitbox.bottom = sprite.hitbox.top
+                        self.rect.bottom = sprite.rect.top
                     if self.direction.y < 0:  # Player going up
-                        self.hitbox.top = sprite.hitbox.bottom
+                        self.rect.top = sprite.rect.bottom
 
     def update(self) -> None:
         """

@@ -8,35 +8,23 @@ from server_files_normal.structures import ClientInputMsg, GameState
 class ClientManager(threading.Thread):
     """Handles the interactions with the client server"""
 
-    def __init__(self, client_addr: (str, int)):
+    def __init__(self, client_sock):
         super().__init__()
-        # Connect to the client server
-        self.client_sock: socket.socket = socket.socket()
-        self.client_sock.connect(client_addr)
-
-        # The info that need to be transferred to the client
-        self.inputs: deque[ClientInputMsg] = deque()
-        self.gameState: GameState
+        self.client_sock: socket.socket = client_sock
+        self.queue: deque[ClientInputMsg] = deque()
 
     def run(self) -> None:
         self.handle_client_connection()
 
-    def get_client_pkt(self) -> bytes:
-        """
-        Gets a packet from the client server, decrypts if needed.
-        :return: The decrypted message in bytes.
-        """
-        pass
-
     def handle_client_connection(self) -> None:
         """
-        Updates the inputs of the clients and the game state.
+        Loop of appending new message from client to the queue
         :return: None
         """
 
         while True:
-            msg: ClientInputMsg = ClientInputMsg(self.get_client_pkt())
+            data = self.client_sock.recv(1024)
+            self.queue.append(ClientInputMsg(data, self))
 
-
-
-
+    def get_new_message(self) -> ClientInputMsg:
+        return self.queue.pop()
