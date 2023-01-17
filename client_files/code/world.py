@@ -37,8 +37,8 @@ class World:
         }
 
         # All graphics groups
-        graphics: dict[str: list(pygame.Surface)] = {
-            'objects': import_folder('../graphics/Objects')
+        graphics: dict[str: dict[int: pygame.Surface]] = {
+            'objects': import_folder('../graphics/objects')
         }
 
         for style, layout in layout.items():
@@ -51,7 +51,7 @@ class World:
                         if style == 'boundary':
                             Tile((x, y), [self.obstacle_sprites], "barrier")
                         if style == 'objects':
-                            surface: pygame.Surface = graphics['objects'][int(col) - 3]  # Tile id is offseted by 3 (not always, might need to be changed)
+                            surface: pygame.Surface = graphics['objects'][int(col)]
                             Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surface)
 
         # Create player with starting position
@@ -83,8 +83,18 @@ class YSortCameraGroup(pygame.sprite.Group):
         self.camera = pygame.math.Vector2()
 
         # Creating the floor
-        self.floor_surface = pygame.image.load('../graphics/ground.png').convert()
-        self.floor_rect = self.floor_surface.get_rect(topleft=(0, 0))
+        self.floor_sprites = pygame.sprite.Group()
+        layout: list(list(str)) = import_csv_layout('../graphics/map/map_Ground.csv')
+        graphics: dict[int: pygame.Surface] = import_folder('../graphics/tiles')
+
+        for row_index, row in enumerate(layout):
+            for col_index, col in enumerate(row):
+                if col != '-1':  # -1 in csv means no tile
+                    x: int = col_index * TILESIZE
+                    y: int = row_index * TILESIZE
+
+                    surface: pygame.Surface = graphics[int(col)]
+                    Tile((x, y), [self.floor_sprites], 'floor', surface)
 
     def center_camera(self, player: Player) -> None:
         """
@@ -119,9 +129,17 @@ class YSortCameraGroup(pygame.sprite.Group):
                 self.camera.y = player.rect.centery + CAMERA_DISTANCE_FROM_PLAYER[1]
 
         # Drawing the floor
-        self.display_surface.blit(self.floor_surface, self.floor_rect.topleft - self.camera + self.screen_center)
+        for sprite in self.floor_sprites:
+            # Display the sprite on screen, moving it by the calculated offset
+            position: pygame.math.Vector2 = sprite.rect.topleft - self.camera + self.screen_center
+
+            if 0 - sprite.rect.width < position.x < SCREEN_WIDTH + sprite.rect.width and 0 - sprite.rect.height < position.y < SCREEN_HEIGHT + sprite.rect.height:  # Only display if in screen
+                self.display_surface.blit(sprite.image, position)
 
         # For every visible sprite, from top to bottom
         for sprite in sorted(self.sprites(), key=lambda x: x.rect.centery):
             # Display the sprite on screen, moving it by the calculated offset
-            self.display_surface.blit(sprite.image, sprite.rect.topleft - self.camera + self.screen_center)
+            position: pygame.math.Vector2 = sprite.rect.topleft - self.camera + self.screen_center
+
+            if 0 - sprite.rect.width < position.x < SCREEN_WIDTH + sprite.rect.width and 0 - sprite.rect.height < position.y < SCREEN_HEIGHT + sprite.rect.height:  # Only display if in screen
+                self.display_surface.blit(sprite.image, position)

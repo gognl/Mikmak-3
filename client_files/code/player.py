@@ -7,7 +7,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__(groups)
 
         # Load player sprite from files
-        self.image: pygame.Surface = pygame.image.load('../graphics/player.png').convert_alpha()
+        self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
 
         # Position of player
         self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
