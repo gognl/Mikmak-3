@@ -12,8 +12,9 @@ class World:
 
         # Visible sprites: sprites that show on screen
         # Obstacle sprites: sprite the player can collide with
-        self.visible_sprites: pygame.Group = YSortCameraGroup()
-        self.obstacle_sprites: pygame.Group = pygame.sprite.Group()
+        self.floor_sprites: Group = Group()
+        self.visible_sprites: Group_YSort = Group_YSort()
+        self.obstacle_sprites: Group = Group()
 
         # Player before creation
         self.player: Player = None
@@ -31,13 +32,15 @@ class World:
         """
 
         # All layout csv files from Tiled
-        layout: dict[str: list(list(int))] = {
-            'boundary': import_csv_layout('../graphics/map/map_Barriers.csv'),
-            'objects': import_csv_layout('../graphics/map/map_Objects.csv')
+        layout: dict[str: list[list[int]]] = {
+            'floor': import_csv_layout('../graphics/map/map_Ground.csv'),
+            'objects': import_csv_layout('../graphics/map/map_Objects.csv'),
+            'boundary': import_csv_layout('../graphics/map/map_Barriers.csv')
         }
 
         # All graphics groups
         graphics: dict[str: dict[int: pygame.Surface]] = {
+            'tiles': import_folder('../graphics/tiles'),
             'objects': import_folder('../graphics/objects')
         }
 
@@ -48,14 +51,17 @@ class World:
                         x: int = col_index * TILESIZE
                         y: int = row_index * TILESIZE
 
-                        if style == 'boundary':
-                            Tile((x, y), [self.obstacle_sprites], "barrier")
-                        if style == 'objects':
+                        if style == 'floor':
+                            surface: pygame.Surface = graphics[int(col)]
+                            Tile((x, y), [self.floor_sprites], 'floor', surface)
+                        elif style == 'objects':
                             surface: pygame.Surface = graphics['objects'][int(col)]
-                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surface)
+                            Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', surface)
+                        elif style == 'boundary':
+                            Tile((x, y), (self.obstacle_sprites), "barrier")
 
         # Create player with starting position
-        self.player = Player((650, 2700), [self.visible_sprites], self.obstacle_sprites)
+        self.player = Player((650, 2700), (self.visible_sprites), self.obstacle_sprites)
 
     def run(self) -> None:
         """
@@ -69,7 +75,14 @@ class World:
         self.visible_sprites.update()
 
 
-class YSortCameraGroup(pygame.sprite.Group):
+class Group(pygame.sprite.Group):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.array: list[list[Tile]] = []
+
+
+class Group_YSort(Group):
     def __init__(self) -> None:
         super().__init__()
         self.display_surface = pygame.display.get_surface()
@@ -81,20 +94,6 @@ class YSortCameraGroup(pygame.sprite.Group):
 
         # Camera position for drawing offset
         self.camera = pygame.math.Vector2()
-
-        # Creating the floor
-        self.floor_sprites = pygame.sprite.Group()
-        layout: list(list(str)) = import_csv_layout('../graphics/map/map_Ground.csv')
-        graphics: dict[int: pygame.Surface] = import_folder('../graphics/tiles')
-
-        for row_index, row in enumerate(layout):
-            for col_index, col in enumerate(row):
-                if col != '-1':  # -1 in csv means no tile
-                    x: int = col_index * TILESIZE
-                    y: int = row_index * TILESIZE
-
-                    surface: pygame.Surface = graphics[int(col)]
-                    Tile((x, y), [self.floor_sprites], 'floor', surface)
 
     def center_camera(self, player: Player) -> None:
         """
