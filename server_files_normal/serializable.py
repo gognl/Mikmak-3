@@ -1,5 +1,5 @@
 import struct
-from typing import Union, Sequence
+from typing import Union, Sequence, Any, Final, Tuple
 
 
 # USE PYTHON VERSION 3.7+ FOR THIS CLASS TO WORK PROPERLY
@@ -7,7 +7,7 @@ from typing import Union, Sequence
 class BaseSerializer:
 	"""A class that has static functions which serialize basic types"""
 
-	KEYS: dict = {
+	KEYS: Final[dict] = {
 			'u': {1: 'B', 2: 'H', 4: 'I', 8: 'Q'},
 			's': {1: 'b', 2: 'h', 4: 'i', 8: 'q'},
 			'f': {2: 'e', 4: 'f', 8: 'd'},
@@ -15,7 +15,7 @@ class BaseSerializer:
 			}
 
 	@staticmethod
-	def serialize_base(value, tsid: tuple, length=1) -> bytes:
+	def serialize_base(value: Any, tsid: tuple, length=1) -> bytes:
 
 		# iterable
 		if type(tsid[1]) == tuple:
@@ -36,7 +36,7 @@ class BaseSerializer:
 			return BaseSerializer.serialize_boolean(value, length)
 
 		if tsid[1] == 'str':
-			return BaseSerializer.serialize_string(value)
+			return BaseSerializer.serialize_string(value, length)
 
 		if tsid[1] == 'o':
 			return BaseSerializer.serialize_object(value, tsid, length)
@@ -53,7 +53,7 @@ class BaseSerializer:
 			# If each element is not a sequence itself
 			if type(tsid[1][1]) != tuple:
 				serialized_value = BaseSerializer.serialize_base(value, tsid[1], len(value))
-				return struct.pack('<h', len(serialized_value)) + serialized_value
+				return struct.pack('<H', len(serialized_value)) + serialized_value
 
 			# If each element is a sequence itself
 			serialized_value: bytes = b''
@@ -63,7 +63,7 @@ class BaseSerializer:
 			else:
 				for i in value:
 					serialized_value += BaseSerializer.serialize_base(i, tsid[1])
-			return struct.pack('<h', len(serialized_value)) + serialized_value
+			return struct.pack('<H', len(serialized_value)) + serialized_value
 
 		# Error checking
 		if len(tsid) - 1 != len(value):
@@ -74,10 +74,10 @@ class BaseSerializer:
 		serialized_value: bytes = b''
 		for i, inner_tsid in enumerate(tsid[1:]):
 			serialized_value += BaseSerializer.serialize_base(value[i], inner_tsid)
-		return struct.pack('<h', len(serialized_value)) + serialized_value
+		return struct.pack('<H', len(serialized_value)) + serialized_value
 
 	@staticmethod
-	def serialize_unsigned(value: Union[int, Sequence[int]], tsid: str, length) -> bytes:
+	def serialize_unsigned(value: Union[int, Sequence[int]], tsid: str, length: int) -> bytes:
 		"""Can serialize unsigned numbers or iterables of unsigned numbers"""
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
@@ -94,7 +94,7 @@ class BaseSerializer:
 		return b''.join([data[i:i + 8][:size] for i in range(0, len(data), 8)])
 
 	@staticmethod
-	def serialize_signed(value: Union[int, Sequence[int]], tsid: str, length) -> bytes:
+	def serialize_signed(value: Union[int, Sequence[int]], tsid: str, length: int) -> bytes:
 		"""Can serialize signed numbers or iterables of signed numbers"""
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
@@ -111,7 +111,7 @@ class BaseSerializer:
 		return b''.join([data[i:i + 8][:size] for i in range(0, len(data), 8)])
 
 	@staticmethod
-	def serialize_float(value: Union[float, Sequence[float]], tsid: str, length) -> Union[bytes, None]:
+	def serialize_float(value: Union[float, Sequence[float]], tsid: str, length: int) -> Union[bytes, None]:
 		"""Can serialize float numbers or iterables of float numbers"""
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
@@ -128,7 +128,7 @@ class BaseSerializer:
 		return struct.pack(f"<{length}{BaseSerializer.KEYS['f'][size]}", *value)
 
 	@staticmethod
-	def serialize_boolean(value: Union[bool, Sequence[bool]], length) -> bytes:
+	def serialize_boolean(value: Union[bool, Sequence[bool]], length: int) -> bytes:
 		"""Can serialize booleans or iterables of booleans"""
 
 		# Simple case; A single value, not a list
@@ -139,14 +139,21 @@ class BaseSerializer:
 		return struct.pack(f"<{length}{BaseSerializer.KEYS['b']}", *value)
 
 	@staticmethod
-	def serialize_string(value: str) -> bytes:
+	def serialize_string(value: Union[str, Sequence[str]], length: int) -> bytes:
 		"""Can serialize strings"""
-		serialized_value = value.encode()
-		return struct.pack('<h', len(serialized_value)) + serialized_value
+		if length == 1:
+			serialized_value = value.encode()
+			return struct.pack('<H', len(serialized_value)) + serialized_value
+
+		serialized_value: bytes = b''
+		for i in value:
+			serialized_i: bytes = i.encode()
+			serialized_value += struct.pack('<H', len(serialized_i)) + serialized_i
+		return serialized_value
 
 	@staticmethod
-	def serialize_object(value, tsid, length) -> Union[bytes, None]:
-		"""Can serialize objects"""
+	def serialize_object(value: Any, tsid: tuple, length: int) -> Union[bytes, None]:
+		"""Can serialize objects, and iterables of objects"""
 
 		if length != 1:
 			serialized_value: bytes = b''
@@ -164,18 +171,133 @@ class BaseSerializer:
 			print(f'WARNING: Length of serialized object attribute is too long')
 			return
 
-		return struct.pack('<h', len(serialized_value)) + serialized_value
+		return struct.pack('<H', len(serialized_value)) + serialized_value
 
 class BaseDeserializer:
 	"""A class that has static functions which deserialize basic types"""
-	pass
+
+	KEYS: Final[dict] = {
+		'u': {1: 'B', 2: 'H', 4: 'I', 8: 'Q'},
+		's': {1: 'b', 2: 'h', 4: 'i', 8: 'q'},
+		'f': {2: 'e', 4: 'f', 8: 'd'},
+		'b': '?'
+	}
+
+	@staticmethod
+	def deserialize_base(ser: bytes, tsid: tuple, length=1) -> Tuple[Any, int]:
+
+		if ser == b'':
+			return None, 0
+
+		# iterable
+		if type(tsid[1]) == tuple:
+			pass
+			# if tsid[0] == dict:
+			# 	value = list(value.items())
+			# return BaseSerializer.serialize_iterable(value, tsid)
+
+		if tsid[1][:2] == 'u_':
+			return BaseDeserializer.deserialize_unsigned(ser, tsid[1], length)
+
+		if tsid[1][:2] == 's_':
+			return BaseDeserializer.deserialize_signed(ser, tsid[1], length)
+
+		if tsid[1][:2] == 'f_':
+			return BaseDeserializer.deserialize_float(ser, tsid[1], length)
+
+		if tsid[1][:2] == 'b_':
+			return BaseDeserializer.deserialize_boolean(ser, length)
+
+		if tsid[1] == 'str':
+			return BaseDeserializer.deserialize_string(ser, length)
+
+		if tsid[1] == 'o':
+			return BaseDeserializer.deserialize_object(ser, tsid, length)
+
+	@staticmethod
+	def deserialize_iterable(ser: bytes, tsid: tuple) -> Tuple[Sequence, int]:
+		pass
+
+	@staticmethod
+	def deserialize_unsigned(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int]], int]:
+		size: int = int(tsid[2:])  # The length (in bytes) of the result
+
+		if length == 1:
+			return struct.unpack(f"<{BaseDeserializer.KEYS['u'][8]}", ser[:size]+(8-size)*b'\x00')[0], size
+
+		# If each item in the list can be easily deserialized (e.g., it's of size 1/2/4/8)
+		if size in BaseDeserializer.KEYS['u'].keys():
+			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['u'][size]}", ser[:size*length]), -1
+
+	@staticmethod
+	def deserialize_signed(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int]], int]:
+		size: int = int(tsid[2:])  # The length (in bytes) of the result
+
+		if length == 1:
+			if ser[size-1] >> 7:  # If negative
+				return struct.unpack(f"<{BaseDeserializer.KEYS['s'][8]}", ser[:size] + (8 - size) * b'\xff')[0], size
+			else:  # If positive
+				return struct.unpack(f"<{BaseDeserializer.KEYS['s'][8]}", ser[:size] + (8 - size) * b'\x00')[0], size
+
+		# If each item in the list can be easily deserialized (e.g., it's of size 1/2/4/8)
+		if size in BaseDeserializer.KEYS['s'].keys():
+			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['s'][size]}", ser[:size*length]), -1
+
+	@staticmethod
+	def deserialize_float(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int], None], int]:
+		size: int = int(tsid[2:])  # The length (in bytes) of the result
+
+		if size not in BaseDeserializer.KEYS['f'].keys():
+			# Error checking: if size is not 2/4/8
+			print('ERROR: Cannot deserialize a float of a number of bytes which is not 2/4/8')
+			return None, size
+
+		# Simple case; A single value, not a list
+		if length == 1:
+			return struct.unpack(f"<{BaseDeserializer.KEYS['f'][size]}", ser[:size])[0], size
+
+		# A list/iterable
+		return struct.unpack(f"<{length}{BaseDeserializer.KEYS['f'][size]}", ser[:size*length]), -1
+
+	@staticmethod
+	def deserialize_boolean(ser: bytes, length: int) -> Tuple[Union[bool, Sequence[bool]], int]:
+		# Simple case; A single value, not a list
+		if length == 1:
+			return bool(ser[0]), 1
+
+		# A list/iterable
+		return struct.unpack(f"<{length}{BaseDeserializer.KEYS['b']}", ser[:length]), -1
+
+	@staticmethod
+	def deserialize_string(ser: bytes, length: int) -> Tuple[Union[str, Sequence[str]], int]:
+
+		# A single string
+		if length == 1:
+			size: int = struct.unpack(f'<H', ser[:2])[0]
+			return ser[2:size+2].decode(), size+2
+
+		# A list of strings
+		output = []
+		offset: int = 0
+		for i in range(length):
+			size: int = struct.unpack(f'<H', ser[offset:offset+2])[0]
+			output.append(ser[offset+2:offset+2+size].decode())
+			offset += size
+		return tuple(output), -1
+
+	@staticmethod
+	def deserialize_object(ser: bytes, tsid: tuple, length: int) -> Tuple[Union[Any, Sequence[Any]], int]:
+		pass
 
 class Serializable:
 	"""A serializable class. To be inherited by any class that should be serialized."""
 
-	def __init__(self):
-		"""If ser is not None,
-		creates an object of the subclass based on the serialized input, and the attributes from get_attr()"""
+	def __init__(self, ser: bytes):
+		"""
+		Used to deserialize the object.
+		:param ser: The serialized data representing the object
+		"""
+		self.__dict__.update(self.__deserialize(ser))
 
 	def __get_type_identifier(self, value) -> tuple:
 		"""
@@ -254,7 +376,7 @@ class Serializable:
 		:return: The serialized version of the object.
 		"""
 
-		serialized_attr: dict = self._get_attr()  # update serialized_attr
+		serialized_attr: dict = self._get_attr()  # dictionary of values to serialize
 
 		output = b''
 		for attr, tsid in serialized_attr.items():
@@ -274,16 +396,35 @@ class Serializable:
 
 		return output
 
+	def __deserialize(self, ser: bytes) -> dict:
+		"""
+		Creates a dictionary representing the de-serialized attributes of the object
+		:param ser: The serialized data representing the object
+		:return: A dictionary representing the __dict__ of the serialized data
+		"""
+
+		serialized_attr: dict = self._get_attr()  # dictionary of serialized values
+
+		output = {}
+		offset: int = 0
+		size: int
+		for attr, tsid in serialized_attr.items():
+			output[attr], size = BaseDeserializer.deserialize_base(ser[offset:], tsid)
+			offset += size
+		return output
+
+
 # test class
 class Entity(Serializable):
-	def __init__(self):
-		super().__init__()
-		self.x = 255
-		self.lis = [Item(), Item(), Item()]
-		self.pair = (1, 'hi')
+	def __init__(self, **kwargs):
+		super().__init__(kwargs.pop('ser', b''))
+		self.x = -234
+		self.y = 'hello'
+		# self.lis = {'a': '1', 'b': '2'}
+		# self.pair = (1, 'hi')
 
 	def _get_attr(self) -> dict:
-		return {'lis': (list, (Item, 'o'))}
+		return {'x': (int, 's_2'), 'y': (str, 'str')}
 
 class Item(Serializable):
 	def __init__(self):
@@ -292,9 +433,12 @@ class Item(Serializable):
 		self.s = 'string'
 
 	def _get_attr(self) -> dict:
-		return {'hello': (int, 'u_1')}
+		return {'hello': (int, 'u_2')}
 
 
 if __name__ == '__main__':
-	e = Entity()
-	print(e.serialize())
+	e1 = Entity()
+	serial: bytes = e1.serialize()
+	print(serial)
+	e2 = Entity(ser=serial)
+	print(e2.__dict__)
