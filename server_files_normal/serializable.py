@@ -1,18 +1,17 @@
 import struct
 from typing import Union, Sequence, Any, Final, Tuple
 
-
-# USE PYTHON VERSION 3.7+ FOR THIS CLASS TO WORK PROPERLY
+# Example classes can be found in the bottom of this code (ClassA & ClassB)
 
 class BaseSerializer:
 	"""A class that has static functions which serialize basic types"""
 
 	KEYS: Final[dict] = {
-			'u': {1: 'B', 2: 'H', 4: 'I', 8: 'Q'},
-			's': {1: 'b', 2: 'h', 4: 'i', 8: 'q'},
-			'f': {2: 'e', 4: 'f', 8: 'd'},
-			'b': '?'
-			}
+		'u': {1: 'B', 2: 'H', 4: 'I', 8: 'Q'},
+		's': {1: 'b', 2: 'h', 4: 'i', 8: 'q'},
+		'f': {2: 'e', 4: 'f', 8: 'd'},
+		'b': '?'
+	}
 
 	@staticmethod
 	def serialize_base(value: Any, tsid: tuple, length=1) -> bytes:
@@ -43,7 +42,7 @@ class BaseSerializer:
 
 	@staticmethod
 	def serialize_iterable(value: Sequence, tsid: tuple) -> Union[bytes, None]:
-		# Possible inputs for tsid:
+		# Possible inputs for tsid[1:]:
 		# (int, 'u_1') -> can be [1, 2, 3, 4, 5, 6, 7]
 		# (int, 'u_4), (str, 'str') -> should be something like (1, 'hi') or maybe [300, 'yes']
 
@@ -57,12 +56,8 @@ class BaseSerializer:
 
 			# If each element is a sequence itself
 			serialized_value: bytes = b''
-			if tsid[0] == dict:  # For dictionaries length of each element is known already, no need to waste 2 bytes
-				for i in value:
-					serialized_value += BaseSerializer.serialize_base(i, tsid[1])[2:]
-			else:
-				for i in value:
-					serialized_value += BaseSerializer.serialize_base(i, tsid[1])
+			for i in value:
+				serialized_value += BaseSerializer.serialize_base(i, tsid[1])
 			return struct.pack('<H', len(serialized_value)) + serialized_value
 
 		# Error checking
@@ -162,12 +157,14 @@ class BaseSerializer:
 			return serialized_value
 
 		if not isinstance(value, Serializable):  # Error checking
-			print(f'WARNING: Cannot serialize objects that do not inherit Serializable:\n\tValue {value}\n\tTSID {tsid}')
+			print(
+				f'WARNING: Cannot serialize objects that do not inherit Serializable:\n\tValue {value}\n\tTSID {tsid}')
 			return
 
 		serialized_value = value.serialize()
 
-		if len(serialized_value) > 0xffff:  # Error checking: Length should be 2 bytes, so make sure it isn't more than that
+		if len(
+				serialized_value) > 0xffff:  # Error checking: Length should be 2 bytes, so make sure it isn't more than that
 			print(f'WARNING: Length of serialized object attribute is too long')
 			return
 
@@ -191,10 +188,7 @@ class BaseDeserializer:
 
 		# iterable
 		if type(tsid[1]) == tuple:
-			pass
-			# if tsid[0] == dict:
-			# 	value = list(value.items())
-			# return BaseSerializer.serialize_iterable(value, tsid)
+			return BaseDeserializer.deserialize_iterable(ser, tsid, length)
 
 		if tsid[1][:2] == 'u_':
 			return BaseDeserializer.deserialize_unsigned(ser, tsid[1], length)
@@ -215,33 +209,71 @@ class BaseDeserializer:
 			return BaseDeserializer.deserialize_object(ser, tsid, length)
 
 	@staticmethod
-	def deserialize_iterable(ser: bytes, tsid: tuple) -> Tuple[Sequence, int]:
-		pass
+	def deserialize_iterable(ser: bytes, tsid: tuple, length: int) -> Tuple[Sequence, int]:
+		# Possible inputs for tsid[1:]:
+		# (int, 'u_1') -> can be [1, 2, 3, 4, 5, 6, 7]
+		# (int, 'u_4), (str, 'str') -> should be something like (1, 'hi') or maybe [300, 'yes']
+
+		# First sequence TSID type: Same type for all items in the list; list can be of any length
+		if len(tsid) == 2:
+
+			# If each element is not a sequence itself
+			if length == 1:
+				size: int = struct.unpack('<H', ser[:2])[0]
+				return tsid[0](BaseDeserializer.deserialize_base(ser[2:], tsid[1], length=size)[0] or []), size + 2
+
+			# If each element is a sequence itself
+			output: list = []
+			offset: int = 0
+			while offset < length:
+				size = struct.unpack(f'<H', ser[offset:offset + 2])[0]
+				output.append(BaseDeserializer.deserialize_base(ser[offset:offset + 2 + size], tsid, 1))
+				offset += size + 2
+			return tuple(output), -1
+
+		# Second sequence TSID type
+		if length == 1:
+			output: list = []
+			offset: int = 0
+			total_size: int = struct.unpack('<H', ser[:2])[0]
+			for inner_tsid in tsid[1:]:
+				deserialized = BaseDeserializer.deserialize_base(ser[2 + offset:], inner_tsid)
+				output.append(deserialized[0])
+				offset += deserialized[1]
+			return tsid[0](output), total_size + 2
+
+		output = []
+		offset: int = 0
+		while offset < length:
+			size: int = struct.unpack(f'<H', ser[offset:offset + 2])[0]
+			output.append(BaseDeserializer.deserialize_iterable(ser[offset:offset + 2 + size], tsid, 1)[0])
+			offset += size + 2
+		return tuple(output), -1
 
 	@staticmethod
 	def deserialize_unsigned(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int]], int]:
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
 		if length == 1:
-			return struct.unpack(f"<{BaseDeserializer.KEYS['u'][8]}", ser[:size]+(8-size)*b'\x00')[0], size
+			return struct.unpack(f"<{BaseDeserializer.KEYS['u'][8]}", ser[:size] + (8 - size) * b'\x00')[0], size
 
 		# If each item in the list can be easily deserialized (e.g., it's of size 1/2/4/8)
 		if size in BaseDeserializer.KEYS['u'].keys():
-			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['u'][size]}", ser[:size*length]), -1
+			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['u'][size]}", ser[:size * length]), -1
 
 	@staticmethod
 	def deserialize_signed(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int]], int]:
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
 		if length == 1:
-			if ser[size-1] >> 7:  # If negative
+			if ser[size - 1] >> 7:  # If negative
 				return struct.unpack(f"<{BaseDeserializer.KEYS['s'][8]}", ser[:size] + (8 - size) * b'\xff')[0], size
 			else:  # If positive
 				return struct.unpack(f"<{BaseDeserializer.KEYS['s'][8]}", ser[:size] + (8 - size) * b'\x00')[0], size
 
 		# If each item in the list can be easily deserialized (e.g., it's of size 1/2/4/8)
 		if size in BaseDeserializer.KEYS['s'].keys():
-			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['s'][size]}", ser[:size*length]), -1
+			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['s'][size]}", ser[:size * length]), -1
 
 	@staticmethod
 	def deserialize_float(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int], None], int]:
@@ -257,7 +289,7 @@ class BaseDeserializer:
 			return struct.unpack(f"<{BaseDeserializer.KEYS['f'][size]}", ser[:size])[0], size
 
 		# A list/iterable
-		return struct.unpack(f"<{length}{BaseDeserializer.KEYS['f'][size]}", ser[:size*length]), -1
+		return struct.unpack(f"<{length}{BaseDeserializer.KEYS['f'][size]}", ser[:size * length]), -1
 
 	@staticmethod
 	def deserialize_boolean(ser: bytes, length: int) -> Tuple[Union[bool, Sequence[bool]], int]:
@@ -274,20 +306,31 @@ class BaseDeserializer:
 		# A single string
 		if length == 1:
 			size: int = struct.unpack(f'<H', ser[:2])[0]
-			return ser[2:size+2].decode(), size+2
+			return ser[2:size + 2].decode(), size + 2
 
 		# A list of strings
 		output = []
 		offset: int = 0
-		for i in range(length):
-			size: int = struct.unpack(f'<H', ser[offset:offset+2])[0]
-			output.append(ser[offset+2:offset+2+size].decode())
-			offset += size
+		while offset < length:
+			size: int = struct.unpack(f'<H', ser[offset:offset + 2])[0]
+			output.append(ser[offset:offset + 2 + size].decode())
+			offset += size + 2
 		return tuple(output), -1
 
 	@staticmethod
 	def deserialize_object(ser: bytes, tsid: tuple, length: int) -> Tuple[Union[Any, Sequence[Any]], int]:
-		pass
+		if length == 1:
+			size: int = struct.unpack(f'<H', ser[:2])[0]
+			return tsid[0](ser=ser[2:size + 2]), size + 2
+
+		# a list of objects
+		output = []
+		offset: int = 0
+		while offset < length:
+			size: int = struct.unpack(f'<H', ser[offset:offset + 2])[0]
+			output.append(BaseDeserializer.deserialize_object(ser[offset:offset + 2 + size], tsid, 1))
+			offset += size + 2
+		return tuple(output), -1
 
 class Serializable:
 	"""A serializable class. To be inherited by any class that should be serialized."""
@@ -415,30 +458,44 @@ class Serializable:
 
 
 # test class
-class Entity(Serializable):
+class ClassA(Serializable):
 	def __init__(self, **kwargs):
 		super().__init__(kwargs.pop('ser', b''))
 		self.x = -234
 		self.y = 'hello'
-		# self.lis = {'a': '1', 'b': '2'}
-		# self.pair = (1, 'hi')
+		self.z = 0.95
+		self.i = ClassB()
+		self.lis1 = (1, 2, 3)
+		self.lis2 = [('a', 'b'), ('c', 'd', 'e'), ('f', 'g', 'h', 'i', 'j')]
+		self.lis3 = [1, 'a', 0.6, -30, ClassB()]
+		self.d = {'one': 1, 'two': 2, 'three': 3, 'four': 4}
+
+		self.dont_serialize = 'secret'  # Doesn't show up in serialized bytes object,
+										# since it is not in the _get_attr dict.
 
 	def _get_attr(self) -> dict:
-		return {'x': (int, 's_2'), 'y': (str, 'str')}
+		return {'x': (int, 's_2'),
+				'y': (str, 'str'),
+				'z': (float, 'f_4'),
+				'i': (ClassB, 'o'),
+				'lis1': (tuple, (int, 'u_1')),
+				'lis2': (list, (tuple, (str, 'str'))),
+				'lis3': (list, (int, 'u_1'), (str, 'str'), (float, 'f_8'), (int, 's_3'), (ClassB, 'o')),
+				'd': (dict, (tuple, (str, 'str'), (int, 'u_1')))
+				}
 
-class Item(Serializable):
-	def __init__(self):
-		super().__init__()
-		self.hello = 4
-		self.s = 'string'
+class ClassB(Serializable):
+	def __init__(self, **kwargs):
+		super().__init__(kwargs.pop('ser', b''))
+		self.var = 1
 
 	def _get_attr(self) -> dict:
-		return {'hello': (int, 'u_2')}
+		return {'var': (int, 'u_1')}
 
 
 if __name__ == '__main__':
-	e1 = Entity()
+	e1 = ClassA()
 	serial: bytes = e1.serialize()
 	print(serial)
-	e2 = Entity(ser=serial)
+	e2 = ClassA(ser=serial)
 	print(e2.__dict__)
