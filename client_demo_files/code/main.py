@@ -9,7 +9,7 @@ from client_demo_files.code.settings import *
 from client_demo_files.code.world import World
 
 
-def initialize_connection(server_ip: str) -> (socket.socket, Queue):
+def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue):
     """
     Initializes the connection to the server, and starts the packets-handler thread.
     :param server_ip: The IP address of the server.
@@ -17,8 +17,8 @@ def initialize_connection(server_ip: str) -> (socket.socket, Queue):
     """
 
     # Create the socket - TODO
-    server_socket: socket.socket = None  # CHANGE LATER - TODO
-    pass
+    server_socket: socket.socket = socket.socket()  # CHANGE LATER - TODO
+    server_socket.connect(server_addr)
 
     # Establish some synchronization stuff - TODO
     pass
@@ -126,7 +126,7 @@ def run_game(*args) -> None:  # TODO
     while running:
         for event in pygame.event.get():
             if event.type == update_required_event:
-                changes: deque  # temporarily here, to be implemented later - TODO
+                changes: deque  # temporarily here, to be implemented later by Goni
                 update_game(event.msg, changes)
             elif event.type == pygame.QUIT:
                 running = False
@@ -160,7 +160,7 @@ def close_game(server_socket: socket.socket) -> None:
 
 
 def main():
-    server_ip: str = '127.0.0.1'  # TEMPORARY
+    server_addr: (str, int) = ('127.0.0.1', 34863)  # TEMPORARY
 
     # Initialize the game
     screen, clock, world = initialize_game()
@@ -168,7 +168,7 @@ def main():
     # Initialize the connection with the server
     server_socket: socket.socket
     updates_queue: Queue
-    server_socket, updates_queue = initialize_connection(server_ip)
+    server_socket, updates_queue = initialize_connection(server_addr)
 
     # Run the main game
     run_game(server_socket, screen, clock, world, updates_queue)
