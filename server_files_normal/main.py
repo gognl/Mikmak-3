@@ -15,6 +15,7 @@ TODO:
 """
 
 import socket
+from collections import deque
 from server_files_normal.LoadBalancerManager import LoadBalancerManager
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
@@ -30,19 +31,24 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 
 	# Connect to the login server
 	login_sock: socket.socket = socket.socket()
-	login_sock.connect(login_addr)
+	#  login_sock.connect(login_addr)
 
 	# TODO - Do some initialization stuff with the login server; initialize_game() should probably be called here.
 	pass
 
-	lb_manager: LoadBalancerManager = LoadBalancerManager(lb_addr)
-	lb_manager.start()
+	#  lb_manager: LoadBalancerManager = LoadBalancerManager(lb_addr)
+	#  lb_manager.start()
+	lb_manager: LoadBalancerManager = None  # change later
 
 	return login_sock, lb_manager
 
 
-def accept_new_client(server_sock):
-	return server_sock.accept()
+def accept_new_clients(server_sock, client_managers):
+	while True:
+		client_sock, client_addr = server_sock.accept()
+		new_client_manager = ClientManager(client_sock)
+		client_managers.append(new_client_manager)
+		new_client_manager.start()
 
 
 def main():
@@ -51,22 +57,20 @@ def main():
 	lb_addr: (str, int) = ('127.0.0.1', 31578)
 
 	# Initialize the connection to the login & load-balancing servers
-	server_sock: socket.socket
+	login_sock: socket.socket
 	lb_manager: LoadBalancerManager
-	server_sock, lb_manager = initialize_connection(login_addr, lb_addr)
+	login_sock, lb_manager = initialize_connection(login_addr, lb_addr)
 
+	server_sock: socket.socket = socket.socket()
+	server_sock.bind(('0.0.0.0', 34863))
 	server_sock.listen()
-	server_sock.bind(('0.0.0.0', 17120))
 
-	client_managers: list[ClientManager] = []
+	client_managers: deque[ClientManager] = []
 	game_manager = GameManager(client_managers)
 	game_manager.start()
 
-	while True:
-		client_sock = server_sock.accept()
-		new_client_manager = ClientManager(client_sock)
-		client_managers.append(new_client_manager)
-		new_client_manager.start()
+	accept_new_clients(server_sock, client_managers)
+
 
 if __name__ == '__main__':
 	main()

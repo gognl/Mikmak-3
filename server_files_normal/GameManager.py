@@ -1,5 +1,6 @@
 import threading
 from collections import deque
+from typing import Tuple
 
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.structures import ClientInputMsg
@@ -8,10 +9,10 @@ import pygame
 
 
 class GameManager(threading.Thread):
-	def __init__(self, client_managers):
+	def __init__(self, client_managers: deque):
 		super().__init__()
-		self.client_managers: list[ClientManager] = client_managers
-		self.queue: deque[ClientInputMsg] = deque()
+		self.client_managers: deque[ClientManager] = client_managers
+		self.queue: deque[Tuple[ClientManager, ClientInputMsg]] = deque()
 		threading.Thread(target=self.add_messages_to_queue).start()
 
 	def add_messages_to_queue(self):
@@ -25,5 +26,6 @@ class GameManager(threading.Thread):
 				continue
 
 			client_msg = self.queue.pop()
+
 
 			# TODO: deal with this message
