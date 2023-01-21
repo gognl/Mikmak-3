@@ -227,7 +227,7 @@ class BaseDeserializer:
 			offset: int = 0
 			while offset < length:
 				size = struct.unpack(f'<H', ser[offset:offset + 2])[0]
-				output.append(BaseDeserializer.deserialize_base(ser[offset:offset + 2 + size], tsid, 1))
+				output.append(BaseDeserializer.deserialize_base(ser[offset:offset + 2 + size], tsid, 1)[0])
 				offset += size + 2
 			return tuple(output), -1
 
@@ -313,7 +313,7 @@ class BaseDeserializer:
 		offset: int = 0
 		while offset < length:
 			size: int = struct.unpack(f'<H', ser[offset:offset + 2])[0]
-			output.append(ser[offset:offset + 2 + size].decode())
+			output.append(ser[offset + 2: offset + 2 + size].decode())
 			offset += size + 2
 		return tuple(output), -1
 
@@ -460,18 +460,20 @@ class Serializable:
 # test class
 class ClassA(Serializable):
 	def __init__(self, **kwargs):
-		super().__init__(kwargs.pop('ser', b''))
-		self.x = -234
-		self.y = 'hello'
-		self.z = 0.95
-		self.i = ClassB()
-		self.lis1 = (1, 2, 3)
-		self.lis2 = [('a', 'b'), ('c', 'd', 'e'), ('f', 'g', 'h', 'i', 'j')]
-		self.lis3 = [1, 'a', 0.6, -30, ClassB()]
-		self.d = {'one': 1, 'two': 2, 'three': 3, 'four': 4}
+		s: bytes = kwargs.pop('ser', b'')
+		super().__init__(ser=s)
+		if s == b'':
+			self.x = -234
+			self.y = 'hello'
+			self.z = 0.95
+			self.i = ClassB()
+			self.lis1 = (1, 2, 3)
+			self.lis2 = [('a', 'b'), ('c', 'd', 'e'), ('f', 'g', 'h', 'i', 'j')]
+			self.lis3 = [1, 'a', 0.6, -30, ClassB()]
+			self.d = {'one': 1, 'two': 2, 'three': 3, 'four': 4}
 
-		self.dont_serialize = 'secret'  # Doesn't show up in serialized bytes object,
-										# since it is not in the _get_attr dict.
+			self.dont_serialize = 'secret'  # Doesn't show up in serialized bytes object,
+											# since it is not in the _get_attr dict.
 
 	def _get_attr(self) -> dict:
 		return {'x': (int, 's_2'),
