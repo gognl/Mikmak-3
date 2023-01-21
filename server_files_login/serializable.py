@@ -259,7 +259,7 @@ class BaseDeserializer:
 
 		# If each item in the list can be easily deserialized (e.g., it's of size 1/2/4/8)
 		if size in BaseDeserializer.KEYS['u'].keys():
-			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['u'][size]}", ser[:size * length]), -1
+			return struct.unpack(f"<{length//size}{BaseDeserializer.KEYS['u'][size]}", ser[:length]), -1
 
 	@staticmethod
 	def deserialize_signed(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int]], int]:
@@ -273,7 +273,7 @@ class BaseDeserializer:
 
 		# If each item in the list can be easily deserialized (e.g., it's of size 1/2/4/8)
 		if size in BaseDeserializer.KEYS['s'].keys():
-			return struct.unpack(f"<{length}{BaseDeserializer.KEYS['s'][size]}", ser[:size * length]), -1
+			return struct.unpack(f"<{length//size}{BaseDeserializer.KEYS['s'][size]}", ser[:length]), -1
 
 	@staticmethod
 	def deserialize_float(ser: bytes, tsid: str, length: int) -> Tuple[Union[int, Sequence[int], None], int]:
@@ -289,7 +289,7 @@ class BaseDeserializer:
 			return struct.unpack(f"<{BaseDeserializer.KEYS['f'][size]}", ser[:size])[0], size
 
 		# A list/iterable
-		return struct.unpack(f"<{length}{BaseDeserializer.KEYS['f'][size]}", ser[:size * length]), -1
+		return struct.unpack(f"<{length//size}{BaseDeserializer.KEYS['f'][size]}", ser[:length]), -1
 
 	@staticmethod
 	def deserialize_boolean(ser: bytes, length: int) -> Tuple[Union[bool, Sequence[bool]], int]:
