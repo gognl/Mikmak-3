@@ -3,14 +3,17 @@ from client_files.code.settings import *
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, groups, obstacle_sprites) -> None:
+    def __init__(self, pos, groups, obstacle_sprites, height) -> None:
         super().__init__(groups)
 
         # Load player sprite from files
-        self.image: pygame.Surface = pygame.image.load('../graphics/player.png').convert_alpha()
+        self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
 
         # Position of player
         self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
+
+        # Height of the player on screen - 0 is background
+        self.height: int = height
 
         # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
         self.hitbox = self.rect.inflate(0, -26)
@@ -19,7 +22,7 @@ class Player(pygame.sprite.Sprite):
         self.direction: pygame.Vector2 = pygame.math.Vector2()
 
         # Speed of the player
-        self.speed: int = 5
+        self.speed: int = 10
 
         # Obstacle sprites for the player to check collisions
         self.obstacle_sprites: pygame.Group = obstacle_sprites
@@ -83,7 +86,7 @@ class Player(pygame.sprite.Sprite):
                     if self.direction.y < 0:  # Player going up
                         self.hitbox.top = sprite.hitbox.bottom
 
-    def update(self) -> None:
+    def update(self, camera: pygame.math.Vector2) -> None:
         """
         Update the player based on input
         :return: None
@@ -93,3 +96,10 @@ class Player(pygame.sprite.Sprite):
 
         # Apply keyboard inputs
         self.move(self.speed)
+
+    def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
+        """
+        update the obstacle_sprite group
+        :return: None
+        """
+        self.obstacle_sprites = obstacle_sprites
