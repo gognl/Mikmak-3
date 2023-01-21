@@ -3,6 +3,7 @@ from client_demo_files.code.settings import *
 from client_demo_files.code.tile import Tile
 from client_demo_files.code.player import Player
 from client_demo_files.code.support import *
+from client_demo_files.code.entity import Entity
 
 
 class World:
@@ -17,6 +18,8 @@ class World:
 
         # Player before creation
         self.player: Player = None
+
+        self.entities: dict[int: Entity] = {}  # id: Entity
 
         # Load the map from settings.py
         self.create_map()

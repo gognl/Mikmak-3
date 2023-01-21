@@ -44,9 +44,15 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 
 
 def accept_new_clients(server_sock, client_managers):
+	client_id: int = 0
 	while True:
 		client_sock, client_addr = server_sock.accept()
-		new_client_manager = ClientManager(client_sock)
+
+		# TODO change this later, maybe to a ConnectionInitialization structure
+		client_sock.send(f'id_{client_id}'.encode())
+		client_id += 1  # also maybe change this to something less predictable
+
+		new_client_manager = ClientManager(client_sock, client_id)
 		client_managers.append(new_client_manager)
 		new_client_manager.start()
 
@@ -65,7 +71,7 @@ def main():
 	server_sock.bind(('0.0.0.0', 34863))
 	server_sock.listen()
 
-	client_managers: deque[ClientManager] = []
+	client_managers: deque[ClientManager] = deque([])
 	game_manager = GameManager(client_managers)
 	game_manager.start()
 

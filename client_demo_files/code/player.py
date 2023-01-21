@@ -93,3 +93,6 @@ class Player(pygame.sprite.Sprite):
 
         # Apply keyboard inputs
         self.move(self.speed)
+
+    def get_pos_on_map(self) -> (int, int):  # TODO change this to return actual position on map, not on screen
+        return self.rect.x, self.rect.y
