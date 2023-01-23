@@ -3,6 +3,7 @@ from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
 from client_files.code.support import *
+from client_files.code.weapon import Weapon
 
 
 class World:
@@ -17,6 +18,9 @@ class World:
 
         # Player before creation
         self.player: Player = None
+
+        # attack sprites
+        self.current_attack = None
 
         # Load the map from settings.py
         self.create_map()
@@ -55,7 +59,15 @@ class World:
                             Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surface)
 
         # Create player with starting position
-        self.player = Player((650, 2700), [self.visible_sprites], self.obstacle_sprites)
+        self.player = Player((650, 2700), [self.visible_sprites], self.obstacle_sprites, self.create_attack, self.destroy_attack)
+
+    def create_attack(self) -> None:
+        self.current_attack = Weapon(self.player, [self.visible_sprites])
+
+    def destroy_attack(self) -> None:
+        if self.current_attack:
+            self.current_attack.kill()
+        self.current_attack = None
 
     def run(self) -> None:
         """

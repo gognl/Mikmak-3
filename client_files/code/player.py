@@ -3,7 +3,7 @@ from client_files.code.settings import *
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, groups, obstacle_sprites) -> None:
+    def __init__(self, pos, groups, obstacle_sprites, create_attack, destroy_attack) -> None:
         super().__init__(groups)
 
         # Load player sprite from files
@@ -15,14 +15,35 @@ class Player(pygame.sprite.Sprite):
         # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
         self.hitbox = self.rect.inflate(0, -26)
 
+        # Movement
         # Direction of the player
         self.direction: pygame.Vector2 = pygame.math.Vector2()
 
         # Speed of the player
         self.speed: int = 5
 
+        # Starting conditions for attacking
+        self.attacking = False
+        self.attack_cooldown = 400
+        self.attack_time = None
+
         # Obstacle sprites for the player to check collisions
         self.obstacle_sprites: pygame.Group = obstacle_sprites
+
+        # weapon
+        self.create_attack = create_attack
+        self.destroy_attack = destroy_attack
+        self.weapon_index = 0
+        self.weapon = list(weapon_data.keys())[self.weapon_index]
+        self.can_switch_weapon = True
+        self.weapon_switch_time = None
+        self.switch_duration_cooldown = 200
+
+    def import_player_assets(self) -> None:
+        character_path = '../graphics/player/'
+        self.animations = {'up': [], 'down': [], 'left': [], 'right': [],
+                           'right_idle': [], 'left_idle': [], 'up_idle': [], 'down_idle': [],
+                           'right_attack': [], 'left_attack': [], 'up_attack': [], 'down_attack': []}
 
     def input(self) -> None:
         """
@@ -30,6 +51,8 @@ class Player(pygame.sprite.Sprite):
         :return: None
         """
         keys: list[pygame.Key] = pygame.key.get_pressed()
+
+        # Movement input
 
         if keys[pygame.K_UP]:
             self.direction.y = -1
@@ -44,6 +67,28 @@ class Player(pygame.sprite.Sprite):
             self.direction.x = -1
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
+
+        # attack input
+        if keys[pygame.K_SPACE] and not self.attacking:
+            self.attacking = True
+            self.attack_time = pygame.time.get_ticks()
+            self.create_attack()
+
+        # magic input
+        if keys[pygame.K_LCTRL] and not self.attacking:
+            self.attacking = True
+            self.attack_time = pygame.time.get_ticks()
+            print('magic')
+
+        # change weapon
+        if keys[pygame.K_q] and self.can_switch_weapon:
+            self.can_switch_weapon = False
+            self.weapon_switch_time = pygame.time.get_ticks()
+            if self.weapon_index < len(list(weapon_data.keys())) - 1:
+                self.weapon_index += 1
+            else:
+                self.weapon_index = 0
+            self.weapon = list(weapon_data.keys())[self.weapon_index]
 
     def move(self, speed: int) -> None:
         """
@@ -83,6 +128,22 @@ class Player(pygame.sprite.Sprite):
                     if self.direction.y < 0:  # Player going up
                         self.hitbox.top = sprite.hitbox.bottom
 
+    def cooldowns(self) -> None:
+        """
+        Update the timers based on time
+        :return: None
+        """
+        current_time = pygame.time.get_ticks()
+        if self.attacking:
+            if current_time - self.attack_time >= self.attack_cooldown:
+                self.attacking = False
+                self.destroy_attack()
+        if not self.can_switch_weapon:
+            if current_time - self.weapon_switch_time >= self.switch_duration_cooldown:
+                self.can_switch_weapon = True
+
+
+
     def update(self) -> None:
         """
         Update the player based on input
@@ -90,6 +151,7 @@ class Player(pygame.sprite.Sprite):
         """
         # Get keyboard inputs
         self.input()
-
+        # Update timers
+        self.cooldowns()
         # Apply keyboard inputs
         self.move(self.speed)
