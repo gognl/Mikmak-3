@@ -1,6 +1,6 @@
 import pygame
 from client_files.code.settings import *
-
+from client_files.code.support import *
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack) -> None:
@@ -16,7 +16,7 @@ class Player(pygame.sprite.Sprite):
         self.height: int = height
 
         # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
-        self.hitbox = self.rect.inflate(0, -26)
+        self.hitbox = self.rect.inflate(-20, -26)
 
         # Movement
         # Direction of the player
@@ -47,30 +47,62 @@ class Player(pygame.sprite.Sprite):
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [],
                            'right_idle': [], 'left_idle': [], 'up_idle': [], 'down_idle': [],
                            'right_attack': [], 'left_attack': [], 'up_attack': [], 'down_attack': []}
+        # Attacking
+        self.attacking: bool = False
+        self.attack_cooldown: int = 400
+        self.attack_time: int = 0
+
+        # Animations
+        self.animations: dict[str: list[pygame.Surface]] = {}
+        self.import_player_assets()
+        self.status = 'down'
+        self.frame_index = 0
+        self.animation_speed = 0.25
+
+    def import_player_assets(self) -> None:
+        """
+        Import all player assets
+        :return: None
+        """
+        path: str = '../graphics/player/'
+
+        self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [], 'left_idle': [], 'right_idle': []}
+        for animation in self.animations.keys():
+            self.animations[animation] = list(import_folder(path + animation).values())
 
     def input(self) -> None:
         """
-        Get keyboard input and apply it to player direction
+        Get keyboard input and process it
         :return: None
         """
         keys: list[pygame.Key] = pygame.key.get_pressed()
+        mouse: list[bool] = pygame.mouse.get_pressed()
 
+<<<<<<< HEAD
         # Movement input
 
         if keys[pygame.K_UP]:
+=======
+        if keys[pygame.K_w]:
+>>>>>>> main
             self.direction.y = -1
-        elif keys[pygame.K_DOWN]:
+            self.status = 'up'
+        elif keys[pygame.K_s]:
             self.direction.y = 1
+            self.status = 'down'
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.y = 0
 
-        if keys[pygame.K_RIGHT]:
-            self.direction.x = 1
-        elif keys[pygame.K_LEFT]:
+        if keys[pygame.K_a]:
             self.direction.x = -1
+            self.status = 'left'
+        elif keys[pygame.K_d]:
+            self.direction.x = 1
+            self.status = 'right'
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
 
+<<<<<<< HEAD
         # attack input
         if keys[pygame.K_SPACE] and not self.attacking:
             self.attacking = True
@@ -92,6 +124,23 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.weapon_index = 0
             self.weapon = list(weapon_data.keys())[self.weapon_index]
+=======
+        if mouse[0] and not self.attacking:
+            print("BOOM")
+            self.attacking = True
+            self.attack_time = pygame.time.get_ticks()
+
+    def get_status(self) -> None:
+        """
+        update player status
+        :return: None
+        """
+
+        # idle
+        if self.direction.x == 0 and self.direction.y == 0:
+            if 'idle' not in self.status:
+                self.status += '_idle'
+>>>>>>> main
 
     def move(self, speed: int) -> None:
         """
@@ -133,6 +182,7 @@ class Player(pygame.sprite.Sprite):
 
     def cooldowns(self) -> None:
         """
+<<<<<<< HEAD
         Update the timers based on time
         :return: None
         """
@@ -146,14 +196,52 @@ class Player(pygame.sprite.Sprite):
                 self.can_switch_weapon = True
 
     def update(self) -> None:
+=======
+        Manage cooldowns
+        :return: None
+        """
+        current_time: int = pygame.time.get_ticks()
+
+        if self.attacking:
+            if current_time - self.attack_time >= self.attack_cooldown:
+                self.attacking = False
+
+    def animate(self) -> None:
+        """
+        animate through images
+        :return: None
+        """
+        animation: list[pygame.Surface] = self.animations[self.status]
+
+        self.frame_index += self.animation_speed
+        if self.frame_index >= len(animation):
+            self.frame_index = 0
+
+        # set the image
+        self.image = animation[int(self.frame_index)]
+        self.rect = self.image.get_rect(center=self.hitbox.center)
+
+    def update(self, camera: pygame.math.Vector2) -> None:
+>>>>>>> main
         """
         Update the player based on input
         :return: None
         """
         # Get keyboard inputs
         self.input()
+<<<<<<< HEAD
         # Update timers
         self.cooldowns()
+=======
+
+        # Process cooldowns
+        self.cooldowns()
+
+        # Animation
+        self.get_status()
+        self.animate()
+
+>>>>>>> main
         # Apply keyboard inputs
         self.move(self.speed)
 

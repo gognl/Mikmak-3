@@ -92,10 +92,10 @@ class World:
                                 y: int = row_index * TILESIZE
 
                                 if style == 'floor':
-                                    surface: pygame.Surface = self.graphics['floor'][int(col)]
+                                    surface: pygame.Surface = self.graphics['floor'][col]
                                     Tile((x, y), [self.visible_sprites], 'floor', 0, surface)
                                 elif style == 'objects':
-                                    surface: pygame.Surface = self.graphics['objects'][int(col)]
+                                    surface: pygame.Surface = self.graphics['objects'][col]
                                     Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', 1, surface)
                                 elif style == 'boundary':
                                     Tile((x, y), [self.obstacle_sprites], 'barrier')
