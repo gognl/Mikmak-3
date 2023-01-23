@@ -2,7 +2,7 @@ import socket  # Socket
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
 from queue import Queue, Empty  # Multi-threaded sorted queue
-from collections import deque  # Normal queue
+from collections import deque  # `Normal queue
 from time import time  # Current time
 from client_files.code.structures import *  # Some custom structures
 from client_files.code.settings import *
@@ -110,8 +110,8 @@ def run_game(*args) -> None:  # TODO
 
     # Unpack the arguments
     server_socket: socket.socket = args[0]
-    screen = pygame.Surface = args[1]
-    clock = pygame.time.Clock = args[2]
+    screen: pygame.Surface = args[1]
+    clock: pygame.time.Clock = args[2]
     world: World = args[3]
     update_queue: Queue = args[4]
 

@@ -3,6 +3,13 @@ SCREEN_HEIGHT: int = 720
 FPS: int = 120
 TILESIZE: int = 64
 CAMERA_DISTANCE_FROM_PLAYER: tuple[int] = (150, 50)
+ROW_TILES: int = 450
+COL_TILES: int = 800
+ROW_LOAD_TILE_DISTANCE: int = 20
+COL_LOAD_TILE_DISTANCE: int = 30
+ROW_UNLOAD_TILE_DISTANCE: int = 30
+COL_UNLOAD_TILE_DISTANCE: int = 40
+
 # Weapons
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
