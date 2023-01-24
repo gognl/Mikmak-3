@@ -3,7 +3,7 @@ from client_files.code.settings import *
 from client_files.code.support import *
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, groups, obstacle_sprites, height) -> None:
+    def __init__(self, pos, groups, obstacle_sprites, height, create_attack) -> None:
         super().__init__(groups)
 
         # Load player sprite from files
@@ -28,6 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.obstacle_sprites: pygame.Group = obstacle_sprites
 
         # Attacking
+        self.create_attack = create_attack
         self.attacking: bool = False
         self.attack_cooldown: int = 400
         self.attack_time: int = 0
@@ -77,7 +78,7 @@ class Player(pygame.sprite.Sprite):
             self.direction.x = 0
 
         if mouse[0] and not self.attacking:
-            print("BOOM")
+            self.create_attack()
             self.attacking = True
             self.attack_time = pygame.time.get_ticks()
 

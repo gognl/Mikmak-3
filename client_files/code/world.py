@@ -3,6 +3,7 @@ from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
 from client_files.code.support import *
+from client_files.code.weapon import Weapon
 
 
 class World:
@@ -50,11 +51,14 @@ class World:
 
         # Create player with starting position
         self.player = Player((20608, 27643), [self.visible_sprites],
-                             self.obstacle_sprites, 1)  # TODO - make starting player position random (or a spawn)
+                             self.obstacle_sprites, 1, self.create_attack)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
+
+    def create_attack(self) -> None:
+        Weapon(self.player, [self.visible_sprites], 2)
 
     def run(self) -> None:
         """
