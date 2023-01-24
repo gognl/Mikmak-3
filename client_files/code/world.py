@@ -16,6 +16,9 @@ class World:
         self.visible_sprites: Group_YSort = Group_YSort()
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
+        # attack sprites
+        self.current_attack = None
+
         # Calculate screen center
         self.half_width: int = self.display_surface.get_size()[0] // 2
         self.half_height: int = self.display_surface.get_size()[1] // 2
@@ -51,14 +54,19 @@ class World:
 
         # Create player with starting position
         self.player = Player((20608, 27643), [self.visible_sprites],
-                             self.obstacle_sprites, 1, self.create_attack)  # TODO - make starting player position random (or a spawn)
+                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
     def create_attack(self) -> None:
-        Weapon(self.player, [self.visible_sprites], 2)
+        self.current_attack = Weapon(self.player, [self.visible_sprites], 2)
+
+    def destroy_attack(self):
+        if self.current_attack:
+            self.current_attack.kill()
+        self.current_attack = None
 
     def run(self) -> None:
         """
@@ -104,7 +112,7 @@ class World:
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
-            if sprite != self.player:
+            if type(sprite) is Tile:
                 sprite.kill()
 
     def update_camera(self) -> None:
