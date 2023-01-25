@@ -14,3 +14,8 @@ weapon_data = {
 	'kettle': {'cooldown': 100, 'damage': 25, 'graphic': '../graphics/weapons/kettle/full.png'},
 	'nerf': {'cooldown': 100, 'damage': 35, 'graphic': '../graphics/weapons/nerf/full.png'}
 }
+
+# enemies
+enemy_data = {
+	'other_player': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0}
+}  # TODO add other enemies
