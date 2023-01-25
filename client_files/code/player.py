@@ -1,8 +1,9 @@
 import pygame
 from client_files.code.settings import *
 from client_files.code.support import *
+from client_files.code.entity import Entity
 
-class Player(pygame.sprite.Sprite):
+class Player(Entity):
     def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack) -> None:
         super().__init__(groups)
 
@@ -17,9 +18,6 @@ class Player(pygame.sprite.Sprite):
 
         # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
         self.hitbox = self.rect.inflate(-20, -26)
-
-        # Direction of the player
-        self.direction: pygame.Vector2 = pygame.math.Vector2()
 
         # Speed of the player
         self.speed: int = 10
@@ -46,8 +44,6 @@ class Player(pygame.sprite.Sprite):
         self.animations: dict[str: list[pygame.Surface]] = {}
         self.import_player_assets()
         self.status = 'down'
-        self.frame_index = 0
-        self.animation_speed = 0.25
 
     def import_player_assets(self) -> None:
         """
@@ -110,44 +106,6 @@ class Player(pygame.sprite.Sprite):
         if self.direction.x == 0 and self.direction.y == 0:
             if 'idle' not in self.status:
                 self.status += '_idle'
-
-    def move(self, speed: int) -> None:
-        """
-        Move the player towards the direction it is going, and apply collision
-        :param speed: maximum pixels per direction per frame (may vary if both directions are active)
-        :return: None
-        """
-        # Normalize direction
-        if self.direction.magnitude() != 0:
-            self.direction = self.direction.normalize()
-
-        self.hitbox.x += self.direction.x * speed
-        self.collision('horizontal')  # Check collisions in the horizontal axis
-        self.hitbox.y += self.direction.y * speed
-        self.collision('vertical')  # Check collisions in the vertical axis
-        self.rect.center = self.hitbox.center
-
-    def collision(self, direction: str) -> None:
-        """
-        Apply collisions to the player, each axis separately
-        :param direction: A string representing the direction the player is going
-        :return: None
-        """
-        if direction == 'horizontal':
-            for sprite in self.obstacle_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
-                    if self.direction.x > 0:  # Player going right
-                        self.hitbox.right = sprite.hitbox.left
-                    if self.direction.x < 0:  # Player going left
-                        self.hitbox.left = sprite.hitbox.right
-
-        if direction == 'vertical':
-            for sprite in self.obstacle_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
-                    if self.direction.y > 0:  # Player going down
-                        self.hitbox.bottom = sprite.hitbox.top
-                    if self.direction.y < 0:  # Player going up
-                        self.hitbox.top = sprite.hitbox.bottom
 
     def cooldowns(self) -> None:
         """
