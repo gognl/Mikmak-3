@@ -50,11 +50,11 @@ def accept_new_clients(server_sock, client_managers):
 
 		# TODO change this later, maybe to a ConnectionInitialization structure
 		client_sock.send(f'id_{client_id}'.encode())
+		client_id += 1  # also maybe change this to something less predictable
+
 		new_client_manager = ClientManager(client_sock, client_id)
 		client_managers.append(new_client_manager)
 		new_client_manager.start()
-
-		client_id += 1  # also maybe change this to something less predictable
 
 
 def main():
