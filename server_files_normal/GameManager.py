@@ -37,5 +37,4 @@ class GameManager(threading.Thread):
 			changes = (client_manager.client_id, client_msg),  # notice the comma here - it's a tuple of tuples
 			state_update: StateUpdateMsg = StateUpdateMsg(changes)
 			self.broadcast_msg(state_update)
-
 			# TODO: deal with this message
