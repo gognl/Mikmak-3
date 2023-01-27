@@ -7,8 +7,6 @@ from client_files.code.structures import StateUpdateMsg, ServerOutputMsg  # Some
 from client_files.code.settings import *
 from client_files.code.world import World
 
-MULTIPLAYER = False
-
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
     """
     Initializes the connection to the server, and starts the packets-handler thread.
@@ -31,7 +29,7 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
 
     return server_socket, updates_queue, client_id
 
-def send_msg_to_server(server_socket:socket.socket, msg: ServerOutputMsg):
+def send_msg_to_server(server_socket: socket.socket, msg: ServerOutputMsg):
     """Sends a message to the server (and encrypts it)"""
     data: bytes = msg.serialize()
     # TODO encrypt here
