@@ -162,3 +162,7 @@ class Player(Entity):
         :return: None
         """
         self.obstacle_sprites = obstacle_sprites
+
+    def get_pos(self) -> (int, int):
+        """Returns the player's position"""
+        return self.rect.x, self.rect.y
