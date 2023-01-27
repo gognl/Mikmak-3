@@ -29,3 +29,7 @@ class Enemy(Entity):
 			path = f'../graphics/monsters/{name}/'
 			for animation in self.animations.keys():
 				self.animations[animation] = list(import_folder(path + animation).values())
+
+	def update_pos(self, pos: (int, int)) -> None:
+		self.rect.x = pos[0]
+		self.rect.y = pos[1]

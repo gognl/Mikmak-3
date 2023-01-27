@@ -1,4 +1,5 @@
 import pygame
+from typing import Dict
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
@@ -31,6 +32,9 @@ class World:
         # Player before creation
         self.player: Player = None
 
+        # enemies dict
+        self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
+
         # Load the map from settings.py
         self.create_map()
 
@@ -56,8 +60,6 @@ class World:
         # Create player with starting position
         self.player = Player((20608, 27643), [self.visible_sprites],
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack)  # TODO - make starting player position random (or a spawn)
-
-        Enemy('other_player', (20608, 27600), [self.visible_sprites])  # temporary TODO
 
         # Center camera
         self.camera.x = self.player.rect.centerx
