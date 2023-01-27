@@ -2,7 +2,7 @@
 #  Not needed in final version of course
 
 from multiprocessing import Process
-from client_files.code.main import main as client_main
+from client_demo_files.code.main import main as client_main
 from typing import Final
 
 CLIENTS_AMOUNT: Final[int] = 2
