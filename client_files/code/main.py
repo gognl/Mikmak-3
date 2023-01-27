@@ -6,6 +6,7 @@ from collections import deque  # Normal queue
 from client_files.code.structures import StateUpdateMsg, ServerOutputMsg  # Some custom structures
 from client_files.code.settings import *
 from client_files.code.world import World
+from client_files.code.enemy import Enemy
 
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
     """
@@ -69,10 +70,14 @@ def update_game(update_msg: StateUpdateMsg, changes: deque, client_id: int, worl
     # Update the game according to the update + changes since its ack (and remove them from the queue) - TODO
     for entity_update in update_msg.changes:
         entity_id: int = entity_update[0]
-        entity_pos: (int, int) = entity_update[1]
+        entity_pos: (int, int) = entity_update[1].pos
 
         if entity_id == client_id:  # don't update self for now
             continue
+        elif entity_id in world.enemies:
+            world.enemies[entity_id].update_pos(entity_pos)
+        else:
+            world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites])
 
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
