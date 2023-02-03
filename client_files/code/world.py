@@ -59,7 +59,7 @@ class World:
         """
 
         # Create player with starting position
-        self.player = Player((20608, 27643), [self.visible_sprites],
+        self.player = Player((1024, 1024), [self.visible_sprites],
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_projectile)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
@@ -121,7 +121,7 @@ class World:
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
-            if type(sprite) is Tile or type(sprite) is Projectile:
+            if type(sprite) is Tile:
                 sprite.kill()
 
     def update_camera(self) -> None:
