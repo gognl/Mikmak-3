@@ -6,6 +6,7 @@ from client_files.code.player import Player
 from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy
+from client_files.code.projectile import Projectile
 
 
 class World:
@@ -19,7 +20,7 @@ class World:
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
         # attack sprites
-        self.current_attack = None
+        self.current_weapon = None
 
         # Calculate screen center
         self.half_width: int = self.display_surface.get_size()[0] // 2
@@ -58,20 +59,23 @@ class World:
         """
 
         # Create player with starting position
-        self.player = Player((20608, 27643), [self.visible_sprites],
-                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack)  # TODO - make starting player position random (or a spawn)
+        self.player = Player((1024, 1024), [self.visible_sprites],
+                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_projectile)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
     def create_attack(self) -> None:
-        self.current_attack = Weapon(self.player, [self.visible_sprites], 2)
+        self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
 
     def destroy_attack(self):
-        if self.current_attack:
-            self.current_attack.kill()
-        self.current_attack = None
+        if self.current_weapon:
+            self.current_weapon.kill()
+        self.current_weapon = None
+
+    def create_projectile(self):
+        Projectile(self.player, self.camera, self.screen_center, self.current_weapon, pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites), 3)
 
     def run(self) -> None:
         """
@@ -113,7 +117,7 @@ class World:
         self.player.update_obstacles(self.obstacle_sprites)
 
         # Run update() function in all visible sprites' classes
-        self.visible_sprites.update(self.camera)
+        self.visible_sprites.update()
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
@@ -128,8 +132,7 @@ class World:
         # Figure out offset based on camera position
 
         # X axis
-        if abs(self.player.rect.centerx - self.camera.x) > CAMERA_DISTANCE_FROM_PLAYER[
-            0]:  # If the camera is too far from the player
+        if abs(self.player.rect.centerx - self.camera.x) > CAMERA_DISTANCE_FROM_PLAYER[0]:  # If the camera is too far from the player
             if self.player.rect.centerx > self.camera.x:  # Move the camera from to the left of the bound if it's further left than the player
                 self.camera.x = self.player.rect.centerx - CAMERA_DISTANCE_FROM_PLAYER[0]
             else:  # Move the camera from to the right of the bound if it's further right than the player
@@ -154,7 +157,6 @@ class Group_YSort(pygame.sprite.Group):
         Draws the sprites on screen according to the screen height, and then according to the position of the camera
         :return: None
         """
-
         # For every visible sprite, from top to bottom
         for sprite in sorted(self.sprites(), key=lambda x: (x.height, x.rect.centery)):
             # Display the sprite on screen, moving it by the calculated offset

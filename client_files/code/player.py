@@ -3,8 +3,9 @@ from client_files.code.settings import *
 from client_files.code.support import *
 from client_files.code.entity import Entity
 
+
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack) -> None:
+    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_projectile) -> None:
         super().__init__(groups)
 
         # Load player sprite from files
@@ -26,15 +27,16 @@ class Player(Entity):
         self.obstacle_sprites: pygame.Group = obstacle_sprites
 
         # Attacking
-        self.create_attack = create_attack
-        self.destroy_attack = destroy_attack
         self.attacking: bool = False
         self.attack_cooldown: int = 400
         self.attack_time: int = 0
 
         # weapon
         self.create_attack = create_attack
+        self.destroy_attack = destroy_attack
+        self.create_projectile = create_projectile
         self.weapon_index = 0
+        self.on_screen = [1]  # Indices of weapons that stay on screen
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
         self.weapon_switch_time = None
@@ -83,11 +85,17 @@ class Player(Entity):
             self.direction.x = 0
 
         if mouse[0] and not self.attacking:
-            self.create_attack()
-            self.attacking = True
-            self.attack_time = pygame.time.get_ticks()
+            if self.weapon_index not in self.on_screen:
+                self.create_attack()
+                self.attacking = True
+                self.attack_time = pygame.time.get_ticks()
+            else:
+                self.create_projectile()
 
-        if keys[pygame.K_q] and self.can_switch_weapon:
+        if keys[pygame.K_q] and self.can_switch_weapon and not self.attacking:
+            if self.weapon_index in self.on_screen:
+                self.destroy_attack()
+
             self.can_switch_weapon = False
             self.weapon_switch_time = pygame.time.get_ticks()
             if self.weapon_index < len(list(weapon_data.keys())) - 1:
@@ -95,6 +103,9 @@ class Player(Entity):
             else:
                 self.weapon_index = 0
             self.weapon = list(weapon_data.keys())[self.weapon_index]
+
+            if self.weapon_index in self.on_screen:
+                self.create_attack()
 
     def get_status(self) -> None:
         """
@@ -115,7 +126,7 @@ class Player(Entity):
         current_time: int = pygame.time.get_ticks()
 
         if self.attacking:
-            if current_time - self.attack_time >= self.attack_cooldown:
+            if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:
                 self.attacking = False
                 self.destroy_attack()
 
@@ -138,7 +149,7 @@ class Player(Entity):
         self.image = animation[int(self.frame_index)]
         self.rect = self.image.get_rect(center=self.hitbox.center)
 
-    def update(self, camera: pygame.math.Vector2) -> None:
+    def update(self) -> None:
         """
         Update the player based on input
         :return: None
@@ -164,5 +175,7 @@ class Player(Entity):
         self.obstacle_sprites = obstacle_sprites
 
     def get_pos(self) -> (int, int):
-        """Returns the player's position"""
+        """
+        Returns the player's position
+        """
         return self.rect.x, self.rect.y

@@ -1,4 +1,6 @@
 import pygame
+from client_files.code.projectile import Projectile
+
 
 class Entity(pygame.sprite.Sprite):
 	def __init__(self, groups):
@@ -31,16 +33,27 @@ class Entity(pygame.sprite.Sprite):
 		"""
 		if direction == 'horizontal':
 			for sprite in self.obstacle_sprites:
-				if sprite.hitbox.colliderect(self.hitbox):
+				if sprite.hitbox.colliderect(self.hitbox) and not (type(sprite) is Projectile and sprite.player is self):  # Not collide with own bullets
 					if self.direction.x > 0:  # Player going right
 						self.hitbox.right = sprite.hitbox.left
-					if self.direction.x < 0:  # Player going left
+					elif self.direction.x < 0:  # Player going left
 						self.hitbox.left = sprite.hitbox.right
+					elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+						if sprite.direction.x > 0:  # Sprite going right
+							self.hitbox.left = sprite.hitbox.right
+						elif sprite.direction.x < 0:  # Sprite going left
+							self.hitbox.right = sprite.hitbox.left
 
 		if direction == 'vertical':
 			for sprite in self.obstacle_sprites:
-				if sprite.hitbox.colliderect(self.hitbox):
+				if sprite.hitbox.colliderect(self.hitbox) and not (type(sprite) is Projectile and sprite.player is self):  # Not collide with own bullets
 					if self.direction.y > 0:  # Player going down
 						self.hitbox.bottom = sprite.hitbox.top
-					if self.direction.y < 0:  # Player going up
+					elif self.direction.y < 0:  # Player going up
 						self.hitbox.top = sprite.hitbox.bottom
+					elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+						if sprite.direction.y > 0:  # Sprite going down
+							self.hitbox.top = sprite.hitbox.bottom
+						elif sprite.direction.y < 0:  # Sprite going up
+							self.hitbox.bottom = sprite.hitbox.top
+
