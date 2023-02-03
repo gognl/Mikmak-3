@@ -1,3 +1,5 @@
+from collections import deque
+
 import pygame
 from typing import Dict
 from client_files.code.settings import *
@@ -7,6 +9,7 @@ from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
+from client_files.code.structures import PlayerUpdate, ServerOutputMsg
 
 
 class World:
@@ -16,8 +19,10 @@ class World:
 
         # Visible sprites: sprites that show on screen
         # Obstacle sprites: sprite the player can collide with
+        # Server sprites: sprites whose updates have to be sent to the server
         self.visible_sprites: Group_YSort = Group_YSort()
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
         # attack sprites
         self.current_weapon = None
@@ -59,8 +64,8 @@ class World:
         """
 
         # Create player with starting position
-        self.player = Player((1024, 1024), [self.visible_sprites],
-                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_projectile)  # TODO - make starting player position random (or a spawn)
+        self.player = Player((1024, 1024), [self.visible_sprites, self.server_sprites],
+                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_projectile, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
@@ -77,7 +82,7 @@ class World:
     def create_projectile(self):
         Projectile(self.player, self.camera, self.screen_center, self.current_weapon, pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites), 3)
 
-    def run(self) -> None:
+    def run(self, changes: deque) -> None:
         """
         Run one world frame
         :return: None
@@ -118,6 +123,17 @@ class World:
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
+
+        local_changes = [[], [], []]  # A list of changes made in this tick. 0 - player, 1 - enemies, 2 - items.
+        for sprite in self.server_sprites.sprites():
+            if sprite.changes is None:  # If no new changes were made
+                continue
+            if type(sprite) is Player:
+                local_changes[0].append(PlayerUpdate(id=sprite.entity_id, changes=sprite.changes))
+            elif type(sprite) is Enemy:
+                pass  # append EnemyUpdate to local_changes[1]
+
+        changes.append(ServerOutputMsg(changes=local_changes))
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():

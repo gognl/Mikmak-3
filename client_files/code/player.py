@@ -5,8 +5,8 @@ from client_files.code.entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_projectile) -> None:
-        super().__init__(groups)
+    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_projectile, entity_id) -> None:
+        super().__init__(groups, entity_id)
 
         # Load player sprite from files
         self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
@@ -46,6 +46,9 @@ class Player(Entity):
         self.animations: dict[str: list[pygame.Surface]] = {}
         self.import_player_assets()
         self.status = 'down'
+
+        # Server
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
 
     def import_player_assets(self) -> None:
         """
@@ -154,6 +157,10 @@ class Player(Entity):
         Update the player based on input
         :return: None
         """
+
+        # Clear the changes dict
+        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+
         # Get keyboard inputs
         self.input()
 
@@ -165,7 +172,12 @@ class Player(Entity):
         self.animate()
 
         # Apply keyboard inputs
+
         self.move(self.speed)
+
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+        if self.changes == previous_state:
+            self.changes = None
 
     def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
         """

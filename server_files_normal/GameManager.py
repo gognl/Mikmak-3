@@ -3,7 +3,7 @@ from collections import deque
 from typing import Tuple
 
 from server_files_normal.ClientManager import ClientManager
-from server_files_normal.structures import ClientUpdateMsg, StateUpdateMsg
+from server_files_normal.structures import EntityUpdateMsg, StateUpdateMsg, ClientCMD
 
 import pygame
 
@@ -12,7 +12,7 @@ class GameManager(threading.Thread):
 	def __init__(self, client_managers: deque):
 		super().__init__()
 		self.client_managers: deque[ClientManager] = client_managers
-		self.client_msgs_queue: deque[Tuple[ClientManager, ClientUpdateMsg]] = deque()
+		self.client_msgs_queue: deque[Tuple[ClientManager, EntityUpdateMsg]] = deque()
 		threading.Thread(target=self.add_messages_to_queue).start()
 
 	def add_messages_to_queue(self):
@@ -31,10 +31,10 @@ class GameManager(threading.Thread):
 				continue
 
 			client_manager: ClientManager
-			client_msg: ClientUpdateMsg
+			client_msg: ClientCMD
 			client_manager, client_msg = self.client_msgs_queue.pop()
 
-			changes = (client_manager.client_id, client_msg),  # notice the comma here - it's a tuple of tuples
+			changes = client_msg.player_changes[0],  # notice the comma here - it's a tuple of tuples
 			state_update: StateUpdateMsg = StateUpdateMsg(changes)
 			self.broadcast_msg(state_update)
 			# TODO: deal with this message
