@@ -13,16 +13,16 @@ class Projectile(pygame.sprite.Sprite):
 		self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
 		self.rect: pygame.Rect = self.image.get_rect(center=weapon.rect.center)
 		self.hitbox = self.rect
-		self.speed: int = 1
-
-		# TODO - not collide with your own bullets, not go only in integer directions, collide even when not moving
+		self.speed: int = 20
 
 	def update(self) -> None:
 		"""
 		Move forwards
 		:return: None
 		"""
-		self.move()
+		self.rect = self.rect.move(self.direction.x * self.speed, self.direction.y * self.speed)
+		self.hitbox.center = self.rect.center  # Update hitbox for collisions
+		# self.move()
 
 	def move(self) -> None:
 		"""
