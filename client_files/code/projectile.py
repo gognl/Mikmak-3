@@ -10,7 +10,9 @@ class Projectile(pygame.sprite.Sprite):
 		self.direction: pygame.math.Vector2 = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - camera + screen_center)
 		self.direction = self.direction.normalize()
 
-		self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
+		self.image: pygame.Surface = pygame.image.load('../graphics/weapons/bullet.png').convert_alpha()
+		self.image = pygame.transform.rotate(self.image, -self.direction.as_polar()[1])
+
 		self.rect: pygame.Rect = self.image.get_rect(center=weapon.rect.center)
 		self.hitbox = self.rect
 		self.speed: int = 20
