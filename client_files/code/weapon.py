@@ -1,24 +1,38 @@
 import pygame
+from client_files.code.player import Player
 
 
 class Weapon(pygame.sprite.Sprite):
 	def __init__(self, player, groups, height):
 		super().__init__(groups)
-		direction = player.status.split('_')[0]
+		self.player: Player = player
+
+		self.direction: str = None
+		self.image: pygame.Surface = None
+		self.rect: pygame.Rect = None
 
 		# graphic
-		self.height = height
+		self.height: int = height
 
-		full_path = f'../graphics/weapons/{player.weapon}/{direction}.png'
+		self.update()
+
+	def update(self) -> None:
+		"""
+		Updates position and direction
+		:return: None
+		"""
+
+		self.direction = self.player.status.split('_')[0]
+
+		full_path: str = f'../graphics/weapons/{self.player.weapon}/{self.direction}.png'
 		self.image = pygame.image.load(full_path).convert_alpha()
 
 		# position
-		if direction == 'right':
-			self.rect = self.image.get_rect(midleft=player.rect.midright + pygame.math.Vector2(-27, 16))
-		elif direction == 'left':
-			self.rect = self.image.get_rect(midright=player.rect.midleft + pygame.math.Vector2(27, 16))
-		elif direction == 'down':
-			self.rect = self.image.get_rect(midtop=player.rect.midbottom + pygame.math.Vector2(-10, -15))
-		else:
-			self.rect = self.image.get_rect(midbottom=player.rect.midtop + pygame.math.Vector2(-10, 3))
-
+		if self.direction == 'up':
+			self.rect = self.image.get_rect(midbottom=self.player.rect.midtop + pygame.math.Vector2(-10, 3))
+		elif self.direction == 'down':
+			self.rect = self.image.get_rect(midtop=self.player.rect.midbottom + pygame.math.Vector2(-10, -15))
+		elif self.direction == 'left':
+			self.rect = self.image.get_rect(midright=self.player.rect.midleft + pygame.math.Vector2(27, 16))
+		elif self.direction == 'right':
+			self.rect = self.image.get_rect(midleft=self.player.rect.midright + pygame.math.Vector2(-27, 16))
