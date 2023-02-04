@@ -4,6 +4,7 @@ from queue import Queue, Empty
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.game.player import Player
 from server_files_normal.structures import *
+from server_files_normal.game.settings import *
 import pygame
 
 class GameManager(threading.Thread):
@@ -62,6 +63,7 @@ class GameManager(threading.Thread):
 					self.handle_cmds(event.client_manager, event.client_cmd)
 
 			pass  # Run enemies simulation
+			self.clock.tick(FPS)
 
 			# Check if a cmd was received
 			if not self.cmd_queue.empty():
@@ -78,22 +80,3 @@ class GameManager(threading.Thread):
 				pygame.event.post(pygame.event.Event(cmd_received_event, {"client_manager": client_manager, "client_cmd": client_cmd}))
 
 		pygame.quit()
-
-		while True:
-			if len(self.cmd_queue) == 0:
-				continue
-
-			# Receive a CMD
-			client_manager: ClientManager
-			client_msg: Client.Input.ClientCMD
-			client_manager, client_msg = self.cmd_queue.pop()
-
-			# Calculations here
-
-			client_manager.ack = client_msg.seq  # The CMD has been taken care of; Update the ack accordingly
-
-			# Send the update
-			changes = client_msg.player_changes[0],  # notice the comma here - it's a tuple of tuples
-			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(changes)
-			self.broadcast_msg(state_update)
-			# TODO: deal with this message
