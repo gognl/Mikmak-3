@@ -98,7 +98,7 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     return screen, clock, world
 
 
-def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World, changes: deque) -> (pygame.Surface, pygame.time.Clock, World):
+def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (pygame.Surface, pygame.time.Clock, World, Server.Output.StateUpdate):
     """
     Run game according to user inputs - prediction before getting update from server
     :return: updated screen, clock, and world
@@ -108,13 +108,13 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World, ch
     screen.fill('black')
 
     # Update the world state and then the screen
-    world.run(changes)
+    update: Server.Output.StateUpdate = world.run()
     pygame.display.update()
 
     # Wait for one tick
     clock.tick(FPS)
 
-    return screen, clock, world
+    return screen, clock, world, update
 
 
 def run_game(*args) -> None:  # TODO
@@ -154,14 +154,13 @@ def run_game(*args) -> None:  # TODO
                 if event.key == pygame.K_RETURN:
                     running = False
 
-        reported_changes: deque = deque()  # clear the deque - temporary TODO remove this
-
         # Run game according to user inputs - prediction before getting update from server
-        screen, clock, world = game_tick(screen, clock, world, reported_changes)
+        tick_update: Server.Output.StateUpdate
+        screen, clock, world, tick_update = game_tick(screen, clock, world)
 
-        # update the server
-        if reported_changes[0].player_changes:
-            send_msg_to_server(server_socket, reported_changes[0])
+        if tick_update.player_changes:
+            send_msg_to_server(server_socket, tick_update)
+            reported_changes.append(tick_update)
 
         # Check if an update is needed
         if not update_queue.empty():
