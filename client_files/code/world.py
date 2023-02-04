@@ -74,7 +74,7 @@ class World:
         self.camera.y = self.player.rect.centery
 
         # Spawn enemies
-        self.spawn_enemies(100000)  # TODO: enemy count, spawn more if under 100
+        self.spawn_enemies(0)  # TODO: enemy count, spawn more if under 100
 
     def create_attack(self) -> None:
         self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
