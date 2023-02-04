@@ -8,6 +8,7 @@ from client_files.code.settings import *
 from client_files.code.world import World
 from client_files.code.enemy import Enemy
 
+
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
     """
     Initializes the connection to the server, and starts the packets-handler thread.
@@ -35,6 +36,7 @@ def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpd
     data: bytes = msg.serialize()
     # TODO encrypt here
     server_socket.send(data)
+
 
 def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
     """

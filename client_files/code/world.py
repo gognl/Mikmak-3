@@ -1,4 +1,5 @@
 from collections import deque
+import random
 
 import pygame
 from typing import Dict
@@ -20,7 +21,7 @@ class World:
         # Visible sprites: sprites that show on screen
         # Obstacle sprites: sprite the player can collide with
         # Server sprites: sprites whose updates have to be sent to the server
-        self.visible_sprites: Group_YSort = Group_YSort()
+        self.visible_sprites: GroupYSort = GroupYSort()
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
@@ -42,14 +43,11 @@ class World:
         # enemies dict
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
 
-        # Load the map from settings.py
-        self.create_map()
-
         # All layout csv files of the map
         self.layout: dict[str: list[list[int]]] = {
             'floor': import_csv_layout('../graphics/map/map_Ground.csv'),
             'objects': import_csv_layout('../graphics/map/map_Objects.csv'),
-            'boundary': import_csv_layout('../graphics/map/map_Barriers.csv')
+            'boundary': import_csv_layout('../graphics/map/map_Barriers.csv'),
         }
 
         # All graphics groups
@@ -58,19 +56,25 @@ class World:
             'objects': import_folder('../graphics/objects')
         }
 
+        # Load the map from settings.py
+        self.create_map()
+
     def create_map(self) -> None:
         """
-        Place moveable tiles on the map
+        Place movable tiles on the map
         :return: None
         """
-
         # Create player with starting position
         self.player = Player((1024, 1024), [self.visible_sprites, self.server_sprites],
-                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet, self.create_kettle, 0)  # TODO - make starting player position random (or a spawn)
+                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
+                             self.create_kettle, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
+
+        # Spawn enemies
+        self.spawn_enemies(100000)  # TODO: enemy count, spawn more if under 100
 
     def create_attack(self) -> None:
         self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
@@ -102,14 +106,17 @@ class World:
         self.update_camera()
 
         # Calculate played tile
-        player_tile: pygame.math.Vector2 = pygame.math.Vector2(int(self.player.rect.x / TILESIZE), int(self.player.rect.y / TILESIZE))
+        player_tile: pygame.math.Vector2 = pygame.math.Vector2(int(self.player.rect.x / TILESIZE),
+                                                               int(self.player.rect.y / TILESIZE))
 
         # Create and display all visible sprites
         for style_index, (style, layout) in enumerate(self.layout.items()):
-            for row_index in range(int(player_tile.y - ROW_LOAD_TILE_DISTANCE), int(player_tile.y + ROW_LOAD_TILE_DISTANCE)):
+            for row_index in range(int(player_tile.y - ROW_LOAD_TILE_DISTANCE),
+                                   int(player_tile.y + ROW_LOAD_TILE_DISTANCE)):
                 if 0 <= row_index < ROW_TILES:
                     row = layout[row_index]
-                    for col_index in range(int(player_tile.x - COL_LOAD_TILE_DISTANCE), int(player_tile.x + COL_LOAD_TILE_DISTANCE)):
+                    for col_index in range(int(player_tile.x - COL_LOAD_TILE_DISTANCE),
+                                           int(player_tile.x + COL_LOAD_TILE_DISTANCE)):
                         if 0 <= col_index < COL_TILES:
                             col = row[col_index]
                             if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
@@ -118,12 +125,13 @@ class World:
 
                                 if style == 'floor':
                                     surface: pygame.Surface = self.graphics['floor'][col]
-                                    Tile((x, y), [self.visible_sprites], 'floor', 0, surface)
+                                    Tile((x, y), [self.visible_sprites], 'floor', col in SPAWNABLE_TILES, 0, surface)
                                 elif style == 'objects':
                                     surface: pygame.Surface = self.graphics['objects'][col]
-                                    Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', 1, surface)
+                                    Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', False, 1,
+                                         surface)
                                 elif style == 'boundary':
-                                    Tile((x, y), [self.obstacle_sprites], 'barrier')
+                                    Tile((x, y), [self.obstacle_sprites], 'barrier', False)
 
         # Display all visible sprites
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
@@ -160,7 +168,8 @@ class World:
         # Figure out offset based on camera position
 
         # X axis
-        if abs(self.player.rect.centerx - self.camera.x) > CAMERA_DISTANCE_FROM_PLAYER[0]:  # If the camera is too far from the player
+        if abs(self.player.rect.centerx - self.camera.x) > CAMERA_DISTANCE_FROM_PLAYER[
+            0]:  # If the camera is too far from the player
             if self.player.rect.centerx > self.camera.x:  # Move the camera from to the left of the bound if it's further left than the player
                 self.camera.x = self.player.rect.centerx - CAMERA_DISTANCE_FROM_PLAYER[0]
             else:  # Move the camera from to the right of the bound if it's further right than the player
@@ -174,8 +183,21 @@ class World:
             else:  # Move the camera from to the bottom of the bound if it's further down than the player
                 self.camera.y = self.player.rect.centery + CAMERA_DISTANCE_FROM_PLAYER[1]
 
+    def spawn_enemies(self,
+                      amount: int) -> None:  # TODO: should be random, dont spawn on water/player, collidable block
 
-class Group_YSort(pygame.sprite.Group):
+        for enemy in range(amount):
+            random_x = random.randint(0, 1280 * 40 // 64 - 1)
+            random_y = random.randint(0, 720 * 40 // 64 - 1)
+            name = list(enemy_data.keys())[int(random.randint(0, 3))]
+
+            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
+                Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
+                      groups=[self.visible_sprites, self.obstacle_sprites],
+                      entity_id=None)  # TODO: @gognl whats # entity id?
+
+
+class GroupYSort(pygame.sprite.Group):
     def __init__(self) -> None:
         super().__init__()
         self.display_surface = pygame.display.get_surface()
