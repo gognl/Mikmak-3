@@ -8,6 +8,7 @@ from client_files.code.settings import *
 from client_files.code.world import World
 from client_files.code.enemy import Enemy
 
+
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
     """
     Initializes the connection to the server, and starts the packets-handler thread.
@@ -30,11 +31,13 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
 
     return server_socket, updates_queue, client_id
 
+
 def send_msg_to_server(server_socket: socket.socket, msg: ServerOutputMsg):
     """Sends a message to the server (and encrypts it)"""
     data: bytes = msg.serialize()
     # TODO encrypt here
     server_socket.send(data)
+
 
 def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
     """
@@ -98,7 +101,8 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     return screen, clock, world
 
 
-def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World, changes: deque) -> (pygame.Surface, pygame.time.Clock, World):
+def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World, changes: deque) -> (
+        pygame.Surface, pygame.time.Clock, World):
     """
     Run game according to user inputs - prediction before getting update from server
     :return: updated screen, clock, and world

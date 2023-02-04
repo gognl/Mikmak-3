@@ -3,10 +3,14 @@ from client_files.code.settings import *
 
 
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, pos, groups, sprite_type, height=0, surface=pygame.Surface((TILESIZE, TILESIZE))) -> None:
+    def __init__(self, pos, groups, sprite_type, spawnable, height=0, surface=pygame.Surface((TILESIZE, TILESIZE))) -> None:
         super().__init__(groups)
 
         self.sprite_type = sprite_type
+
+        self.sprite_type = sprite_type
+
+        self.spawnable = spawnable
 
         # Load image from files
         self.image: pygame.Surface = surface
