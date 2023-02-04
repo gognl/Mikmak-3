@@ -22,7 +22,7 @@ class GameManager(threading.Thread):
 					self.client_msgs_queue.append(client_manager.get_new_message())
 
 	def broadcast_msg(self, msg: StateUpdateMsg):
-		for client_manager in self.client_managers:
+		for client_manager in list(self.client_managers):
 			client_manager.send_msg(msg)
 
 	def run(self):
