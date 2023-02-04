@@ -69,15 +69,18 @@ def update_game(update_msg: StateUpdateMsg, changes: deque, client_id: int, worl
 
     # Update the game according to the update + changes since its ack (and remove them from the queue) - TODO
     for entity_update in update_msg.changes:
-        entity_id: int = entity_update[0]
-        entity_pos: (int, int) = entity_update[1].pos
+        entity_id: int = entity_update.id
+        entity_pos: (int, int) = entity_update.pos
+        entity_status: str = entity_update.status
 
         if entity_id == client_id:  # don't update self for now
             continue
         elif entity_id in world.enemies:
+            world.enemies[entity_id].status = entity_status
+            world.enemies[entity_id].animate()
             world.enemies[entity_id].update_pos(entity_pos)
         else:
-            world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites])
+            world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id)
 
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
@@ -95,7 +98,7 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     return screen, clock, world
 
 
-def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (pygame.Surface, pygame.time.Clock, World):
+def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World, changes: deque) -> (pygame.Surface, pygame.time.Clock, World):
     """
     Run game according to user inputs - prediction before getting update from server
     :return: updated screen, clock, and world
@@ -105,7 +108,7 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
     screen.fill('black')
 
     # Update the world state and then the screen
-    world.run()
+    world.run(changes)
     pygame.display.update()
 
     # Wait for one tick
@@ -137,29 +140,28 @@ def run_game(*args) -> None:  # TODO
     update_required_event = pygame.USEREVENT + 1
 
     # The changes queue; Push to it data about the changes after every cmd sent to the server
-    changes_queue: deque = deque()
+    reported_changes: deque = deque()
 
     # The main game loop
     running: bool = True
     while running:
         for event in pygame.event.get():
             if event.type == update_required_event:
-                update_game(event.msg, changes_queue, client_id, world)
+                update_game(event.msg, reported_changes, client_id, world)
             elif event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     running = False
 
-        previous_player_pos: (int, int) = world.player.get_pos()
+        reported_changes: deque = deque()  # clear the deque - temporary TODO remove this
 
         # Run game according to user inputs - prediction before getting update from server
-        screen, clock, world = game_tick(screen, clock, world)
+        screen, clock, world = game_tick(screen, clock, world, reported_changes)
 
         # update the server
-        new_player_pos: (int, int) = world.player.get_pos()
-        if new_player_pos != previous_player_pos:
-            send_msg_to_server(server_socket, ServerOutputMsg(new_pos=new_player_pos))
+        if reported_changes[0].player_changes:
+            send_msg_to_server(server_socket, reported_changes[0])
 
         # Check if an update is needed
         if not update_queue.empty():
@@ -194,6 +196,7 @@ def main():
     updates_queue: Queue
     client_id: int
     server_socket, updates_queue, client_id = initialize_connection(server_addr)
+    world.player.entity_id = client_id
 
     # Run the main game
     run_game(server_socket, screen, clock, world, updates_queue, client_id)
