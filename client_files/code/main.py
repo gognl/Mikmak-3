@@ -198,8 +198,6 @@ def run_game(*args) -> None:  # TODO
 
     pygame.quit()
 
-    return None
-
 
 def close_game(server_socket: socket.socket) -> None:
     """Closes the game"""

@@ -73,8 +73,6 @@ class Client:
                 self.seq: int = None
                 changes = kwargs.pop('changes')
                 self.player_changes: List[Client.Input.EntityUpdate] = changes[0]
-                self.enemies_changes = changes[1]
-                self.items_changes = changes[2]
 
             def _get_attr(self) -> dict:
                 return {'seq': (int, 'u_4'), 'player_changes': (list, (Client.Input.EntityUpdate, 'o'))}

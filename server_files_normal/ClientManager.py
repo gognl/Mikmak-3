@@ -2,16 +2,19 @@ import socket
 import threading
 from collections import deque
 from typing import Union
+
+from server_files_normal.game.player import Player
 from server_files_normal.structures import *
 
 
 class ClientManager(threading.Thread):
     """Handles the interactions with the client server"""
 
-    def __init__(self, client_sock: socket.socket, client_id: int):
+    def __init__(self, client_sock: socket.socket, client_id: int, player: Player):
         super().__init__()
         self.client_sock: socket.socket = client_sock
         self.client_id: int = client_id
+        self.player = player
         self.ack: int = 0
         self.queue: deque[Tuple[ClientManager, Client.Input.ClientCMD]] = deque()
 
