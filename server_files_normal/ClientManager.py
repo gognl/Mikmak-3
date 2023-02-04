@@ -12,6 +12,7 @@ class ClientManager(threading.Thread):
         super().__init__()
         self.client_sock: socket.socket = client_sock
         self.client_id: int = client_id
+        self.ack: int = 0
         self.queue: deque[Tuple[ClientManager, Client.Input.ClientCMD]] = deque()
 
     def run(self) -> None:
@@ -38,7 +39,8 @@ class ClientManager(threading.Thread):
         # TODO encrypt here
         self.client_sock.send(pkt)
 
-    def send_msg(self, msg: Union[Client.Output.StateUpdate, Client.Output.ServerSwitch]):
+    def send_msg(self, changes: Client.Output.StateUpdateNoAck):
+        msg = Client.Output.StateUpdate(self.ack, changes)  # Add an ack to the msg
         data: bytes = msg.serialize()
         self._send_pkt(data)
 
