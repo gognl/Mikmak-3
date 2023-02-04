@@ -3,7 +3,7 @@ import pygame  # Pygame
 from threading import Thread  # Multi-threading
 from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
-from client_files.code.structures import StateUpdateMsg, ServerOutputMsg  # Some custom structures
+from client_files.code.structures import *
 from client_files.code.settings import *
 from client_files.code.world import World
 from client_files.code.enemy import Enemy
@@ -30,7 +30,7 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
 
     return server_socket, updates_queue, client_id
 
-def send_msg_to_server(server_socket: socket.socket, msg: ServerOutputMsg):
+def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpdate):
     """Sends a message to the server (and encrypts it)"""
     data: bytes = msg.serialize()
     # TODO encrypt here
@@ -53,11 +53,11 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
     """
     while True:
         # Get a packet from the server; convert it to a ServerMessage object.
-        msg: StateUpdateMsg = StateUpdateMsg(ser=get_server_pkt(server_socket))
+        msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=get_server_pkt(server_socket))
         updates_queue.put(msg)
 
 
-def update_game(update_msg: StateUpdateMsg, changes: deque, client_id: int, world: World) -> None:
+def update_game(update_msg: Server.Input.StateUpdate, changes: deque, client_id: int, world: World) -> None:
     """
     Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
     :param world: The pygame world.
@@ -168,7 +168,7 @@ def run_game(*args) -> None:  # TODO
 
             # Get the message from the queue
             try:
-                update_msg: StateUpdateMsg = update_queue.get_nowait()
+                update_msg: Server.Input.StateUpdate = update_queue.get_nowait()
             except Empty:
                 continue
 
