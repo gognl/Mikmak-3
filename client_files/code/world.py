@@ -23,6 +23,7 @@ class World:
         self.visible_sprites: Group_YSort = Group_YSort()
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
         # attack sprites
         self.current_weapon = None
@@ -65,7 +66,7 @@ class World:
 
         # Create player with starting position
         self.player = Player((1024, 1024), [self.visible_sprites, self.server_sprites],
-                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_projectile, 0)  # TODO - make starting player position random (or a spawn)
+                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet, self.create_kettle, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
@@ -79,8 +80,18 @@ class World:
             self.current_weapon.kill()
         self.current_weapon = None
 
-    def create_projectile(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon, pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites), 3)
+    def create_bullet(self):
+        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
+                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
+                                            self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
+                   '../graphics/weapons/bullet.png')
+
+    def create_kettle(self):
+        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
+                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
+                                            self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
+                   '../graphics/weapons/kettle/full.png', 'explode', True)
+
 
     def run(self, changes: deque) -> None:
         """
@@ -120,6 +131,8 @@ class World:
 
         # Update the obstacle sprites for the player
         self.player.update_obstacles(self.obstacle_sprites)
+        for projectile in self.projectile_sprites:
+            projectile.update_obstacles(self.obstacle_sprites)
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
