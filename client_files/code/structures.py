@@ -1,10 +1,25 @@
-from typing import Tuple
+from typing import Tuple, List
 
 from client_files.code.serializable import Serializable
 
 class Server:
 	class Input:
+
 		class StateUpdate(Serializable):
+			"""Like StateUpdate but with an acknowledgement number"""
+
+			def __init__(self, **kwargs):
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+				self.ack: int = None
+				self.state_update: Server.Input.StateUpdateNoAck = None
+
+			def _get_attr(self) -> dict:
+				return {'ack': (int, 'u_4'), 'state_update': (Server.Input.StateUpdateNoAck, 'o')}
+
+		class StateUpdateNoAck(Serializable):
 			"""A class of an incoming message from the server"""
 
 			def __init__(self, **kwargs):
@@ -45,9 +60,9 @@ class Server:
 			"""
 		    A class of messages to the server - output
 		    corresponds to ClientCMD
-
-		    SIZE = 43 BYTES
 		    """
+
+			seq_count: int = 0
 
 			def __init__(self, **kwargs):
 				s: bytes = kwargs.pop('ser', b'')
@@ -55,13 +70,15 @@ class Server:
 				if s != b'':
 					return
 
+				self.seq = Server.Output.StateUpdate.seq_count
+
 				changes = kwargs.pop('changes')
-				self.player_changes = changes[0]
+				self.player_changes: List[Server.Output.PlayerUpdate] = changes[0]
 				self.enemies_changes = changes[1]
 				self.items_changes = changes[2]
 
 			def _get_attr(self) -> dict:
-				return {'player_changes': (list, (Server.Output.PlayerUpdate, 'o'))}
+				return {'seq': (int, 'u_4'), 'player_changes': (list, (Server.Output.PlayerUpdate, 'o'))}
 
 		class PlayerUpdate(Serializable):
 			"""A class containing data about player updates in the last tick"""

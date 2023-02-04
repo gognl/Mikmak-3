@@ -96,7 +96,7 @@ class World:
                                             self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', 'explode', True)
 
-    def run(self, changes: deque) -> None:
+    def run(self) -> Server.Output.StateUpdate:
         """
         Run one world frame
         :return: None
@@ -144,6 +144,11 @@ class World:
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
 
+        # Delete all tiles
+        for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
+            if type(sprite) is Tile:
+                sprite.kill()
+
         local_changes = [[], [], []]  # A list of changes made in this tick. 0 - player, 1 - enemies, 2 - items.
         for sprite in self.server_sprites.sprites():
             if sprite.changes is None:  # If no new changes were made
@@ -153,12 +158,7 @@ class World:
             elif type(sprite) is Enemy:
                 pass  # append EnemyUpdate to local_changes[1]
 
-        changes.append(Server.Output.StateUpdate(changes=local_changes))
-
-        # Delete all tiles
-        for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
-            if type(sprite) is Tile:
-                sprite.kill()
+        return Server.Output.StateUpdate(changes=local_changes)
 
     def update_camera(self) -> None:
         """

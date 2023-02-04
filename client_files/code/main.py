@@ -59,7 +59,7 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
         updates_queue.put(msg)
 
 
-def update_game(update_msg: Server.Input.StateUpdate, changes: deque, client_id: int, world: World) -> None:
+def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Output.StateUpdate], client_id: int, world: World) -> None:
     """
     Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
     :param world: The pygame world.
@@ -70,19 +70,38 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque, client_id:
     """
 
     # Update the game according to the update + changes since its ack (and remove them from the queue) - TODO
-    for entity_update in update_msg.changes:
+
+    # Reset to the server state
+    for entity_update in update_msg.state_update.changes:
         entity_id: int = entity_update.id
         entity_pos: (int, int) = entity_update.pos
         entity_status: str = entity_update.status
 
-        if entity_id == client_id:  # don't update self for now
-            continue
+        if entity_id == client_id:
+            world.player.rect.x = entity_pos[0]
+            world.player.rect.y = entity_pos[1]
+            world.player.status = entity_status
+            world.player.animate()
         elif entity_id in world.enemies:
             world.enemies[entity_id].status = entity_status
             world.enemies[entity_id].animate()
             world.enemies[entity_id].update_pos(entity_pos)
         else:
             world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id)
+
+    # Clear the changes deque; Leave only the changes made after the acknowledged CMD
+    while changes and changes[0].seq < update_msg.ack:
+        changes.popleft()
+
+    # Apply the changes - TODO simulate, dont just change attributes
+    for cmd in changes:
+        for player_change in cmd.player_changes:
+            world.player.rect.x = player_change.pos[0]
+            world.player.rect.y = player_change.pos[1]
+            world.player.attacking = player_change.attacking
+            world.player.weapon = player_change.weapon
+            world.player.status = player_change.status
+        # TODO also update enemies and items (cmd.enemies_changes, cmd.items_changes)
 
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
@@ -100,8 +119,7 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     return screen, clock, world
 
 
-def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World, changes: deque) -> (
-        pygame.Surface, pygame.time.Clock, World):
+def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (pygame.Surface, pygame.time.Clock, World, Server.Output.StateUpdate):
     """
     Run game according to user inputs - prediction before getting update from server
     :return: updated screen, clock, and world
@@ -111,13 +129,13 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World, ch
     screen.fill('black')
 
     # Update the world state and then the screen
-    world.run(changes)
+    update: Server.Output.StateUpdate = world.run()
     pygame.display.update()
 
     # Wait for one tick
     clock.tick(FPS)
 
-    return screen, clock, world
+    return screen, clock, world, update
 
 
 def run_game(*args) -> None:  # TODO
@@ -143,7 +161,7 @@ def run_game(*args) -> None:  # TODO
     update_required_event = pygame.USEREVENT + 1
 
     # The changes queue; Push to it data about the changes after every cmd sent to the server
-    reported_changes: deque = deque()
+    reported_changes: deque[Server.Output.StateUpdate] = deque()
 
     # The main game loop
     running: bool = True
@@ -157,14 +175,14 @@ def run_game(*args) -> None:  # TODO
                 if event.key == pygame.K_RETURN:
                     running = False
 
-        reported_changes: deque = deque()  # clear the deque - temporary TODO remove this
-
         # Run game according to user inputs - prediction before getting update from server
-        screen, clock, world = game_tick(screen, clock, world, reported_changes)
+        tick_update: Server.Output.StateUpdate
+        screen, clock, world, tick_update = game_tick(screen, clock, world)
 
-        # update the server
-        if reported_changes[0].player_changes:
-            send_msg_to_server(server_socket, reported_changes[0])
+        if tick_update.player_changes:
+            send_msg_to_server(server_socket, tick_update)
+            reported_changes.append(tick_update)
+            Server.Output.StateUpdate.seq_count += 1
 
         # Check if an update is needed
         if not update_queue.empty():
