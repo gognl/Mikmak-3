@@ -21,7 +21,7 @@ class Player(Entity):
         self.hitbox = self.rect.inflate(-20, -26)
 
         # Speed of the player
-        self.speed: int = 30
+        self.speed: int = 10
 
         # Obstacle sprites for the player to check collisions
         self.obstacle_sprites: pygame.Group = obstacle_sprites

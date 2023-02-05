@@ -43,7 +43,9 @@ def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
     Gets a packet from the server (and decrypts them...)
     :return: The packet from the server.
     """
-    data: bytes = server_socket.recv(1024)
+    data: bytes = b''
+    while not data:
+        data: bytes = server_socket.recv(1024)
     # TODO decrypt here
     return data
 
@@ -55,7 +57,11 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
     """
     while True:
         # Get a packet from the server; convert it to a ServerMessage object.
-        msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=get_server_pkt(server_socket))
+        ser: bytes = get_server_pkt(server_socket)
+        msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
+        #print(f'\ndata: {ser}\np_changes: {msg.state_update.player_changes}\n')
+        if msg.state_update.player_changes is None:
+            print(f'FOUND ERROR CAUSING THING\nser: {ser}\n\tack: {msg.ack}\n\tstate:\n\t\tp: {msg.state_update.player_changes}\n\t\te: {msg.state_update.enemy_changes}')
         updates_queue.put(msg)
 
 

@@ -23,7 +23,7 @@ class GameManager(threading.Thread):
 		self.enemies: pygame.sprite.Group = pygame.sprite.Group()
 
 		# TODO temporary
-		for i in range(3):
+		for i in range(20):
 			pos = (randint(1000, 2000), randint(1000, 2000))
 			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies,), entity_id=i)
 
@@ -86,7 +86,7 @@ class GameManager(threading.Thread):
 			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck((), tuple(enemy_changes))
 			if temp_c == 0:
 				self.broadcast_msg(state_update)
-				temp_c = 10
+				temp_c = 30
 			temp_c -= 1
 
 			self.clock.tick(FPS)
