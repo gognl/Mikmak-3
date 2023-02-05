@@ -45,7 +45,7 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 
 
 def accept_new_clients(server_sock, client_managers, game_manager: GameManager):
-	client_id: int = 0
+	client_id: int = 25
 	while True:
 		client_sock, client_addr = server_sock.accept()
 
