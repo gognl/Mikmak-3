@@ -69,36 +69,15 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player((1024, 1024), [self.visible_sprites, self.server_sprites],
-                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
-                             self.create_kettle, 0)  # TODO - make starting player position random (or a spawn)
+        self.player = Player(self, (1024, 1024), [self.visible_sprites, self.server_sprites],
+                             self.obstacle_sprites, 1, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
         # Spawn enemies
-        self.spawn_enemies(0)  # TODO: enemy count, spawn more if under 100
-
-    def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
-
-    def destroy_attack(self):
-        if self.current_weapon:
-            self.current_weapon.kill()
-        self.current_weapon = None
-
-    def create_bullet(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
-                   '../graphics/weapons/bullet.png')
-
-    def create_kettle(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
-                   '../graphics/weapons/kettle/full.png', 'explode', True)
+        self.spawn_enemies(100)  # TODO: enemy count, spawn more if under 100
 
     def run(self) -> Server.Output.StateUpdate:
         """
@@ -199,7 +178,7 @@ class World:
             name = list(enemy_data.keys())[int(random.randint(0, 3))]
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
+                Enemy(world=self, enemy_name=name, pos=(random_x * 64, random_y * 64),
                       groups=[self.visible_sprites, self.obstacle_sprites],
                       entity_id=None)  # TODO: @gognl whats # entity id?
 

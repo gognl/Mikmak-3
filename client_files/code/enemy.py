@@ -5,10 +5,10 @@ from client_files.code.support import *
 
 
 class Enemy(Entity):
-    def __init__(self, enemy_name, pos, groups, entity_id):
+    def __init__(self, world, enemy_name, pos, groups, entity_id):
 
         # general setup
-        super().__init__(groups, entity_id)
+        super().__init__(world, groups, entity_id)
         self.sprite_type = 'enemy'
 
         # graphics setup

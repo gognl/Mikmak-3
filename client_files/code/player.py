@@ -5,8 +5,8 @@ from client_files.code.entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, entity_id) -> None:
-        super().__init__(groups, entity_id)
+    def __init__(self, world, pos, groups, obstacle_sprites, height, entity_id) -> None:
+        super().__init__(world, groups, entity_id)
 
         # Load player sprite from files
         self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
@@ -28,11 +28,7 @@ class Player(Entity):
         self.attack_cooldown: int = 400
         self.attack_time: int = 0
 
-        # weapon
-        self.create_attack = create_attack
-        self.destroy_attack = destroy_attack
-        self.create_bullet = create_bullet
-        self.create_kettle = create_kettle
+        # weapons
         self.weapon_index = 0
         self.on_screen = [1, 2]  # Indices of weapons that stay on screen
         self.weapon = list(weapon_data.keys())[self.weapon_index]
