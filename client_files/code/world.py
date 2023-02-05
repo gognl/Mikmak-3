@@ -74,7 +74,7 @@ class World:
         self.camera.y = self.player.rect.centery
 
         # Spawn enemies
-        self.spawn_enemies(100000)  # TODO: enemy count, spawn more if under 100
+        self.spawn_enemies(100)  # TODO: enemy count, spawn more if under 100
 
     def create_attack(self) -> None:
         self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
@@ -143,6 +143,7 @@ class World:
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
+        self.visible_sprites.enemy_update(self.player)
 
         local_changes = [[], [], []]  # A list of changes made in this tick. 0 - player, 1 - enemies, 2 - items.
         for sprite in self.server_sprites.sprites():
@@ -183,8 +184,7 @@ class World:
             else:  # Move the camera from to the bottom of the bound if it's further down than the player
                 self.camera.y = self.player.rect.centery + CAMERA_DISTANCE_FROM_PLAYER[1]
 
-    def spawn_enemies(self,
-                      amount: int) -> None:  # TODO: should be random, dont spawn on water/player, collidable block
+    def spawn_enemies(self, amount: int) -> None:  # TODO: should be random, dont spawn on water/player, collidable block
 
         for enemy in range(amount):
             random_x = random.randint(0, 1280 * 40 // 64 - 1)
@@ -192,9 +192,7 @@ class World:
             name = list(enemy_data.keys())[int(random.randint(0, 3))]
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
-                      groups=[self.visible_sprites, self.obstacle_sprites],
-                      entity_id=None)  # TODO: @gognl whats # entity id?
+                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?
 
 
 class GroupYSort(pygame.sprite.Group):
@@ -211,3 +209,8 @@ class GroupYSort(pygame.sprite.Group):
         for sprite in sorted(self.sprites(), key=lambda x: (x.height, x.rect.centery)):
             # Display the sprite on screen, moving it by the calculated offset
             self.display_surface.blit(sprite.image, sprite.rect.topleft - camera + screen_center)
+
+    def enemy_update(self, player):
+        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy']
+        for enemy in enemy_sprites:
+            enemy.enemy_update(player)
