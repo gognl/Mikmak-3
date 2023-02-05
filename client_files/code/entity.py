@@ -3,11 +3,12 @@ from client_files.code.projectile import Projectile
 
 
 class Entity(pygame.sprite.Sprite):
-	def __init__(self, groups):
+	def __init__(self, groups, entity_id):
 		super().__init__(groups)
 		self.frame_index = 0
 		self.animation_speed = 0.25
 		self.direction = pygame.math.Vector2()
+		self.entity_id = entity_id
 
 	def move(self, speed: int) -> None:
 		"""

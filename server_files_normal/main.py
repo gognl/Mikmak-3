@@ -19,6 +19,7 @@ from collections import deque
 from server_files_normal.LoadBalancerManager import LoadBalancerManager
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
+from server_files_normal.game.player import Player
 
 
 def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socket.socket, LoadBalancerManager):
@@ -43,16 +44,19 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 	return login_sock, lb_manager
 
 
-def accept_new_clients(server_sock, client_managers):
+def accept_new_clients(server_sock, client_managers, game_manager: GameManager):
 	client_id: int = 0
 	while True:
 		client_sock, client_addr = server_sock.accept()
 
 		# TODO change this later, maybe to a ConnectionInitialization structure
 		client_sock.send(f'id_{client_id}'.encode())
-		new_client_manager = ClientManager(client_sock, client_id)
+
+		player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
+		new_client_manager: ClientManager = ClientManager(client_sock, client_id, player)  # Create a new client manager
 		client_managers.append(new_client_manager)
 		new_client_manager.start()
+		player.client_manager = new_client_manager  # Add the client manager to the player's attributes
 
 		client_id += 1  # also maybe change this to something less predictable
 
@@ -75,7 +79,7 @@ def main():
 	game_manager = GameManager(client_managers)
 	game_manager.start()
 
-	accept_new_clients(server_sock, client_managers)
+	accept_new_clients(server_sock, client_managers, game_manager)
 
 
 if __name__ == '__main__':
