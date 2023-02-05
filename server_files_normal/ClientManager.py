@@ -1,9 +1,8 @@
 import socket
 import threading
 from collections import deque
-from typing import Tuple, Union
-
-from server_files_normal.structures import EntityUpdateMsg, StateUpdateMsg, ServerSwitchMsg, ClientCMD
+from typing import Union
+from server_files_normal.structures import *
 
 
 class ClientManager(threading.Thread):
@@ -13,7 +12,7 @@ class ClientManager(threading.Thread):
         super().__init__()
         self.client_sock: socket.socket = client_sock
         self.client_id: int = client_id
-        self.queue: deque[Tuple[ClientManager, ClientCMD]] = deque()
+        self.queue: deque[Tuple[ClientManager, Client.Input.ClientCMD]] = deque()
 
     def run(self) -> None:
         self.handle_client_connection()
@@ -26,7 +25,7 @@ class ClientManager(threading.Thread):
 
         while True:
             data: bytes = self._receive_pkt()
-            self.queue.append((self, ClientCMD(ser=data)))
+            self.queue.append((self, Client.Input.ClientCMD(ser=data)))
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
@@ -39,14 +38,14 @@ class ClientManager(threading.Thread):
         # TODO encrypt here
         self.client_sock.send(pkt)
 
-    def send_msg(self, msg: Union[StateUpdateMsg, ServerSwitchMsg]):
+    def send_msg(self, msg: Union[Client.Output.StateUpdate, Client.Output.ServerSwitch]):
         data: bytes = msg.serialize()
         self._send_pkt(data)
 
     def has_messages(self):
         return len(self.queue) != 0
 
-    def get_new_message(self) -> Union[Tuple['ClientManager', ClientCMD], None]:
+    def get_new_message(self) -> Union[Tuple['ClientManager', Client.Input.ClientCMD], None]:
         if len(self.queue) == 0:
             return
         return self.queue.pop()

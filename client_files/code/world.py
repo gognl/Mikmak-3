@@ -10,7 +10,7 @@ from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
-from client_files.code.structures import PlayerUpdate, ServerOutputMsg
+from client_files.code.structures import *
 
 
 class World:
@@ -150,11 +150,11 @@ class World:
             if sprite.changes is None:  # If no new changes were made
                 continue
             if type(sprite) is Player:
-                local_changes[0].append(PlayerUpdate(id=sprite.entity_id, changes=sprite.changes))
+                local_changes[0].append(Server.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes))
             elif type(sprite) is Enemy:
                 pass  # append EnemyUpdate to local_changes[1]
 
-        changes.append(ServerOutputMsg(changes=local_changes))
+        changes.append(Server.Output.StateUpdate(changes=local_changes))
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
