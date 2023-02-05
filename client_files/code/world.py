@@ -10,6 +10,7 @@ from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
+from client_files.code.ui import UI
 from client_files.code.structures import *
 
 
@@ -25,6 +26,9 @@ class World:
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
+
+        # User interface
+        self.ui = UI()
 
         # attack sprites
         self.current_weapon = None
@@ -149,6 +153,8 @@ class World:
             if type(sprite) is Tile:
                 sprite.kill()
 
+        self.ui.display(self.player)
+
         local_changes = [[], [], []]  # A list of changes made in this tick. 0 - player, 1 - enemies, 2 - items.
         for sprite in self.server_sprites.sprites():
             if sprite.changes is None:  # If no new changes were made
@@ -159,6 +165,7 @@ class World:
                 pass  # append EnemyUpdate to local_changes[1]
 
         return Server.Output.StateUpdate(changes=local_changes)
+
 
     def update_camera(self) -> None:
         """

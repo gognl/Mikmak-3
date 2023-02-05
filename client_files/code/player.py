@@ -20,9 +20,6 @@ class Player(Entity):
         # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
         self.hitbox = self.rect.inflate(-20, -26)
 
-        # Speed of the player
-        self.speed: int = 30
-
         # Obstacle sprites for the player to check collisions
         self.obstacle_sprites: pygame.Group = obstacle_sprites
 
@@ -58,6 +55,14 @@ class Player(Entity):
 
         # Mouse press
         self.release_mouse = False
+
+        # Stats
+        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}
+        self.health = self.stats['health'] * 0.5
+        self.energy = self.stats['energy'] * 0.8
+        self.exp = 123
+        # Speed of the player
+        self.speed = self.stats['speed']
 
     def import_player_assets(self) -> None:
         """
