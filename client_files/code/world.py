@@ -7,6 +7,7 @@ from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
+from client_files.code.ui import UI
 
 
 class World:
@@ -19,6 +20,9 @@ class World:
         self.visible_sprites: Group_YSort = Group_YSort()
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
+
+        # User interface
+        self.ui = UI()
 
         # attack sprites
         self.current_weapon = None
@@ -88,7 +92,6 @@ class World:
                                             self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', 'explode', True)
 
-
     def run(self) -> None:
         """
         Run one world frame
@@ -137,6 +140,8 @@ class World:
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
             if type(sprite) is Tile:
                 sprite.kill()
+
+        self.ui.display(self.player)
 
     def update_camera(self) -> None:
         """
