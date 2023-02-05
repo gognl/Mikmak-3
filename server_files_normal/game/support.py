@@ -14,7 +14,7 @@ def import_folder(path: str) -> dict[str: pygame.Surface]:
         for image in img_files:
             full_path = path + '/' + image
             # Load files to pygame surface
-            image_surface: pygame.Surface = pygame.image.load(full_path).convert_alpha()
+            image_surface: pygame.Surface = pygame.image.load(full_path)
             surface_list[image[:-4]] = image_surface  # Ignore the .png at the end
 
     return surface_list

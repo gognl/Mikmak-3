@@ -14,6 +14,6 @@ class Enemy(pygame.sprite.Sprite):
 
 	def import_graphics(self, name: str):
 		self.animations = {'move': []}
-		path = f'../graphics/monsters/{name}/move/'
+		path = f'./graphics/monsters/{name}/move/'
 		self.animations['move'] = list(import_folder(path).values())
 		self.status = 'move'

@@ -72,10 +72,10 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
     # Update the game according to the update + changes since its ack (and remove them from the queue) - TODO
 
     # Reset to the server state
-    for entity_update in update_msg.state_update.changes:
-        entity_id: int = entity_update.id
-        entity_pos: (int, int) = entity_update.pos
-        entity_status: str = entity_update.status
+    for player_update in update_msg.state_update.player_changes:
+        entity_id: int = player_update.id
+        entity_pos: (int, int) = player_update.pos
+        entity_status: str = player_update.status
 
         if entity_id == client_id:
             world.player.rect.x = entity_pos[0]
@@ -88,6 +88,14 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.enemies[entity_id].update_pos(entity_pos)
         else:
             world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id)
+
+    for enemy_update in update_msg.state_update.enemy_changes:
+        entity_id: int = enemy_update.id
+        entity_pos: (int, int) = enemy_update.pos
+        if entity_id in world.enemies:
+            world.enemies[entity_id].update_pos(entity_pos)
+        else:
+            world.enemies[entity_id] = Enemy('white_cow', entity_pos, [world.visible_sprites, world.obstacle_sprites], entity_id)
 
     # Clear the changes deque; Leave only the changes made after the acknowledged CMD
     while changes and changes[0].seq < update_msg.ack:

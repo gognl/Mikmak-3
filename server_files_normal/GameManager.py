@@ -23,7 +23,7 @@ class GameManager(threading.Thread):
 		self.enemies: pygame.sprite.Group = pygame.sprite.Group()
 
 		# TODO temporary
-		for i in range(25):
+		for i in range(3):
 			pos = (randint(1000, 2000), randint(1000, 2000))
 			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies,), entity_id=i)
 
@@ -41,14 +41,14 @@ class GameManager(threading.Thread):
 		pos: (int, int) = (1024, 1024)
 		return Player(self.players, entity_id, pos)
 
-	def handle_cmds(self, cmds: List[(ClientManager, Client.Input.ClientCMD)]):
+	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
 		for cmd in cmds:
 			client_manager = cmd[0]
 			client_cmd = cmd[1]
 
-			player_update: Client.Input.EntityUpdate = client_cmd.player_changes[0]
+			player_update: Client.Input.PlayerUpdate = client_cmd.player_changes[0]
 			player = client_manager.player
-	
+
 			# Update the player
 			player.rect = player.image.get_rect(topleft=player_update.pos)
 			player.attacking = player_update.attacking
@@ -56,8 +56,8 @@ class GameManager(threading.Thread):
 			player.status = player_update.status
 
 			changes = {'pos': (player.rect.x, player.rect.y), 'attacking': player.attacking, 'weapon': player.weapon, 'status': player.status}
-			entity_update = Client.Output.EntityUpdate(id=player.entity_id, changes=changes)
-			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck((entity_update,))
+			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
+			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck((player_update,), ())
 
 			client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 			self.broadcast_msg(state_update)
@@ -67,13 +67,28 @@ class GameManager(threading.Thread):
 		# Create custom events
 		cmd_received_event = pygame.USEREVENT + 1
 
+		temp_c: int = 0
 		running: bool = True
 		while running:
 			for event in pygame.event.get():
 				if event.type == cmd_received_event:
 					self.handle_cmds(event.cmds)
 
-			pass  # Run enemies simulation
+			# Run enemies simulation
+			enemy_changes = []
+			for enemy in self.enemies.sprites():
+				random_x_change = randint(-1, 1)
+				random_y_change = randint(-1, 1)
+				enemy.rect.x += random_x_change
+				enemy.rect.y += random_y_change
+				changes = {'pos': (enemy.rect.x, enemy.rect.y)}
+				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, changes=changes))
+			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck((), tuple(enemy_changes))
+			if temp_c == 0:
+				self.broadcast_msg(state_update)
+				temp_c = 10
+			temp_c -= 1
+
 			self.clock.tick(FPS)
 
 			# Check if a cmd was received
