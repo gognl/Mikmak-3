@@ -1,38 +1,15 @@
 import random
-import socket
-
-import numpy
-import numpy as np
+import threading
+from collections import deque
 import pygame
+from structures import *
 
-
-class Server:
-	def __init__(self, ip: str, port: int):
-		self.ip: str = ip
-		self.port: int = port
-
-
-class NormalServer(Server):
-	def __init__(self, ip: str, port: int):
-		super().__init__(ip, port)
-		self.location = Point(-1, -1)
-
-class Point:
-	def __init__(self, x, y):
-		self.x = x
-		self.y = y
-
-	def __repr__(self):
-		return f"({self.x}, {self.y})"
-
-def dist2(p1, p2):
-	return (p1.x - p2.x)**2 + (p1.y - p2.y)**2
 
 def get_closest_centroid(p: Point, centroids: list[Point]) -> int:
 	closest_centroid_index = 0
-	min_dist2 = dist2(p, centroids[0])
+	min_dist2 = Point.dist2(p, centroids[0])
 	for j in range(1, len(centroids)):
-		d2 = dist2(p, centroids[j])
+		d2 = Point.dist2(p, centroids[j])
 		if d2 < min_dist2:
 			min_dist2 = d2
 			closest_centroid_index = j
@@ -51,9 +28,9 @@ def update_centroids(positions, prev_centroids):
 			closest_centroid_index = get_closest_centroid(p, centroids)
 			closest[closest_centroid_index].append(p)
 
-			J += dist2(p, centroids[closest_centroid_index])
+			J += Point.dist2(p, centroids[closest_centroid_index])
 
-		for j in range(k-1, -1, -1):
+		for j in range(k - 1, -1, -1):
 			if len(closest[j]) == 0:
 				centroids.pop(j)
 				continue
@@ -69,6 +46,7 @@ def update_centroids(positions, prev_centroids):
 		print(f"After {iter} iterations: Error is {J}")
 
 	return centroids
+
 
 def simulate_algo():
 	W = 800
@@ -107,20 +85,30 @@ def simulate_algo():
 
 	pygame.quit()
 
-def main():
-	simulate_algo()
-	# servers: list[NormalServer] = []
-	# login_ip, login_port = "", 0
-	# login_server = Server(login_ip, login_port)
-	#
-	# sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	# sock.bind(("0.0.0.0", 17120))
-	#
-	# while True:
-	# 	data, address = sock.recvfrom(1024)
+
+def find_suitable_server(client: Client) -> Server:
+	pass
 
 
+def look_for_new_client(new_clients_q: deque[Client], msgs_to_clients_q: deque[MsgToClient]):
+	while True:
+		if len(new_clients_q) == 0:
+			continue
+		new_client = new_clients_q.pop()
+		suitable_server = find_suitable_server(new_client)
+		msg = MsgToClient(new_client.id,
+						b'{suitable_server}')  # TODO: change parameter to the serializable encoding of suitable_server
+		msgs_to_clients_q.append(msg)
 
 
-if __name__ == '__main__':
-	main()
+def LB_main(new_clients_q: deque[Client], msgs_to_clients_q: deque[MsgToClient]):
+	threads: [threading.Thread] = []
+
+	look_for_new_client_Thread = threading.Thread(target=look_for_new_client, args=(new_clients_q, msgs_to_clients_q))
+	threads.append(look_for_new_client_Thread)
+
+	for thread in threads:
+		thread.start()
+
+	for thread in threads:
+		thread.join()
