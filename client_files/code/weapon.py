@@ -1,11 +1,10 @@
 import pygame
-from client_files.code.player import Player
 
 
 class Weapon(pygame.sprite.Sprite):
 	def __init__(self, player, groups, height):
 		super().__init__(groups)
-		self.player: Player = player
+		self.player = player
 
 		self.direction: str = None
 		self.image: pygame.Surface = None

@@ -1,14 +1,17 @@
 import pygame
+from client_files.code.weapon import Weapon
 from client_files.code.projectile import Projectile
 
 
 class Entity(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id):
+	def __init__(self, world, groups, entity_id):
 		super().__init__(groups)
+		self.world = world
 		self.frame_index = 0
 		self.animation_speed = 0.25
 		self.direction = pygame.math.Vector2()
 		self.entity_id = entity_id
+		self.current_weapon = None
 
 	def move(self, speed: int) -> None:
 		"""
@@ -58,3 +61,22 @@ class Entity(pygame.sprite.Sprite):
 						elif sprite.direction.y < 0:  # Sprite going up
 							self.hitbox.bottom = sprite.hitbox.top
 
+	def create_attack(self) -> None:
+		self.current_weapon = Weapon(self, [self.world.visible_sprites], 2)
+
+	def destroy_attack(self):
+		if self.current_weapon:
+			self.current_weapon.kill()
+		self.current_weapon = None
+
+	def create_bullet(self):
+		Projectile(self, self.world.camera, self.world.screen_center, self.current_weapon,
+				   pygame.mouse.get_pos(), (self.world.visible_sprites, self.world.obstacle_sprites,
+											self.world.projectile_sprites), self.world.obstacle_sprites, 3, 15, 2000,
+				   '../graphics/weapons/bullet.png')
+
+	def create_kettle(self):
+		Projectile(self, self.world.camera, self.world.screen_center, self.current_weapon,
+				   pygame.mouse.get_pos(), (self.world.visible_sprites, self.world.obstacle_sprites,
+											self.world.projectile_sprites), self.world.obstacle_sprites, 3, 5, 750,
+				   '../graphics/weapons/kettle/full.png', 'explode', True)
