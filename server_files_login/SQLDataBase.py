@@ -1,6 +1,6 @@
 import sqlalchemy
-from sqlalchemy import Table, Column, MetaData, VARCHAR, TEXT, INT, JSON, \
-    Connection
+from sqlalchemy import Table, Column, MetaData, VARCHAR, TEXT, INT, JSON
+from sqlalchemy.engine import Connection
 
 from Constant import *
 
