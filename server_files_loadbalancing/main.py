@@ -5,10 +5,17 @@ import numpy
 import numpy as np
 import pygame
 
-W = 800
-H = 600
-SERVERS_AMOUNT = 7
-PLAYERS_AMOUNT = 100
+
+class Server:
+	def __init__(self, ip: str, port: int):
+		self.ip: str = ip
+		self.port: int = port
+
+
+class NormalServer(Server):
+	def __init__(self, ip: str, port: int):
+		super().__init__(ip, port)
+		self.location = Point(-1, -1)
 
 class Point:
 	def __init__(self, x, y):
@@ -18,35 +25,33 @@ class Point:
 	def __repr__(self):
 		return f"({self.x}, {self.y})"
 
-
-def rand(n):
-	return random.randrange(n)
-
-
 def dist2(p1, p2):
 	return (p1.x - p2.x)**2 + (p1.y - p2.y)**2
 
-def main():
-	positions = [Point(rand(W), rand(H)) for _ in range(PLAYERS_AMOUNT)]
-	m = len(positions)
+def get_closest_centroid(p: Point, centroids: list[Point]) -> int:
+	closest_centroid_index = 0
+	min_dist2 = dist2(p, centroids[0])
+	for j in range(1, len(centroids)):
+		d2 = dist2(p, centroids[j])
+		if d2 < min_dist2:
+			min_dist2 = d2
+			closest_centroid_index = j
 
-	centroids = [Point(rand(W), rand(H)) for _ in range(SERVERS_AMOUNT)]
+	return closest_centroid_index
+
+
+def update_centroids(positions, prev_centroids):
+	centroids = [Point(c.x, c.y) for c in prev_centroids]
 
 	for iter in range(1, 21):
 		k = len(centroids)
 		closest = [[] for j in range(k)]
 		J = 0
 		for p in positions:
-			closest_centroid_index = 0
-			min_dist2 = dist2(p, centroids[0])
-			for j in range(1, k):
-				d2 = dist2(p, centroids[j])
-				if d2 < min_dist2:
-					min_dist2 = d2
-					closest_centroid_index = j
-
+			closest_centroid_index = get_closest_centroid(p, centroids)
 			closest[closest_centroid_index].append(p)
-			J += min_dist2
+
+			J += dist2(p, centroids[closest_centroid_index])
 
 		for j in range(k-1, -1, -1):
 			if len(closest[j]) == 0:
@@ -60,8 +65,24 @@ def main():
 				new_location.y += closest[j][i].y
 			centroids[j] = Point(new_location.x / l, new_location.y / l)
 
-		J /= m
+		J /= len(positions)
 		print(f"After {iter} iterations: Error is {J}")
+
+	return centroids
+
+def simulate_algo():
+	W = 800
+	H = 600
+	SERVERS_AMOUNT = 1
+	PLAYERS_AMOUNT = 100
+
+	def rand(n):
+		return random.randrange(n)
+
+	positions = [Point(rand(W), rand(H)) for _ in range(PLAYERS_AMOUNT)]
+	centroids = [Point(rand(W), rand(H)) for _ in range(SERVERS_AMOUNT)]
+
+	centroids = update_centroids(positions, centroids)
 
 	print(len(centroids))
 
@@ -85,6 +106,18 @@ def main():
 		pygame.display.flip()
 
 	pygame.quit()
+
+def main():
+	simulate_algo()
+	# servers: list[NormalServer] = []
+	# login_ip, login_port = "", 0
+	# login_server = Server(login_ip, login_port)
+	#
+	# sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	# sock.bind(("0.0.0.0", 17120))
+	#
+	# while True:
+	# 	data, address = sock.recvfrom(1024)
 
 
 
