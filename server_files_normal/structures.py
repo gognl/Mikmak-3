@@ -1,10 +1,21 @@
-from typing import Tuple
+from typing import Tuple, List
 
 from server_files_normal.serializable import Serializable
 
 class Client:
     class Output:
+
         class StateUpdate(Serializable):
+            """Like StateUpdate but with an acknowledgement number"""
+            def __init__(self, ack: int, state_update: 'Client.Output.StateUpdateNoAck'):
+                super().__init__(ser=b'')
+                self.ack: int = ack
+                self.state_update: Client.Output.StateUpdateNoAck = state_update
+
+            def _get_attr(self) -> dict:
+                return {'ack': (int, 'u_4'), 'state_update': (Client.Output.StateUpdateNoAck, 'o')}
+
+        class StateUpdateNoAck(Serializable):
             """ A class that describes the message to the client, which contains the current state of relevant game changes"""
 
             def __init__(self, new_changes: Tuple['Client.Output.EntityUpdate']):
@@ -59,13 +70,12 @@ class Client:
                 if s != b'':
                     return
 
+                self.seq: int = None
                 changes = kwargs.pop('changes')
-                self.player_changes = changes[0]
-                self.enemies_changes = changes[1]
-                self.items_changes = changes[2]
+                self.player_changes: List[Client.Input.EntityUpdate] = changes[0]
 
             def _get_attr(self) -> dict:
-                return {'player_changes': (list, (Client.Input.EntityUpdate, 'o'))}
+                return {'seq': (int, 'u_4'), 'player_changes': (list, (Client.Input.EntityUpdate, 'o'))}
 
         class EntityUpdate(Serializable):
             """
