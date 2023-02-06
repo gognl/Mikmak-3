@@ -1,20 +1,22 @@
+import math
 import random
 import threading
+import time
 from collections import deque
 import pygame
 from structures import *
 
 
-def get_closest_centroid(p: Point, centroids: list[Point]) -> int:
-	closest_centroid_index = 0
-	min_dist2 = Point.dist2(p, centroids[0])
-	for j in range(1, len(centroids)):
-		d2 = Point.dist2(p, centroids[j])
+def get_closest_server(p: Point, regions_division: dict[Server, Region]) -> Server:
+	closest_server = None
+	min_dist2 = math.inf
+	for server in regions_division:
+		d2 = Point.dist2(p, regions_division[server].c)
 		if d2 < min_dist2:
 			min_dist2 = d2
-			closest_centroid_index = j
+			closest_server = server
 
-	return closest_centroid_index
+	return closest_server
 
 
 def update_centroids(positions, prev_centroids):
@@ -48,49 +50,71 @@ def update_centroids(positions, prev_centroids):
 	return centroids
 
 
-def simulate_algo():
-	W = 800
-	H = 600
-	SERVERS_AMOUNT = 1
-	PLAYERS_AMOUNT = 100
+def rand(n):
+	return random.randrange(n)
 
-	def rand(n):
-		return random.randrange(n)
+amount_servers = 5
+W = 800#40960
+H = 600#30720
 
-	positions = [Point(rand(W), rand(H)) for _ in range(PLAYERS_AMOUNT)]
-	centroids = [Point(rand(W), rand(H)) for _ in range(SERVERS_AMOUNT)]
+normal_servers = [Server("0.0.0.0", i) for i in range(amount_servers)]
+regions_division = {server: Region(Point(rand(W), rand(H)), -1, -1) for server in normal_servers}
+players = [Player(Point(rand(W), rand(H)), 0) for _ in range(100)]
 
-	centroids = update_centroids(positions, centroids)
+def update_regions(players: list[Player], regions_division: dict[Server, Region]):
+	while True:
+		players_copy = players.copy()
 
-	print(len(centroids))
+		regions_div_copy = {server: regions_division[server] for server in normal_servers}
+		players_belong: dict[Server, list[Player]] = {}
 
-	pygame.init()
-	screen = pygame.display.set_mode((800, 600))
+		for iter in range(1, 21):
+			players_belong, changed_regions_div = {}, {}
+			for server in normal_servers:
+				players_belong[server] = []
+				changed_regions_div[server] = Region(Point(0, 0), -1, -1)
 
-	running = True
-	while running:
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				running = False
+			for player in players_copy:
+				closest_server = get_closest_server(player.pos, regions_div_copy)
+				changed_regions_div[closest_server].c.add(player.pos)
+				players_belong[closest_server].append(player)
 
-		screen.fill((255, 255, 255))
+			for server in normal_servers:
+				if len(players_belong[server]) == 0:
+					# server is not used
+					continue
+				changed_regions_div[server].c.div(len(players_belong[server]))
 
-		for p in positions:
-			pygame.draw.circle(screen, (0, 0, 255), (p.x, p.y), 3)
+				regions_div_copy[server] = changed_regions_div[server]
 
-		for c in centroids:
-			pygame.draw.circle(screen, (255, 0, 0), (c.x, c.y), 2)
+		for server in normal_servers:
+			max_dx, max_dy = -math.inf, -math.inf
+			for player in players_belong[server]:
+				dx = abs(player.pos.x - regions_div_copy[server].c.x)
+				if dx > max_dx:
+					max_dx = dx
 
-		pygame.display.flip()
+				dy = abs(player.pos.y - regions_div_copy[server].c.y)
+				if dy > max_dy:
+					max_dy = dy
 
-	pygame.quit()
+			regions_div_copy[server].rw, regions_div_copy[server].rh = max_dx, max_dy
+
+		for server in normal_servers:
+			regions_division[server] = regions_div_copy[server]
+
+		time.sleep(5)
+
+		
+def find_suitable_server(player: Player) -> Server:
+	for server in normal_servers:
+		if player.pos in regions_division[server]:
+			return server
+
+	return None  # not arriving here
 
 
-def find_suitable_server(client: Client) -> Server:
-	pass
-
-
-def look_for_new_client(new_clients_q: deque[Client], msgs_to_clients_q: deque[MsgToClient]):
+def look_for_new_client(new_clients_q: deque[Player], msgs_to_clients_q: deque[MsgToClient]):
 	while True:
 		if len(new_clients_q) == 0:
 			continue
@@ -101,11 +125,14 @@ def look_for_new_client(new_clients_q: deque[Client], msgs_to_clients_q: deque[M
 		msgs_to_clients_q.append(msg)
 
 
-def LB_main(new_clients_q: deque[Client], msgs_to_clients_q: deque[MsgToClient]):
+def LB_main(new_players_q: deque[Player], msgs_to_clients_q: deque[MsgToClient]):
 	threads: [threading.Thread] = []
 
-	look_for_new_client_Thread = threading.Thread(target=look_for_new_client, args=(new_clients_q, msgs_to_clients_q))
+	look_for_new_client_Thread = threading.Thread(target=look_for_new_client, args=(new_players_q, msgs_to_clients_q))
 	threads.append(look_for_new_client_Thread)
+
+	update_regions_Thread = threading.Thread(target=update_regions, args=(players, regions_division))
+	threads.append(update_regions_Thread)
 
 	for thread in threads:
 		thread.start()
