@@ -51,6 +51,14 @@ class Player(Entity):
         # Server
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
 
+        # Stats
+        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}
+        self.health = self.stats['health'] * 0.5
+        self.energy = self.stats['energy'] * 0.8
+        self.exp = 123
+        # Speed of the player
+        self.speed = self.stats['speed']
+
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = None

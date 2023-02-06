@@ -87,7 +87,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.enemies[entity_id].animate()
             world.enemies[entity_id].update_pos(entity_pos)
         else:
-            world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id)
+            world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id, world.obstacle_sprites)
 
     # Clear the changes deque; Leave only the changes made after the acknowledged CMD
     while changes and changes[0].seq < update_msg.ack:
