@@ -205,7 +205,7 @@ def close_game(server_socket: socket.socket) -> None:
 
 
 def main():
-    server_addr: (str, int) = ('127.0.0.1', 34863)  # TEMPORARY
+    server_addr: (str, int) = ('127.0.0.1', 34865)  # TEMPORARY
 
     # Initialize the game
     screen, clock, world = initialize_game()

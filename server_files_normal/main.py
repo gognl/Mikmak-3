@@ -72,7 +72,7 @@ def main():
 	login_sock, lb_manager = initialize_connection(login_addr, lb_addr)
 
 	server_sock: socket.socket = socket.socket()
-	server_sock.bind(('0.0.0.0', 34863))
+	server_sock.bind(('0.0.0.0', 34865))
 	server_sock.listen()
 
 	client_managers: deque[ClientManager] = deque([])
