@@ -5,7 +5,7 @@ from client_files.code.entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, entity_id) -> None:
+    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, create_inventory, destroy_inventory, entity_id) -> None:
         super().__init__(groups, entity_id)
 
         # Load player sprite from files
@@ -67,6 +67,15 @@ class Player(Entity):
         # Mouse press
         self.release_mouse = False
 
+        # Inventory
+        self.create_inventory = create_inventory
+        self.destroy_inventory = destroy_inventory
+        self.inventory_active: bool = False
+        self.can_change_inventory: bool = True
+        self.inventory_time: int = 0
+        self.inventory_cooldown: int = 100
+        self.last_inventory: bool = True
+
     def import_player_assets(self) -> None:
         """
         Import all player assets
@@ -103,6 +112,20 @@ class Player(Entity):
             self.status = 'right'
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
+
+        if keys[pygame.K_e]:
+            if self.can_change_inventory and not self.last_inventory:
+                if not self.inventory_active:
+                    self.create_inventory()
+                else:
+                    self.destroy_inventory()
+
+                self.inventory_active = not self.inventory_active
+                self.can_change_inventory = False
+                self.inventory_time = pygame.time.get_ticks()
+            self.last_inventory = True
+        else:
+            self.last_inventory = False
 
         if self.release_mouse and not mouse[0]:
             self.release_mouse = False
@@ -179,6 +202,10 @@ class Player(Entity):
         if not self.can_shoot:
             if current_time - self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
+
+        if not self.can_change_inventory:
+            if current_time - self.inventory_time >= self.inventory_cooldown:
+                self.can_change_inventory = True
 
     def animate(self) -> None:
         """

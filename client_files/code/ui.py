@@ -19,6 +19,9 @@ class UI:
 			weapon = pygame.image.load(path).convert_alpha()
 			self.weapon_graphics.append(weapon)
 
+		# Inventory
+		self.inventory_active: bool = False
+
 	def show_bar(self, current, max_amount, bg_rect, color):
 		# Draw background
 		pygame.draw.rect(self.display_surface, UI_BG_COLOR, bg_rect)
@@ -37,6 +40,8 @@ class UI:
 		text_surf = self.font.render(str(int(exp)), False, TEXT_COLOR)
 		x = self.display_surface.get_size()[0] - 20
 		y = self.display_surface.get_size()[1] - 20
+		if self.inventory_active:
+			x -= INVENTORY_WIDTH
 		text_rect = text_surf.get_rect(bottomright=(x, y))
 
 		pygame.draw.rect(self.display_surface, UI_BG_COLOR, text_rect.inflate(20, 20))
@@ -60,6 +65,13 @@ class UI:
 
 		self.display_surface.blit(weapon_surf, weapon_rect)
 
+	def show_inventory(self):
+		x = self.display_surface.get_size()[0] - INVENTORY_WIDTH
+		y = 0
+
+		rect = pygame.Rect(x, y, INVENTORY_WIDTH, self.display_surface.get_size()[1])
+		pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
+
 	def display(self, player):
 		# Creates the bars
 		self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
@@ -71,4 +83,14 @@ class UI:
 
 		# after we add magic
 		# Create magic box
-		#self.selection_box(93, 630)
+		# self.selection_box(93, 630)
+
+		# Inventory
+		if self.inventory_active:
+			self.show_inventory()
+
+	def create_inventory(self):
+		self.inventory_active = True
+
+	def destroy_inventory(self):
+		self.inventory_active = False
