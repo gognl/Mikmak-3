@@ -159,19 +159,8 @@ class World:
                                 elif style == 'boundary':
                                     Tile((x, y), [self.obstacle_sprites], 'barrier', False)
 
-        # TODO
-        """
-        in inventory:
-        name of user
-        items sections
-        weapons section
-        
-        opening screen - username and password
-        """
-
         # Display all visible sprites
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
-
 
         # Update the obstacle sprites for the player
         self.player.update_obstacles(self.obstacle_sprites)

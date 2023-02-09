@@ -119,6 +119,7 @@ class Player(Entity):
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
 
+        # Move nametag right after moving
         self.nametag_update(self.nametag)
 
         if keys[pygame.K_e]:
@@ -139,20 +140,21 @@ class Player(Entity):
             self.release_mouse = False
 
         if mouse[0] and not self.attacking and not self.release_mouse:
-            if self.weapon_index not in self.on_screen:
-                self.create_attack()
-                self.attacking = True
-                self.release_mouse = True
-                self.attack_time = pygame.time.get_ticks()
-            else:
-                if self.weapon_index == 1:
-                    if self.can_shoot:
-                        self.create_bullet()
-                        self.can_shoot = False
-                        self.shoot_time = pygame.time.get_ticks()
-                elif self.weapon_index == 2:
-                    self.create_kettle()
-                    self.switch_weapon()
+            if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
+                if self.weapon_index not in self.on_screen:
+                    self.create_attack()
+                    self.attacking = True
+                    self.release_mouse = True
+                    self.attack_time = pygame.time.get_ticks()
+                else:
+                    if self.weapon_index == 1:
+                        if self.can_shoot:
+                            self.create_bullet()
+                            self.can_shoot = False
+                            self.shoot_time = pygame.time.get_ticks()
+                    elif self.weapon_index == 2:
+                        self.create_kettle()
+                        self.switch_weapon()
 
         if keys[pygame.K_q] and self.can_switch_weapon and not self.attacking:
             self.switch_weapon()
