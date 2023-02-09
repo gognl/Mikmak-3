@@ -10,7 +10,7 @@ from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
-from client_files.code.ui import UI
+from client_files.code.ui import *
 from client_files.code.structures import *
 
 
@@ -26,6 +26,7 @@ class World:
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.nametags: list[NameTag] = []
 
         # User interface
         self.ui = UI()
@@ -70,9 +71,10 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player((1024, 1024), [self.visible_sprites, self.server_sprites],
+        self.player = Player("gognl", (1024, 1024), [self.visible_sprites, self.server_sprites],
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
-                             self.create_kettle, self.create_inventory, self.destroy_inventory, 0)  # TODO - make starting player position random (or a spawn)
+                             self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
+                             self.nametag_update, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
@@ -111,6 +113,15 @@ class World:
         self.screen_center.x = self.half_width
         self.camera_distance_from_player = list(CAMERA_DISTANCE_FROM_PLAYER)
 
+    def create_nametag(self, player):
+        nametag = NameTag(player)
+        self.nametags.append(nametag)
+
+        return nametag
+
+    def nametag_update(self, nametag):
+        nametag.update(self.camera, self.screen_center)
+
     def run(self) -> Server.Output.StateUpdate:
         """
         Run one world frame
@@ -148,8 +159,19 @@ class World:
                                 elif style == 'boundary':
                                     Tile((x, y), [self.obstacle_sprites], 'barrier', False)
 
+        # TODO
+        """
+        in inventory:
+        name of user
+        items sections
+        weapons section
+        
+        opening screen - username and password
+        """
+
         # Display all visible sprites
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
+
 
         # Update the obstacle sprites for the player
         self.player.update_obstacles(self.obstacle_sprites)
@@ -165,7 +187,10 @@ class World:
             if type(sprite) is Tile:
                 sprite.kill()
 
+        # UI
         self.ui.display(self.player)
+        for nametag in self.nametags:
+            nametag.display()
 
         local_changes = [[], [], []]  # A list of changes made in this tick. 0 - player, 1 - enemies, 2 - items.
         for sprite in self.server_sprites.sprites():

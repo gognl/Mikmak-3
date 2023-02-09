@@ -5,7 +5,7 @@ from client_files.code.entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, create_inventory, destroy_inventory, entity_id) -> None:
+    def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag, nametag_update, entity_id) -> None:
         super().__init__(groups, entity_id)
 
         # Load player sprite from files
@@ -76,6 +76,12 @@ class Player(Entity):
         self.inventory_cooldown: int = 100
         self.last_inventory: bool = True
 
+        # Name tag
+        self.name: str = name
+        self.create_nametag = create_nametag
+        self.nametag = create_nametag(self)
+        self.nametag_update = nametag_update
+
     def import_player_assets(self) -> None:
         """
         Import all player assets
@@ -112,6 +118,8 @@ class Player(Entity):
             self.status = 'right'
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
+
+        self.nametag_update(self.nametag)
 
         if keys[pygame.K_e]:
             if self.can_change_inventory and not self.last_inventory:

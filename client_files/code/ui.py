@@ -94,3 +94,36 @@ class UI:
 
 	def destroy_inventory(self):
 		self.inventory_active = False
+
+
+class NameTag:
+	def __init__(self, player):
+		self.player = player
+		self.name = self.player.name
+
+		self.display_surface = pygame.display.get_surface()
+		self.font = pygame.font.Font(UI_FONT, NAMETAG_FONT_SIZE)
+
+		# Initial position
+		self.text, self.rect = self.initialize_rect()
+
+	def initialize_rect(self):
+		text = self.font.render(self.name, False, TEXT_COLOR)
+		x = self.player.rect.centerx - int(text.get_rect().width / 2)
+		y = self.player.rect.top - NAMETAG_HEIGHT
+
+		rect = text.get_rect(topleft=(x, y))
+
+		print(text, rect)
+		return text, rect
+
+	def update(self, camera, screen_center):
+		x = self.player.rect.centerx - int(self.text.get_rect().width / 2) - camera.x + screen_center.x
+		y = self.player.rect.top - NAMETAG_HEIGHT - camera.y + screen_center.y
+
+		self.rect = self.text.get_rect(topleft=(x, y))
+
+	def display(self):
+		pygame.draw.rect(self.display_surface, UI_BG_COLOR, self.rect.inflate(20, 10))
+		self.display_surface.blit(self.text, self.rect)
+		pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, self.rect.inflate(20, 10), 3)
