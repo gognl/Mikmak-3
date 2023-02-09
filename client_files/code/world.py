@@ -10,7 +10,7 @@ from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
-from client_files.code.ui import UI
+from client_files.code.ui import *
 from client_files.code.structures import *
 
 
@@ -26,6 +26,7 @@ class World:
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.nametags: list[NameTag] = []
 
         # User interface
         self.ui = UI()
@@ -40,6 +41,7 @@ class World:
 
         # Camera position for drawing offset
         self.camera: pygame.math.Vector2 = pygame.math.Vector2()
+        self.camera_distance_from_player: list[int, int] = list(CAMERA_DISTANCE_FROM_PLAYER)
 
         # Player before creation
         self.player: Player = None
@@ -69,9 +71,10 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player((1024, 1024), [self.visible_sprites, self.server_sprites],
+        self.player = Player("gognl", (1024, 1024), [self.visible_sprites, self.server_sprites],
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
-                             self.create_kettle, 0)  # TODO - make starting player position random (or a spawn)
+                             self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
+                             self.nametag_update, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
@@ -99,6 +102,25 @@ class World:
                    pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
                                             self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', 'explode', True)
+
+    def create_inventory(self):
+        self.ui.create_inventory()
+        self.screen_center.x = self.half_width - int(INVENTORY_WIDTH / 2)
+        self.camera_distance_from_player[0] = int(self.camera_distance_from_player[0] / 2)
+
+    def destroy_inventory(self):
+        self.ui.destroy_inventory()
+        self.screen_center.x = self.half_width
+        self.camera_distance_from_player = list(CAMERA_DISTANCE_FROM_PLAYER)
+
+    def create_nametag(self, player):
+        nametag = NameTag(player)
+        self.nametags.append(nametag)
+
+        return nametag
+
+    def nametag_update(self, nametag):
+        nametag.update(self.camera, self.screen_center)
 
     def run(self) -> Server.Output.StateUpdate:
         """
@@ -154,7 +176,10 @@ class World:
             if type(sprite) is Tile:
                 sprite.kill()
 
+        # UI
         self.ui.display(self.player)
+        for nametag in self.nametags:
+            nametag.display()
 
         local_changes = [[], [], []]  # A list of changes made in this tick. 0 - player, 1 - enemies, 2 - items.
         for sprite in self.server_sprites.sprites():
@@ -167,7 +192,6 @@ class World:
 
         return Server.Output.StateUpdate(changes=local_changes)
 
-
     def update_camera(self) -> None:
         """
         update the camera position
@@ -176,20 +200,18 @@ class World:
         # Figure out offset based on camera position
 
         # X axis
-        if abs(self.player.rect.centerx - self.camera.x) > CAMERA_DISTANCE_FROM_PLAYER[
-            0]:  # If the camera is too far from the player
+        if abs(self.player.rect.centerx - self.camera.x) > self.camera_distance_from_player[0]:  # If the camera is too far from the player
             if self.player.rect.centerx > self.camera.x:  # Move the camera from to the left of the bound if it's further left than the player
-                self.camera.x = self.player.rect.centerx - CAMERA_DISTANCE_FROM_PLAYER[0]
+                self.camera.x = self.player.rect.centerx - self.camera_distance_from_player[0]
             else:  # Move the camera from to the right of the bound if it's further right than the player
-                self.camera.x = self.player.rect.centerx + CAMERA_DISTANCE_FROM_PLAYER[0]
+                self.camera.x = self.player.rect.centerx + self.camera_distance_from_player[0]
 
         # Y axis
-        if abs(self.player.rect.centery - self.camera.y) > CAMERA_DISTANCE_FROM_PLAYER[
-            1]:  # If the camera is too far from the player
+        if abs(self.player.rect.centery - self.camera.y) > self.camera_distance_from_player[1]:  # If the camera is too far from the player
             if self.player.rect.centery > self.camera.y:  # Move the camera from to the top of the bound if it's further up than the player
-                self.camera.y = self.player.rect.centery - CAMERA_DISTANCE_FROM_PLAYER[1]
+                self.camera.y = self.player.rect.centery - self.camera_distance_from_player[1]
             else:  # Move the camera from to the bottom of the bound if it's further down than the player
-                self.camera.y = self.player.rect.centery + CAMERA_DISTANCE_FROM_PLAYER[1]
+                self.camera.y = self.player.rect.centery + self.camera_distance_from_player[1]
 
     def spawn_enemies(self, amount: int) -> None:  # TODO: should be random, dont spawn on water/player, collidable block
 

@@ -16,13 +16,17 @@ weapon_data = {
 	'nerf': {'cooldown': 100, 'damage': 35, 'graphic': '../graphics/weapons/nerf/full.png'},
 	'kettle': {'cooldown': 100, 'damage': 25, 'graphic': '../graphics/weapons/kettle/full.png'}
 }
+
 # UI
+UI_FONT = '../graphics/font/joystix.ttf'
+UI_FONT_SIZE = 18
+NAMETAG_FONT_SIZE = 12
 BAR_HEIGHT = 20
 HEALTH_BAR_WIDTH = 200
 ENERGY_BAR_WIDTH = 140
 ITEM_BOX_SIZE = 80
-UI_FONT = '../graphics/font/joystix.ttf'
-UI_FONT_SIZE = 18
+INVENTORY_WIDTH = 300
+NAMETAG_HEIGHT = 32
 
 # general colors
 WATER_COLOR = '#71ddee'
