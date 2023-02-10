@@ -23,7 +23,7 @@ class GameManager(threading.Thread):
 		self.enemies: pygame.sprite.Group = pygame.sprite.Group()
 
 		# TODO temporary
-		for i in range(20):
+		for i in range(10):
 			pos = (randint(1000, 2000), randint(1000, 2000))
 			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies,), entity_id=i)
 

@@ -1,6 +1,7 @@
 import socket
 import threading
 from collections import deque
+from struct import unpack, pack
 from typing import Union
 
 from server_files_normal.game.player import Player
@@ -33,13 +34,17 @@ class ClientManager(threading.Thread):
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
-        data = self.client_sock.recv(1024)
+        size: int = unpack("<H", self.client_sock.recv(2))[0]
+        # TODO maybe decrypt here too
+        data = self.client_sock.recv(size)
         # TODO decrypt here
         return data
 
     def _send_pkt(self, pkt: bytes):
         """Encrypts and then sends a packet to the client"""
+        size: bytes = pack("<H", len(pkt))
         # TODO encrypt here
+        self.client_sock.send(size)
         self.client_sock.send(pkt)
 
     def send_msg(self, changes: Client.Output.StateUpdateNoAck):
