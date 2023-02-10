@@ -8,8 +8,6 @@ class Tile(pygame.sprite.Sprite):
 
         self.sprite_type = sprite_type
 
-        self.sprite_type = sprite_type
-
         self.spawnable = spawnable
 
         # Load image from files

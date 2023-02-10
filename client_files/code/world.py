@@ -1,6 +1,7 @@
 import random
 import pygame
 from typing import Dict
+from client_files.code.item import Item
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
@@ -24,6 +25,7 @@ class World:
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.item_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.nametags: list[NameTag] = []
 
         # User interface
@@ -72,7 +74,7 @@ class World:
         self.player = Player("gognl", (1024, 1024), [self.visible_sprites, self.server_sprites],
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
-                             self.nametag_update, 0)  # TODO - make starting player position random (or a spawn)
+                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
@@ -80,6 +82,9 @@ class World:
 
         # Spawn enemies
         self.spawn_enemies(100)  # TODO: enemy count, spawn more if under 100
+
+        # Spawn items
+        self.spawn_items(1000)
 
     def create_attack(self) -> None:
         self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
@@ -117,8 +122,16 @@ class World:
 
         return nametag
 
+    def create_dropped_item(self, name, pos):
+        if int(self.layout['floor'][pos[0] // 64][pos[1] // 64]) in SPAWNABLE_TILES:
+            Item(name, (self.visible_sprites, self.item_sprites), pos)
+        # TODO - add else if not spawnable
+
     def nametag_update(self, nametag):
         nametag.update(self.camera, self.screen_center)
+
+    def get_inventory_box_pressed(self, mouse):
+        return self.ui.get_inventory_box_pressed(mouse)
 
     def run(self) -> Server.Output.StateUpdate:
         """
@@ -162,6 +175,7 @@ class World:
 
         # Update the obstacle sprites for the player
         self.player.update_obstacles(self.obstacle_sprites)
+        self.player.update_items(self.item_sprites)
         for projectile in self.projectile_sprites:
             projectile.update_obstacles(self.obstacle_sprites)
 
@@ -212,7 +226,6 @@ class World:
                 self.camera.y = self.player.rect.centery + self.camera_distance_from_player[1]
 
     def spawn_enemies(self, amount: int) -> None:  # TODO: should be random, dont spawn on water/player, collidable block
-
         for enemy in range(amount):
             random_x = random.randint(0, 1280 * 40 // 64 - 1)
             random_y = random.randint(0, 720 * 40 // 64 - 1)
@@ -220,6 +233,17 @@ class World:
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
                 Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?
+            # TODO - add else if not spawnable
+
+    def spawn_items(self, amount: int) -> None:
+        for item in range(amount):
+            random_x = random.randint(20, 21)
+            random_y = random.randint(20, 21)
+            name = item_names[int(random.randint(0, len(item_names) - 1))]
+
+            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
+                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
+            # TODO - add else if not spawnable
 
 
 class GroupYSort(pygame.sprite.Group):
