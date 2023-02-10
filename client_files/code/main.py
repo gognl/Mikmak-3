@@ -7,6 +7,7 @@ from client_files.code.structures import *
 from client_files.code.settings import *
 from client_files.code.world import World
 from client_files.code.enemy import Enemy
+from client_files.code.title import Title
 
 
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
@@ -30,6 +31,7 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
     pkts_handler.start()
 
     return server_socket, updates_queue, client_id
+
 
 def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpdate):
     """Sends a message to the server (and encrypts it)"""
@@ -107,7 +109,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     """
     Initializes the game.
-    :return: screen, clock
+    :return: screen, clock, world
     """
     pygame.init()
     f = (SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -162,6 +164,28 @@ def run_game(*args) -> None:  # TODO
 
     # The changes queue; Push to it data about the changes after every cmd sent to the server
     reported_changes: deque[Server.Output.StateUpdate] = deque()
+
+    # Opening screen loop
+    running: bool = True
+    title: Title = Title()
+    while running:
+        for event in pygame.event.get():
+            if event.type == update_required_event:
+                update_game(event.msg, reported_changes, client_id, world)
+            elif event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    running = False
+
+        # Reset screen to black - delete last frame from screen
+        screen.fill('black')
+
+        running, username, password = title.run()  # TODO - add ip and port (if needed - @goni?)
+        pygame.display.update()
+
+        # Wait for one tick
+        clock.tick(FPS)
 
     # The main game loop
     running: bool = True

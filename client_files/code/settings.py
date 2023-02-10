@@ -16,6 +16,7 @@ weapon_data = {
 	'nerf': {'cooldown': 100, 'damage': 35, 'graphic': '../graphics/weapons/nerf/full.png'},
 	'kettle': {'cooldown': 100, 'damage': 25, 'graphic': '../graphics/weapons/kettle/full.png'}
 }
+
 # UI
 BAR_HEIGHT = 20
 HEALTH_BAR_WIDTH = 200
@@ -34,6 +35,16 @@ TEXT_COLOR = '#EEEEEE'
 HEALTH_COLOR = 'red'
 ENERGY_COLOR = 'blue'
 UI_BORDER_COLOR_ACTIVE = 'gold'
+
+# Openning screen
+TITLE_BG_COLOR = '#71ddee'
+TITLE_FONT = UI_FONT  # TODO - change
+TITLE_FONT_SIZE = 24
+TITLE_TEXT_COLOR = '#EEEEEE'
+BOX_BG_COLOR = '#444444'
+INPUT_BG_COLOR = '#cc99ff'
+BUTTON_BG_COLOR = '#66ff66'
+BUTTON_TEXT_COLOR = '#222222'
 
 # TODO: make the red cow explode
 enemy_data = {
