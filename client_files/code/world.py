@@ -1,6 +1,4 @@
-from collections import deque
 import random
-
 import pygame
 from typing import Dict
 from client_files.code.settings import *
@@ -196,7 +194,7 @@ class World:
         for enemy in range(amount):
             random_x = random.randint(0, 1280 * 40 // 64 - 1)
             random_y = random.randint(0, 720 * 40 // 64 - 1)
-            name = list(enemy_data.keys())[int(random.randint(0, 3))]
+            name = list(enemy_data.keys())[int(random.randint(1, 3))]
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
                 Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?

@@ -6,10 +6,9 @@ from client_files.code.support import *
 
 class Enemy(Entity):
     def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites):
-
         # general setup
         super().__init__(groups, entity_id)
-        self.status = None  # TODO is this needed or not?
+        self.status = None
         self.sprite_type = 'enemy'
 
         # graphics setup
@@ -78,7 +77,7 @@ class Enemy(Entity):
             direction = (player_vec - enemy_vec).normalize()
         else:
             direction = pygame.math.Vector2()
-        return (distance, direction)
+        return distance, direction
 
     def get_status(self, player):
         distance = self.get_player_distance_direction(player)[0]
@@ -95,6 +94,8 @@ class Enemy(Entity):
             print('attack')
         elif self.status == 'move':
             self.direction = self.get_player_distance_direction(player)[1]
+            if self.enemy_name != "other_player":
+                self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
         else:
             self.direction = pygame.math.Vector2()
 
@@ -104,3 +105,14 @@ class Enemy(Entity):
     def enemy_update(self, player):
         self.get_status(player)
         self.actions(player)
+
+
+class TitleEnemy(Enemy):
+    def __init__(self, enemy_name, pos, groups, direction):
+        super().__init__(enemy_name, pos, groups, 0, None)
+
+        self.direction = direction
+        self.image = self.animations['move'][0 if self.direction[0] < 0 else 1]
+
+    def title_move(self):
+        self.rect.x += self.direction[0]

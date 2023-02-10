@@ -1,5 +1,9 @@
 import pygame
+import random
 from client_files.code.settings import *
+from client_files.code.tile import Tile
+from client_files.code.world import GroupYSort
+from client_files.code.enemy import TitleEnemy
 
 
 class Title:
@@ -48,9 +52,32 @@ class Title:
         self.username_selected = False
         self.password_selected = False
 
-    def background(self):
         # Background
-        self.display_surface.fill(TITLE_BG_COLOR)  # TODO - add cows and grass
+        self.visible_sprites = GroupYSort()
+        self.enemies = []
+        self.background_setup()
+
+    def background_setup(self):
+        # Create grass background
+        surface = pygame.image.load('../graphics/tiles/10.png').convert_alpha()
+        for y in range(12):
+            for x in range(20):
+                Tile((x * TILESIZE, y * TILESIZE), [self.visible_sprites], 'floor', True, 0, surface)
+
+    def background(self):
+        self.visible_sprites.custom_draw(pygame.math.Vector2(0, 0), pygame.math.Vector2(0, 0))
+
+        # Create an enemy every frame
+        side = random.randrange(-1, 2, 2)
+        x = (SCREEN_WIDTH if side == 1 else 0) + (side * TILESIZE)
+        y = random.randint(-TILESIZE, SCREEN_HEIGHT + TILESIZE)
+        self.enemies.append(TitleEnemy("white_cow", (x, y), [self.visible_sprites], (-side, 0)))
+
+        for enemy in self.enemies:
+            if enemy.rect.x + enemy.direction[0] > SCREEN_WIDTH + TILESIZE or enemy.rect.x + enemy.direction[0] < -TILESIZE:
+                enemy.kill()
+
+            enemy.title_move()
 
     def display(self):
         self.background()
@@ -106,17 +133,18 @@ class Title:
             if event.type == pygame.QUIT:
                 self.quit = True
             elif event.type == pygame.KEYDOWN:
-                if self.username_selected:
-                    if event.key == pygame.K_BACKSPACE:
-                        self.username = self.username[:-1]
-                    elif len(self.username) < self.max_length:
-                        self.username += str(event.unicode)
+                if event.key != pygame.K_RETURN and event.key != pygame.K_ESCAPE and event.key != pygame.K_TAB:
+                    if self.username_selected:
+                        if event.key == pygame.K_BACKSPACE:
+                            self.username = self.username[:-1]
+                        elif len(self.username) < self.max_length:
+                            self.username += str(event.unicode)
 
-                if self.password_selected:
-                    if event.key == pygame.K_BACKSPACE:
-                        self.password = self.password[:-1]
-                    elif len(self.password) < self.max_length:
-                        self.password += str(event.unicode)
+                    if self.password_selected:
+                        if event.key == pygame.K_BACKSPACE:
+                            self.password = self.password[:-1]
+                        elif len(self.password) < self.max_length:
+                            self.password += str(event.unicode)
 
         # Update text on screen
         # Username
@@ -130,5 +158,10 @@ class Title:
         self.mouse()
         self.input()
         self.display()
+
+        # Delete all enemies if join button is pressed
+        if not self.running:
+            for sprite in self.visible_sprites:
+                sprite.kill()
 
         return self.quit, self.running, self.username, self.password
