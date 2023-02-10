@@ -5,7 +5,7 @@ from client_files.code.entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, entity_id) -> None:
+    def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag, nametag_update, entity_id) -> None:
         super().__init__(groups, entity_id)
 
         # Load player sprite from files
@@ -51,6 +51,14 @@ class Player(Entity):
         # Server
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
 
+        # Stats
+        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}
+        self.health = self.stats['health'] * 0.5
+        self.energy = self.stats['energy'] * 0.8
+        self.exp = 123
+        # Speed of the player
+        self.speed = self.stats['speed']
+
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = None
@@ -58,6 +66,21 @@ class Player(Entity):
 
         # Mouse press
         self.release_mouse = False
+
+        # Inventory
+        self.create_inventory = create_inventory
+        self.destroy_inventory = destroy_inventory
+        self.inventory_active: bool = False
+        self.can_change_inventory: bool = True
+        self.inventory_time: int = 0
+        self.inventory_cooldown: int = 100
+        self.last_inventory: bool = True
+
+        # Name tag
+        self.name: str = name
+        self.create_nametag = create_nametag
+        self.nametag = create_nametag(self)
+        self.nametag_update = nametag_update
 
     def import_player_assets(self) -> None:
         """
@@ -96,24 +119,42 @@ class Player(Entity):
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
 
+        # Move nametag right after moving
+        self.nametag_update(self.nametag)
+
+        if keys[pygame.K_e]:
+            if self.can_change_inventory and not self.last_inventory:
+                if not self.inventory_active:
+                    self.create_inventory()
+                else:
+                    self.destroy_inventory()
+
+                self.inventory_active = not self.inventory_active
+                self.can_change_inventory = False
+                self.inventory_time = pygame.time.get_ticks()
+            self.last_inventory = True
+        else:
+            self.last_inventory = False
+
         if self.release_mouse and not mouse[0]:
             self.release_mouse = False
 
         if mouse[0] and not self.attacking and not self.release_mouse:
-            if self.weapon_index not in self.on_screen:
-                self.create_attack()
-                self.attacking = True
-                self.release_mouse = True
-                self.attack_time = pygame.time.get_ticks()
-            else:
-                if self.weapon_index == 1:
-                    if self.can_shoot:
-                        self.create_bullet()
-                        self.can_shoot = False
-                        self.shoot_time = pygame.time.get_ticks()
-                elif self.weapon_index == 2:
-                    self.create_kettle()
-                    self.switch_weapon()
+            if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
+                if self.weapon_index not in self.on_screen:
+                    self.create_attack()
+                    self.attacking = True
+                    self.release_mouse = True
+                    self.attack_time = pygame.time.get_ticks()
+                else:
+                    if self.weapon_index == 1:
+                        if self.can_shoot:
+                            self.create_bullet()
+                            self.can_shoot = False
+                            self.shoot_time = pygame.time.get_ticks()
+                    elif self.weapon_index == 2:
+                        self.create_kettle()
+                        self.switch_weapon()
 
         if keys[pygame.K_q] and self.can_switch_weapon and not self.attacking:
             self.switch_weapon()
@@ -171,6 +212,10 @@ class Player(Entity):
         if not self.can_shoot:
             if current_time - self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
+
+        if not self.can_change_inventory:
+            if current_time - self.inventory_time >= self.inventory_cooldown:
+                self.can_change_inventory = True
 
     def animate(self) -> None:
         """

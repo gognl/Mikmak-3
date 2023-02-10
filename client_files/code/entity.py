@@ -57,4 +57,3 @@ class Entity(pygame.sprite.Sprite):
 							self.hitbox.top = sprite.hitbox.bottom
 						elif sprite.direction.y < 0:  # Sprite going up
 							self.hitbox.bottom = sprite.hitbox.top
-
