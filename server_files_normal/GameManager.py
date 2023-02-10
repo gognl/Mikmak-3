@@ -77,11 +77,9 @@ class GameManager(threading.Thread):
 
 			# Run enemies simulation
 			enemy_changes = []
+			self.enemies.update()
 			for enemy in self.enemies.sprites():
-				random_x_change = randint(-1, 1)
-				random_y_change = randint(-1, 1)
-				enemy.rect.x += random_x_change
-				enemy.rect.y += random_y_change
+				enemy.enemy_update(self.players)
 				changes = {'pos': (enemy.rect.x, enemy.rect.y)}
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, changes=changes))
 
