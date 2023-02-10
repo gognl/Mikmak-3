@@ -39,6 +39,16 @@ HEALTH_COLOR = 'red'
 ENERGY_COLOR = 'blue'
 UI_BORDER_COLOR_ACTIVE = 'gold'
 
+# Openning screen
+TITLE_BG_COLOR = '#71ddee'
+TITLE_FONT = UI_FONT  # TODO - change
+TITLE_FONT_SIZE = 24
+TITLE_TEXT_COLOR = '#EEEEEE'
+BOX_BG_COLOR = '#444444'
+INPUT_BG_COLOR = '#cc99ff'
+BUTTON_BG_COLOR = '#66ff66'
+BUTTON_TEXT_COLOR = '#222222'
+
 # TODO: make the red cow explode
 enemy_data = {
 	'other_player': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
@@ -46,3 +56,5 @@ enemy_data = {
 	'green_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
 	'white_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300}
 }
+
+
