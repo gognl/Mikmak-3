@@ -169,23 +169,17 @@ def run_game(*args) -> None:  # TODO
     running: bool = True
     title: Title = Title()
     while running:
-        for event in pygame.event.get():
-            if event.type == update_required_event:
-                update_game(event.msg, reported_changes, client_id, world)
-            elif event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    running = False
-
         # Reset screen to black - delete last frame from screen
         screen.fill('black')
 
-        running, username, password = title.run()  # TODO - add ip and port (if needed - @goni?)
+        quit_response, running, username, password = title.run()  # TODO - add ip and port (if needed - @goni?)
         pygame.display.update()
 
         # Wait for one tick
         clock.tick(FPS)
+
+        if quit_response:
+            pygame.quit()
 
     # The main game loop
     running: bool = True
