@@ -2,6 +2,7 @@ import pygame
 from client_files.code.settings import *
 from client_files.code.support import *
 from client_files.code.entity import Entity
+from client_files.code.item import Item
 
 
 class Player(Entity):
@@ -81,6 +82,10 @@ class Player(Entity):
         self.create_nametag = create_nametag
         self.nametag = create_nametag(self)
         self.nametag_update = nametag_update
+
+        # Items
+        self.item_sprites = None
+        self.inventory_items = {}
 
     def import_player_assets(self) -> None:
         """
@@ -252,8 +257,10 @@ class Player(Entity):
         self.animate()
 
         # Apply keyboard inputs
-
         self.move(self.speed)
+
+        # Pick up items
+        self.item_collision()
 
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
         if self.changes == previous_state:
@@ -266,8 +273,22 @@ class Player(Entity):
         """
         self.obstacle_sprites = obstacle_sprites
 
+    def update_items(self, item_sprites: pygame.sprite.Group) -> None:
+        self.item_sprites = item_sprites
+
     def get_pos(self) -> (int, int):
         """
         Returns the player's position
         """
         return self.rect.x, self.rect.y
+
+    def item_collision(self):
+        for item in self.item_sprites:
+            if self.rect.colliderect(item.rect):
+                if item.can_pick_up:
+                    if item.name in list(self.inventory_items.keys()):
+                        self.inventory_items[item.name] += 1
+                        item.kill()
+                    elif len(self.inventory_items) < INVENTORY_ITEMS:
+                        self.inventory_items[item.name] = 1
+                        item.kill()
