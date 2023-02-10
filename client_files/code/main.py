@@ -59,9 +59,6 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
         # Get a packet from the server; convert it to a ServerMessage object.
         ser: bytes = get_server_pkt(server_socket)
         msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
-        #print(f'\ndata: {ser}\np_changes: {msg.state_update.player_changes}\n')
-        if msg.state_update.player_changes is None:
-            print(f'FOUND ERROR CAUSING THING\nser: {ser}\n\tack: {msg.ack}\n\tstate:\n\t\tp: {msg.state_update.player_changes}\n\t\te: {msg.state_update.enemy_changes}')
         updates_queue.put(msg)
 
 
@@ -87,7 +84,6 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.player.rect.x = entity_pos[0]
             world.player.rect.y = entity_pos[1]
             world.player.status = entity_status
-            world.player.animate()
         elif entity_id in world.enemies:
             world.enemies[entity_id].status = entity_status
             world.enemies[entity_id].animate()
@@ -116,6 +112,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.player.weapon = player_change.weapon
             world.player.status = player_change.status
         # TODO also update enemies and items (cmd.enemies_changes, cmd.items_changes)
+
+    world.player.animate()
 
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):

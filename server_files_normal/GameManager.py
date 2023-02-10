@@ -67,7 +67,6 @@ class GameManager(threading.Thread):
 		# Create custom events
 		cmd_received_event = pygame.USEREVENT + 1
 
-		temp_c: int = 0
 		running: bool = True
 		while running:
 			for event in pygame.event.get():
@@ -84,10 +83,7 @@ class GameManager(threading.Thread):
 				changes = {'pos': (enemy.rect.x, enemy.rect.y)}
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, changes=changes))
 			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck((), tuple(enemy_changes))
-			if temp_c == 0:
-				self.broadcast_msg(state_update)
-				temp_c = 30
-			temp_c -= 1
+			self.broadcast_msg(state_update)
 
 			self.clock.tick(FPS)
 
