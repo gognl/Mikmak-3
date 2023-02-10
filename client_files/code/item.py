@@ -1,4 +1,5 @@
 import pygame
+from client_files.code.settings import *
 
 
 class Item(pygame.sprite.Sprite):
@@ -15,7 +16,7 @@ class Item(pygame.sprite.Sprite):
 
         # Pick up cooldown
         self.spawn_time = pygame.time.get_ticks()
-        self.pick_up_cooldown = 200
+        self.pick_up_cooldown = ITEM_PICK_UP_COOLDOWN
         self.can_pick_up = False
 
     def update(self):

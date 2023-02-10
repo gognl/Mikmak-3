@@ -74,7 +74,7 @@ class World:
         self.player = Player("gognl", (1024, 1024), [self.visible_sprites, self.server_sprites],
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
-                             self.nametag_update, 0)  # TODO - make starting player position random (or a spawn)
+                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, 0)  # TODO - make starting player position random (or a spawn)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
@@ -84,7 +84,7 @@ class World:
         self.spawn_enemies(100)  # TODO: enemy count, spawn more if under 100
 
         # Spawn items
-        self.spawn_items(100)
+        self.spawn_items(1000)
 
     def create_attack(self) -> None:
         self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
@@ -122,8 +122,16 @@ class World:
 
         return nametag
 
+    def create_dropped_item(self, name, pos):
+        if int(self.layout['floor'][pos[0] // 64][pos[1] // 64]) in SPAWNABLE_TILES:
+            Item(name, (self.visible_sprites, self.item_sprites), pos)
+        # TODO - add else if not spawnable
+
     def nametag_update(self, nametag):
         nametag.update(self.camera, self.screen_center)
+
+    def get_inventory_box_pressed(self, mouse):
+        return self.ui.get_inventory_box_pressed(mouse)
 
     def run(self) -> Server.Output.StateUpdate:
         """
@@ -229,8 +237,8 @@ class World:
 
     def spawn_items(self, amount: int) -> None:
         for item in range(amount):
-            random_x = random.randint(20, 30)
-            random_y = random.randint(20, 30)
+            random_x = random.randint(20, 21)
+            random_y = random.randint(20, 21)
             name = item_names[int(random.randint(0, len(item_names) - 1))]
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
