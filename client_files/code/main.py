@@ -3,6 +3,7 @@ import pygame  # Pygame
 from threading import Thread  # Multi-threading
 from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
+from struct import pack, unpack  # serialize
 from client_files.code.structures import *
 from client_files.code.settings import *
 from client_files.code.world import World
@@ -36,7 +37,9 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
 def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpdate):
     """Sends a message to the server (and encrypts it)"""
     data: bytes = msg.serialize()
+    size: bytes = pack("<H", len(data))
     # TODO encrypt here
+    server_socket.send(size)
     server_socket.send(data)
 
 
@@ -45,7 +48,9 @@ def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
     Gets a packet from the server (and decrypts them...)
     :return: The packet from the server.
     """
-    data: bytes = server_socket.recv(1024)
+    size: int = unpack("<H", server_socket.recv(2))[0]
+    # TODO decrypt here too maybe
+    data: bytes = server_socket.recv(size)
     # TODO decrypt here
     return data
 
@@ -57,7 +62,10 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
     """
     while True:
         # Get a packet from the server; convert it to a ServerMessage object.
-        msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=get_server_pkt(server_socket))
+        ser: bytes = get_server_pkt(server_socket)
+        if ser == b'':
+            print('got empty msg')
+        msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
         updates_queue.put(msg)
 
 
@@ -74,22 +82,32 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
     # Update the game according to the update + changes since its ack (and remove them from the queue) - TODO
 
     # Reset to the server state
-    for entity_update in update_msg.state_update.changes:
-        entity_id: int = entity_update.id
-        entity_pos: (int, int) = entity_update.pos
-        entity_status: str = entity_update.status
+    if None in (update_msg.state_update.player_changes, update_msg.state_update.enemy_changes):
+        print(f'Returning from update_game():\n\tplayer_changes: {update_msg.state_update.player_changes}\n\tenemy_changes: {update_msg.state_update.enemy_changes}')
+        return
+    for player_update in update_msg.state_update.player_changes:
+        entity_id: int = player_update.id
+        entity_pos: (int, int) = player_update.pos
+        entity_status: str = player_update.status
 
         if entity_id == client_id:
             world.player.rect.x = entity_pos[0]
             world.player.rect.y = entity_pos[1]
             world.player.status = entity_status
-            world.player.animate()
         elif entity_id in world.enemies:
             world.enemies[entity_id].status = entity_status
             world.enemies[entity_id].animate()
             world.enemies[entity_id].update_pos(entity_pos)
         else:
             world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id, world.obstacle_sprites)
+
+    for enemy_update in update_msg.state_update.enemy_changes:
+        entity_id: int = enemy_update.id
+        entity_pos: (int, int) = enemy_update.pos
+        if entity_id in world.enemies:
+            world.enemies[entity_id].update_pos(entity_pos)
+        else:
+            world.enemies[entity_id] = Enemy('white_cow', entity_pos, [world.visible_sprites, world.obstacle_sprites], entity_id)
 
     # Clear the changes deque; Leave only the changes made after the acknowledged CMD
     while changes and changes[0].seq < update_msg.ack:
@@ -104,6 +122,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.player.weapon = player_change.weapon
             world.player.status = player_change.status
         # TODO also update enemies and items (cmd.enemies_changes, cmd.items_changes)
+
+    world.player.animate()
 
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
@@ -209,10 +229,11 @@ def run_game(*args) -> None:  # TODO
             try:
                 update_msg: Server.Input.StateUpdate = update_queue.get_nowait()
             except Empty:
-                continue
+                pass
+            else:
+                # Post the event
 
-            # Post the event
-            pygame.event.post(pygame.event.Event(update_required_event, {"msg": update_msg}))
+                pygame.event.post(pygame.event.Event(update_required_event, {"msg": update_msg}))
 
     pygame.quit()
 

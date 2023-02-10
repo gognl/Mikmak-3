@@ -16,6 +16,7 @@ TODO:
 
 import socket
 from collections import deque
+from threading import Semaphore
 from server_files_normal.LoadBalancerManager import LoadBalancerManager
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
@@ -44,8 +45,8 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 	return login_sock, lb_manager
 
 
-def accept_new_clients(server_sock, client_managers, game_manager: GameManager):
-	client_id: int = 0
+def accept_new_clients(server_sock, client_managers, game_manager: GameManager, cmd_semaphore: Semaphore):
+	client_id: int = 25
 	while True:
 		client_sock, client_addr = server_sock.accept()
 
@@ -53,7 +54,7 @@ def accept_new_clients(server_sock, client_managers, game_manager: GameManager):
 		client_sock.send(f'id_{client_id}'.encode())
 
 		player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
-		new_client_manager: ClientManager = ClientManager(client_sock, client_id, player)  # Create a new client manager
+		new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore)  # Create a new client manager
 		client_managers.append(new_client_manager)
 		new_client_manager.start()
 		player.client_manager = new_client_manager  # Add the client manager to the player's attributes
@@ -75,11 +76,12 @@ def main():
 	server_sock.bind(('0.0.0.0', 34865))
 	server_sock.listen()
 
+	cmd_semaphore: Semaphore = Semaphore(0)
 	client_managers: deque[ClientManager] = deque([])
-	game_manager = GameManager(client_managers)
+	game_manager = GameManager(client_managers, cmd_semaphore)
 	game_manager.start()
 
-	accept_new_clients(server_sock, client_managers, game_manager)
+	accept_new_clients(server_sock, client_managers, game_manager, cmd_semaphore)
 
 
 if __name__ == '__main__':

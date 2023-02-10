@@ -23,17 +23,19 @@ class Server:
 			"""A class of an incoming message from the server"""
 
 			def __init__(self, **kwargs):
-				self.changes: Tuple[Server.Input.EntityUpdate] = None  # id & update
 
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
 					return
+				self.player_changes: Tuple[Server.Input.PlayerUpdate] = None
+				self.enemy_changes: Tuple[Server.Input.EnemyUpdate] = None
 
 			def _get_attr(self) -> dict:
-				return {'changes': (tuple, (Server.Input.EntityUpdate, 'o'))}
+				return {'player_changes': (tuple, (Server.Input.PlayerUpdate, 'o')),
+						'enemy_changes': (tuple, (Server.Input.EnemyUpdate, 'o'))}
 
-		class EntityUpdate(Serializable):
+		class PlayerUpdate(Serializable):
 			"""
 			A class of messages from the server - input
 			"""
@@ -54,6 +56,18 @@ class Server:
 				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacking': (bool, 'b'),
 						'weapon': (str, 'str'),
 						'status': (str, 'str')}
+
+		class EnemyUpdate(Serializable):
+			def __init__(self, **kwargs):
+				self.id: int = None
+				self.pos: Tuple[int, int] = None
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+
+			def _get_attr(self) -> dict:
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8'))}
 
 	class Output:
 		class StateUpdate(Serializable):

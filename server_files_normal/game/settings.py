@@ -1,4 +1,4 @@
-FPS: int = 120
+FPS: int = 5
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
