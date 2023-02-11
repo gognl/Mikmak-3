@@ -69,7 +69,7 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
         updates_queue.put(msg)
 
 
-def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Output.StateUpdate], client_id: int, world: World) -> None:
+def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
     """
     Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
     :param world: The pygame world.
@@ -99,7 +99,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.enemies[entity_id].animate()
             world.enemies[entity_id].update_pos(entity_pos)
         else:
-            world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id, world.obstacle_sprites)
+            world.enemies[entity_id] = Enemy('other_player', entity_pos, (world.visible_sprites,), entity_id, world.obstacle_sprites)
             world.all_players.append(world.enemies[entity_id])
 
     for enemy_update in update_msg.state_update.enemy_changes:
@@ -108,22 +108,24 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
         if entity_id in world.enemies:
             world.enemies[entity_id].update_pos(entity_pos)
         else:
-            world.enemies[entity_id] = Enemy('white_cow', entity_pos, [world.visible_sprites, world.obstacle_sprites], entity_id, world.obstacle_sprites)
+            world.enemies[entity_id] = Enemy('white_cow', entity_pos, (world.visible_sprites, world.obstacle_sprites, world.server_sprites), entity_id, world.obstacle_sprites)
 
     # Clear the changes deque; Leave only the changes made after the acknowledged CMD
     while changes and changes[0].seq < update_msg.ack:
         changes.popleft()
 
     # Apply the changes - TODO simulate, dont just change attributes
-    for cmd in changes:
-        for player_change in cmd.player_changes:
+    for tick_update in changes:
+        if tick_update.player_update is not None:
+            player_change: Server.Output.PlayerUpdate = tick_update.player_update
             world.player.rect.x = player_change.pos[0]
             world.player.rect.y = player_change.pos[1]
             world.player.attacking = player_change.attacking
             world.player.weapon = player_change.weapon
             world.player.status = player_change.status
-        for enemy_change in cmd.enemies_changes:
-            pass
+        for enemy_change in tick_update.enemies_update:
+            world.enemies[enemy_change.entity_id].rect.x = enemy_change.pos[0]
+            world.enemies[enemy_change.entity_id].rect.y = enemy_change.pos[1]
         # TODO also update enemies and items (cmd.enemies_changes, cmd.items_changes)
 
     world.player.animate()
@@ -144,7 +146,7 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     return screen, clock, world
 
 
-def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (pygame.Surface, pygame.time.Clock, World, Server.Output.StateUpdate):
+def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (pygame.Surface, pygame.time.Clock, World, TickUpdate, Server.Output.StateUpdate):
     """
     Run game according to user inputs - prediction before getting update from server
     :return: updated screen, clock, and world
@@ -154,13 +156,15 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
     screen.fill('black')
 
     # Update the world state and then the screen
-    update: Server.Output.StateUpdate = world.run()
+    tick_update: TickUpdate
+    state_update: Server.Output.StateUpdate
+    tick_update, state_update = world.run()
     pygame.display.update()
 
     # Wait for one tick
     clock.tick(FPS)
 
-    return screen, clock, world, update
+    return screen, clock, world, tick_update, state_update
 
 
 def run_game(*args) -> None:  # TODO
@@ -170,23 +174,20 @@ def run_game(*args) -> None:  # TODO
     """
 
     # Check for invalid number of arguments; Should be okay to delete this in the final version - TODO
-    if len(args) != 6:
+    if len(args) != 3:
         print('you did smth wrong smh')
         return
 
     # Unpack the arguments
-    server_socket: socket.socket = args[0]
-    screen: pygame.Surface = args[1]
-    clock: pygame.time.Clock = args[2]
-    world: World = args[3]
-    update_queue: Queue = args[4]
-    client_id: int = args[5]
+    screen: pygame.Surface = args[0]
+    clock: pygame.time.Clock = args[1]
+    world: World = args[2]
 
     # Create custom events
     update_required_event = pygame.USEREVENT + 1
 
     # The changes queue; Push to it data about the changes after every cmd sent to the server
-    reported_changes: deque[Server.Output.StateUpdate] = deque()
+    reported_changes: deque[TickUpdate] = deque()
 
     # Opening screen loop
     running: bool = True
@@ -204,6 +205,14 @@ def run_game(*args) -> None:  # TODO
         if quit_response:
             pygame.quit()
 
+    # Initialize the connection with the server
+    server_addr: (str, int) = ('127.0.0.1', 34865)  # TEMPORARY
+    server_socket: socket.socket
+    update_queue: Queue
+    client_id: int
+    server_socket, update_queue, client_id = initialize_connection(server_addr)
+    world.player.entity_id = client_id
+
     # The main game loop
     running: bool = True
     while running:
@@ -217,13 +226,14 @@ def run_game(*args) -> None:  # TODO
                     running = False
 
         # Run game according to user inputs - prediction before getting update from server
-        tick_update: Server.Output.StateUpdate
-        screen, clock, world, tick_update = game_tick(screen, clock, world)
+        tick_update: TickUpdate
+        state_update: Server.Output.StateUpdate
+        screen, clock, world, tick_update, state_update = game_tick(screen, clock, world)
 
-        if tick_update.player_changes:
-            send_msg_to_server(server_socket, tick_update)
-            reported_changes.append(tick_update)
+        if state_update is not None:
+            send_msg_to_server(server_socket, state_update)
             Server.Output.StateUpdate.seq_count += 1
+        reported_changes.append(tick_update)
 
         # Check if an update is needed
         if not update_queue.empty():
@@ -240,6 +250,9 @@ def run_game(*args) -> None:  # TODO
 
     pygame.quit()
 
+    # Close the game
+    close_game(server_socket)
+
 
 def close_game(server_socket: socket.socket) -> None:
     """Closes the game"""
@@ -247,23 +260,12 @@ def close_game(server_socket: socket.socket) -> None:
 
 
 def main():
-    server_addr: (str, int) = ('127.0.0.1', 34865)  # TEMPORARY
 
     # Initialize the game
     screen, clock, world = initialize_game()
 
-    # Initialize the connection with the server
-    server_socket: socket.socket
-    updates_queue: Queue
-    client_id: int
-    server_socket, updates_queue, client_id = initialize_connection(server_addr)
-    world.player.entity_id = client_id
-
     # Run the main game
-    run_game(server_socket, screen, clock, world, updates_queue, client_id)
-
-    # Close the game
-    close_game(server_socket)
+    run_game(screen, clock, world)
 
 
 if __name__ == '__main__':

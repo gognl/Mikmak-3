@@ -36,6 +36,9 @@ class Enemy(Entity):
 		self.attack_radius = enemy_info['attack_radius']
 		self.notice_radius = enemy_info['notice_radius']
 
+		# Server
+		self.changes = {'pos': (self.rect.x, self.rect.y)}  # changes made in this tick
+
 	def import_graphics(self, name):
 
 		if name == 'other_player':
@@ -108,7 +111,17 @@ class Enemy(Entity):
 			self.direction = pygame.math.Vector2()
 
 	def update(self):
+
+		if self.enemy_name == 'other_player':
+			return
+
+		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
+
 		self.move(self.speed)
+
+		self.changes: dict = {'pos': (self.rect.x, self.rect.y)}
+		if self.changes == previous_state:
+			self.changes = None
 
 	def enemy_update(self, players):
 		if not players:

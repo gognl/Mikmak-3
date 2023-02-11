@@ -81,11 +81,10 @@ class Client:
                     return
 
                 self.seq: int = None
-                changes = kwargs.pop('changes')
-                self.player_changes: List[Client.Input.PlayerUpdate] = changes[0]
+                self.player_changes: Client.Input.PlayerUpdate = None
 
             def _get_attr(self) -> dict:
-                return {'seq': (int, 'u_4'), 'player_changes': (list, (Client.Input.PlayerUpdate, 'o'))}
+                return {'seq': (int, 'u_4'), 'player_changes': (Client.Input.PlayerUpdate, 'o')}
 
         class PlayerUpdate(Serializable):
             """

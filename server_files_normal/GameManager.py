@@ -26,12 +26,12 @@ class GameManager(threading.Thread):
 
 		# TODO temporary
 		for i in range(20):
-			pos = (randint(1000, 2000), randint(1000, 2000))
+			pos = (randint(2000, 3000), randint(2000, 3000))
 			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies,), entity_id=i)
 
 	def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
 		while True:
-			cmd_semaphore.acquire()
+			cmd_semaphore.acquire()  # so its not just busy waiting
 			for client_manager in list(self.client_managers):
 				if client_manager.has_messages():
 					self.cmd_queue.put(client_manager.get_new_message())
@@ -49,7 +49,7 @@ class GameManager(threading.Thread):
 			client_manager = cmd[0]
 			client_cmd = cmd[1]
 
-			player_update: Client.Input.PlayerUpdate = client_cmd.player_changes[0]
+			player_update: Client.Input.PlayerUpdate = client_cmd.player_changes
 			player = client_manager.player
 
 			# Update the player
@@ -85,6 +85,7 @@ class GameManager(threading.Thread):
 
 			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
 			self.broadcast_msg(state_update)
+			self.players_updates: List[Client.Output.PlayerUpdate] = []
 
 			self.clock.tick(FPS)
 
