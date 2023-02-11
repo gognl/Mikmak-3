@@ -1,4 +1,7 @@
 FPS: int = 5
+TILESIZE = 64
+ROW_TILES: int = 450
+COL_TILES: int = 800
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},

@@ -1,5 +1,23 @@
+from csv import reader
 import pygame
 from os import walk
+
+def import_csv_layout(path: str) -> list[list[str]]:
+    """
+    Loads layout from csv file
+    :return: 2D list of numbers representing layout
+    """
+    # Output
+    tiles: list[list[str]] = []
+
+    with open(path) as file:
+        # Read lines of csv file
+        layout = reader(file, delimiter=',')
+
+        for row in layout:
+            tiles.append(list(row))
+
+    return tiles
 
 def import_folder(path: str) -> dict[str: pygame.Surface]:
     """

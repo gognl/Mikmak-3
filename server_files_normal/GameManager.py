@@ -1,7 +1,10 @@
 import threading
 from collections import deque
 from queue import Queue, Empty
+
+from server_files_normal.game.support import import_csv_layout
 from server_files_normal.ClientManager import ClientManager
+from server_files_normal.game.barrier import Barrier
 from server_files_normal.game.enemy import Enemy
 from server_files_normal.game.player import Player
 from server_files_normal.structures import *
@@ -24,10 +27,24 @@ class GameManager(threading.Thread):
 
 		self.players_updates: List[Client.Output.PlayerUpdate] = []
 
+		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
+		self.initialize_obstacle_sprites()
+
 		# TODO temporary
 		for i in range(20):
 			pos = (randint(2000, 3000), randint(2000, 3000))
-			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies,), entity_id=i)
+			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies,), entity_id=i, obstacle_sprites=self.obstacle_sprites)
+
+	def initialize_obstacle_sprites(self):
+		layout = import_csv_layout('./graphics/map/map_Barriers.csv')
+		for row_index in range(0, ROW_TILES):
+			row = layout[row_index]
+			for col_index in range(0, COL_TILES):
+				col = row[col_index]
+				if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
+					x: int = col_index * TILESIZE
+					y: int = row_index * TILESIZE
+					Barrier((x, y), (self.obstacle_sprites,))
 
 	def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
 		while True:
@@ -85,7 +102,7 @@ class GameManager(threading.Thread):
 
 			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
 			self.broadcast_msg(state_update)
-			self.players_updates: List[Client.Output.PlayerUpdate] = []
+			self.players_updates.clear()  # clear the list
 
 			self.clock.tick(FPS)
 
@@ -103,7 +120,8 @@ class GameManager(threading.Thread):
 				except Empty:
 					break
 
-				# Post the event
+			# Post the event
+			if cmds:
 				pygame.event.post(pygame.event.Event(cmd_received_event, {"cmds": cmds}))
 
 		pygame.quit()

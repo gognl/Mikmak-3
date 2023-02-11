@@ -72,7 +72,7 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player("gognl", (1024, 1024), [self.visible_sprites, self.server_sprites],
+        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.server_sprites),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
                              self.nametag_update, 0)  # TODO - make starting player position random (or a spawn)
@@ -84,7 +84,7 @@ class World:
         self.camera.y = self.player.rect.centery
 
     def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
+        self.current_weapon = Weapon(self.player, (self.visible_sprites,), 2)
 
     def destroy_attack(self):
         if self.current_weapon:
@@ -151,13 +151,13 @@ class World:
 
                                 if style == 'floor':
                                     surface: pygame.Surface = self.graphics['floor'][col]
-                                    Tile((x, y), [self.visible_sprites], 'floor', col in SPAWNABLE_TILES, 0, surface)
+                                    Tile((x, y), (self.visible_sprites,), 'floor', col in SPAWNABLE_TILES, 0, surface)
                                 elif style == 'objects':
                                     surface: pygame.Surface = self.graphics['objects'][col]
                                     Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', False, 1,
                                          surface)
                                 elif style == 'boundary':
-                                    Tile((x, y), [self.obstacle_sprites], 'barrier', False)
+                                    Tile((x, y), (self.obstacle_sprites,), 'barrier', False)
 
         # Display all visible sprites
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
@@ -226,7 +226,7 @@ class World:
             name = list(enemy_data.keys())[int(random.randint(1, 3))]
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?
+                Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites,), 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?
 
 
 class GroupYSort(pygame.sprite.Group):

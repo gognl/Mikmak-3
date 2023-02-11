@@ -1,13 +1,15 @@
 from typing import List
 
 import pygame
+
+from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_folder
 from server_files_normal.game.player import Player
 from server_files_normal.game.settings import enemy_data
 
 
 class Enemy(pygame.sprite.Sprite):
-	def __init__(self, enemy_name: str, pos: (int, int), groups, entity_id: int):
+	def __init__(self, enemy_name: str, pos: (int, int), groups, entity_id: int, obstacle_sprites: pygame.sprite.Group):
 		super().__init__(groups)
 
 		self.entity_id = entity_id
@@ -30,7 +32,7 @@ class Enemy(pygame.sprite.Sprite):
 		self.attack_radius = enemy_info['attack_radius']
 		self.notice_radius = enemy_info['notice_radius']
 
-		self.obstacle_sprites = pygame.sprite.Group()  # TODO temporary add walls and water and stuff
+		self.obstacle_sprites: pygame.sprite.Group = obstacle_sprites
 
 		self.direction = pygame.math.Vector2()
 
@@ -96,6 +98,7 @@ class Enemy(pygame.sprite.Sprite):
 		:param direction: A string representing the direction the player is going
 		:return: None
 		"""
+		return  # no need to check collision in server enemies
 		if direction == 'horizontal':
 			for sprite in self.obstacle_sprites:
 				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
