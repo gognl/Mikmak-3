@@ -1,4 +1,8 @@
+from typing import List, Union
+
 import pygame
+
+from client_files.code.player import Player
 from client_files.code.settings import *
 from client_files.code.entity import Entity
 from client_files.code.support import *
@@ -69,6 +73,10 @@ class Enemy(Entity):
 		self.rect.x = pos[0]
 		self.rect.y = pos[1]
 
+	def get_closest_player(self, players: List[Union[Player, 'Enemy']]) -> Union[Player, 'Enemy']:
+		enemy_pos = pygame.Vector2(self.rect.center)
+		return min(players, key=lambda p: enemy_pos.distance_squared_to(pygame.Vector2(p.rect.center)))
+
 	def get_player_distance_direction(self, player):
 		enemy_vec = pygame.math.Vector2(self.rect.center)
 		player_vec = pygame.math.Vector2(player.rect.center)
@@ -91,20 +99,21 @@ class Enemy(Entity):
 
 	def actions(self, player):
 		if self.status == 'attack':
-			print('attack')
+			pass
+			#print('attack')
 		elif self.status == 'move':
 			self.direction = self.get_player_distance_direction(player)[1]
-			if self.enemy_name != "other_player":
-				self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
+			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
 		else:
 			self.direction = pygame.math.Vector2()
 
 	def update(self):
-		return
 		self.move(self.speed)
 
-	def enemy_update(self, player):
-		return
+	def enemy_update(self, players):
+		if not players:
+			return
+		player: Player = self.get_closest_player(players)
 		self.get_status(player)
 		self.actions(player)
 

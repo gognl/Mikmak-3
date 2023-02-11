@@ -1,6 +1,6 @@
 import random
 import pygame
-from typing import Dict
+from typing import Dict, Union
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
@@ -47,6 +47,9 @@ class World:
         # enemies dict
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
 
+        # other players
+        self.all_players: List[Union[Enemy, Player]] = []
+
         # All layout csv files of the map
         self.layout: dict[str: list[list[int]]] = {
             'floor': import_csv_layout('../graphics/map/map_Ground.csv'),
@@ -74,12 +77,14 @@ class World:
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
                              self.nametag_update, 0)  # TODO - make starting player position random (or a spawn)
 
+        self.all_players.append(self.player)
+
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
         # Spawn enemies
-        self.spawn_enemies(100)  # TODO: enemy count, spawn more if under 100
+        #self.spawn_enemies(100)  # TODO: enemy count, spawn more if under 100
 
     def create_attack(self) -> None:
         self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
@@ -167,7 +172,7 @@ class World:
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
-        self.visible_sprites.enemy_update(self.player)
+        self.visible_sprites.enemy_update(self.all_players)
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
@@ -237,7 +242,7 @@ class GroupYSort(pygame.sprite.Group):
             # Display the sprite on screen, moving it by the calculated offset
             self.display_surface.blit(sprite.image, sprite.rect.topleft - camera + screen_center)
 
-    def enemy_update(self, player):
-        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy']
+    def enemy_update(self, players):
+        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy' and sprite.enemy_name != 'other_player']
         for enemy in enemy_sprites:
-            enemy.enemy_update(player)
+            enemy.enemy_update(players)

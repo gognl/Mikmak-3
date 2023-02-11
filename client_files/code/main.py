@@ -100,6 +100,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.enemies[entity_id].update_pos(entity_pos)
         else:
             world.enemies[entity_id] = Enemy('other_player', entity_pos, [world.visible_sprites], entity_id, world.obstacle_sprites)
+            world.all_players.append(world.enemies[entity_id])
 
     for enemy_update in update_msg.state_update.enemy_changes:
         entity_id: int = enemy_update.id
@@ -121,6 +122,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[Server.Outp
             world.player.attacking = player_change.attacking
             world.player.weapon = player_change.weapon
             world.player.status = player_change.status
+        for enemy_change in cmd.enemies_changes:
+            pass
         # TODO also update enemies and items (cmd.enemies_changes, cmd.items_changes)
 
     world.player.animate()
