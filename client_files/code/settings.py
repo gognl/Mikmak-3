@@ -63,4 +63,4 @@ enemy_data = {
 	'white_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300}
 }
 
-item_names = ['kettle', 'nerf', 'sword', 'cow', 'obama']
+item_names = ['kettle', 'nerf', 'sword', 'cow']
