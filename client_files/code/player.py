@@ -6,7 +6,9 @@ from client_files.code.entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack, create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag, nametag_update, entity_id) -> None:
+    def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack,
+                 create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag,
+                 nametag_update, get_inventory_box_pressed, create_dropped_item, entity_id) -> None:
         super().__init__(groups, entity_id)
 
         # Load player sprite from files
@@ -66,7 +68,7 @@ class Player(Entity):
         self.shoot_cooldown = 200
 
         # Mouse press
-        self.release_mouse = False
+        self.release_mouse = [False, False]
 
         # Inventory
         self.create_inventory = create_inventory
@@ -82,6 +84,12 @@ class Player(Entity):
         self.create_nametag = create_nametag
         self.nametag = create_nametag(self)
         self.nametag_update = nametag_update
+
+        # Items
+        self.item_sprites = None
+        self.inventory_items = {}
+        self.get_inventory_box_pressed = get_inventory_box_pressed
+        self.create_dropped_item = create_dropped_item
 
     def import_player_assets(self) -> None:
         """
@@ -99,6 +107,7 @@ class Player(Entity):
         Get keyboard input and process it
         :return: None
         """
+
         keys: Sequence[pygame.Key] = pygame.key.get_pressed()
         mouse: Sequence[bool] = pygame.mouse.get_pressed()
 
@@ -137,15 +146,17 @@ class Player(Entity):
         else:
             self.last_inventory = False
 
-        if self.release_mouse and not mouse[0]:
-            self.release_mouse = False
+        if self.release_mouse[0] and not mouse[0]:
+            self.release_mouse[0] = False
+        if self.release_mouse[1] and not mouse[2]:
+            self.release_mouse[1] = False
 
-        if mouse[0] and not self.attacking and not self.release_mouse:
+        if mouse[0] and not self.attacking and not self.release_mouse[0]:
             if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
                 if self.weapon_index not in self.on_screen:
                     self.create_attack()
                     self.attacking = True
-                    self.release_mouse = True
+                    self.release_mouse[0] = True
                     self.attack_time = pygame.time.get_ticks()
                 else:
                     if self.weapon_index == 1:
@@ -157,6 +168,36 @@ class Player(Entity):
                         self.create_kettle()
                         self.switch_weapon()
 
+        if self.inventory_active and pygame.mouse.get_pos()[0] > SCREEN_WIDTH - INVENTORY_WIDTH:
+            mouse_pos = pygame.mouse.get_pos()
+            box = self.get_inventory_box_pressed(mouse_pos)
+
+            if box is not None and box < len(self.inventory_items):
+                item = list(self.inventory_items.keys())[box]
+
+                if mouse[0] and not self.release_mouse[0]:
+                    self.release_mouse[0] = True
+                    print(f'{item} activated!')  # TODO - add usage for each item
+                    self.inventory_items[item] -= 1
+
+                    if self.inventory_items[item] == 0:
+                        del self.inventory_items[item]
+                elif mouse[2] and not self.release_mouse[1]:
+                    self.release_mouse[1] = True
+
+                    if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
+                        for i in range(self.inventory_items[item]):
+                            self.create_dropped_item(item, ((self.rect.centerx + random.randrange(-1, 2) * 64),
+                                                            (self.rect.centery + random.randrange(-1, 2) * 64)))
+                        self.inventory_items[item] = 0
+                    else:
+                        self.create_dropped_item(item, ((self.rect.centerx + random.randrange(-1, 2) * 64),
+                                                        (self.rect.centery + random.randrange(-1, 2) * 64)))
+                        self.inventory_items[item] -= 1
+
+                    if self.inventory_items[item] == 0:
+                        del self.inventory_items[item]
+
         if keys[pygame.K_q] and self.can_switch_weapon and not self.attacking:
             self.switch_weapon()
 
@@ -165,7 +206,7 @@ class Player(Entity):
         switch current held weapon
         :return:
         """
-        self.release_mouse = True
+        self.release_mouse[0] = True
 
         if self.weapon_index in self.on_screen:
             self.destroy_attack()
@@ -253,8 +294,10 @@ class Player(Entity):
         self.animate()
 
         # Apply keyboard inputs
-
         self.move(self.speed)
+
+        # Pick up items
+        self.item_collision()
 
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
         if self.changes == previous_state:
@@ -267,8 +310,22 @@ class Player(Entity):
         """
         self.obstacle_sprites = obstacle_sprites
 
+    def update_items(self, item_sprites: pygame.sprite.Group) -> None:
+        self.item_sprites = item_sprites
+
     def get_pos(self) -> (int, int):
         """
         Returns the player's position
         """
         return self.rect.x, self.rect.y
+
+    def item_collision(self):
+        for item in self.item_sprites:
+            if self.rect.colliderect(item.rect):
+                if item.can_pick_up:
+                    if item.name in list(self.inventory_items.keys()):
+                        self.inventory_items[item.name] += 1
+                        item.kill()
+                    elif len(self.inventory_items) < INVENTORY_ITEMS:
+                        self.inventory_items[item.name] = 1
+                        item.kill()

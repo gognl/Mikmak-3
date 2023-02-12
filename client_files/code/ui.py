@@ -2,6 +2,7 @@ from typing import Sequence
 
 import pygame
 from client_files.code.settings import *
+from client_files.code.item import Item
 
 
 class UI:
@@ -23,10 +24,11 @@ class UI:
 
         # Inventory
         self.inventory_active: bool = False
-        self.items: List[List[int]] = [[0] * 3] * 8
-        self.item_size = 64
-        self.item_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 72)
-        self.items_distance = 10
+        self.boxes: list[list[int]] = []
+        self.box_size = 64
+        self.box_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 72)
+        self.boxes_distance = 10
+        self.setup_inventory()
 
         # Mouse
         self.release_mouse: bool = False
@@ -74,37 +76,51 @@ class UI:
 
         self.display_surface.blit(weapon_surf, weapon_rect)
 
-    def input(self):
-        mouse: Sequence[bool] = pygame.mouse.get_pressed()
+    def setup_inventory(self):
+        for y in range(INVENTORY_SIZE[1]):
+            row = []
+            for x in range(INVENTORY_SIZE[0]):
+                row.append(pygame.Rect(self.box_starting_position[0] + (self.box_size + self.boxes_distance) * x,
+                                            self.box_starting_position[1] + (self.box_size + self.boxes_distance) * y,
+                                            self.box_size, self.box_size))
+            self.boxes.append(row)
 
-        if self.release_mouse and not mouse[0]:
-            self.release_mouse = False
-
-        if mouse[0] and not self.release_mouse:
-            self.release_mouse = True
-            if self.inventory_active and pygame.mouse.get_pos()[0] > SCREEN_WIDTH - INVENTORY_WIDTH:
-                mouse_pos: (int, int) = pygame.mouse.get_pos()
-                print(mouse_pos)
-
-    def show_inventory(self):
+    def show_inventory(self, inventory_items):
         x = self.display_surface.get_size()[0] - INVENTORY_WIDTH
         y = 0
 
         rect = pygame.Rect(x, y, INVENTORY_WIDTH, self.display_surface.get_size()[1])
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
 
-        for y, row in enumerate(self.items):
-            for x, item in enumerate(row):
-                rect = pygame.Rect(self.item_starting_position[0] + (self.item_size + self.items_distance) * x,
-                                   self.item_starting_position[1] + (self.item_size + self.items_distance) * y,
-                                   self.item_size, self.item_size)
+        for y, row in enumerate(self.boxes):
+            for x in range(len(row)):
+                rect = self.boxes[y][x]
                 pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
                 pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, rect, 3)
 
-    def display(self, player):
-        # Process input
-        self.input()
+                number = y * INVENTORY_SIZE[0] + x
+                if len(inventory_items) > number:
+                    item_name = list(inventory_items)[number]
+                    item_amount = inventory_items[item_name]
 
+                    item = Item(item_name, (), rect.center)
+                    self.display_surface.blit(item.image, item.rect)
+
+                    if item_amount > 1:
+                        font = pygame.font.Font(UI_FONT, INVENTORY_FONT_SIZE)
+                        item_text = font.render(f'{item_amount}', False, TEXT_COLOR)
+                        item_text_rect = item_text.get_rect(bottomright=(rect.bottomright[0] - 2, rect.bottomright[1] - 2))
+                        self.display_surface.blit(item_text, item_text_rect)
+
+    def get_inventory_box_pressed(self, mouse):
+        for y, row in enumerate(self.boxes):
+            for x, box in enumerate(row):
+                if box.collidepoint(mouse):
+                    return y * INVENTORY_SIZE[0] + x
+
+        return None
+
+    def display(self, player):
         # Creates the bars
         self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
@@ -119,7 +135,7 @@ class UI:
 
         # Inventory
         if self.inventory_active:
-            self.show_inventory()
+            self.show_inventory(player.inventory_items)
 
     def create_inventory(self):
         self.inventory_active = True

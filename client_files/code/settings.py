@@ -52,6 +52,12 @@ INPUT_BG_COLOR = '#cc99ff'
 BUTTON_BG_COLOR = '#66ff66'
 BUTTON_TEXT_COLOR = '#222222'
 
+# Inventory
+INVENTORY_SIZE = (3, 8)
+INVENTORY_ITEMS = INVENTORY_SIZE[0] * INVENTORY_SIZE[1]
+INVENTORY_FONT_SIZE = 10
+ITEM_PICK_UP_COOLDOWN = 2000
+
 # TODO: make the red cow explode
 enemy_data = {
 	'other_player': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
@@ -60,4 +66,4 @@ enemy_data = {
 	'white_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300}
 }
 
-
+item_names = ['kettle', 'nerf', 'sword', 'cow']
