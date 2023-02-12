@@ -1,4 +1,5 @@
-from typing import Dict, List, Sequence
+import random
+from typing import Dict, Sequence
 
 from client_files.code.settings import *
 from client_files.code.support import *
