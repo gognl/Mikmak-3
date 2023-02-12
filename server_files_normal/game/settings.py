@@ -1,4 +1,5 @@
 FPS: int = 5
+CLIENT_FPS: int = 120
 TILESIZE = 64
 ROW_TILES: int = 450
 COL_TILES: int = 800

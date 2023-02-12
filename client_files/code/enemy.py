@@ -71,11 +71,6 @@ class Enemy(Entity):
 		self.image = animation[int(self.frame_index)]
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 
-	# TODO: different than vid @goni what does this do??
-	def update_pos(self, pos: (int, int)) -> None:
-		self.rect.x = pos[0]
-		self.rect.y = pos[1]
-
 	def get_closest_player(self, players: List[Union[Player, 'Enemy']]) -> Union[Player, 'Enemy']:
 		enemy_pos = pygame.Vector2(self.rect.center)
 		return min(players, key=lambda p: enemy_pos.distance_squared_to(pygame.Vector2(p.rect.center)))

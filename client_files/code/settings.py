@@ -10,6 +10,7 @@ COL_LOAD_TILE_DISTANCE: int = 30
 ROW_UNLOAD_TILE_DISTANCE: int = 30
 COL_UNLOAD_TILE_DISTANCE: int = 40
 SPAWNABLE_TILES: list[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24]
+MAX_DIVERGENCE_SQUARED: int = 100**2
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},

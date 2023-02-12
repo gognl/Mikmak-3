@@ -94,9 +94,13 @@ class GameManager(threading.Thread):
 
 			# Run enemies simulation
 			enemy_changes = []
-			self.enemies.update()
 			for enemy in self.enemies.sprites():
-				enemy.enemy_update(self.players)
+				previous_pos = (enemy.rect.x, enemy.rect.y)
+				for i in range(CLIENT_FPS//FPS):
+					enemy.update()
+					enemy.enemy_update(self.players)
+				if previous_pos == (enemy.rect.x, enemy.rect.y):
+					continue
 				changes = {'pos': (enemy.rect.x, enemy.rect.y)}
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, changes=changes))
 

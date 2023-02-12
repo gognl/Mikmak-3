@@ -1,9 +1,13 @@
 import socket  # Socket
+from typing import Dict
+
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
 from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
 from struct import pack, unpack  # serialize
+
+from client_files.code.circle import Circle
 from client_files.code.structures import *
 from client_files.code.settings import *
 from client_files.code.world import World
@@ -68,6 +72,9 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
 		msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
 		updates_queue.put(msg)
 
+circles: Dict[int, Circle] = {}
+red_circles: Dict[int, Circle] = {}
+green_circles: Dict[int, Circle] = {}
 
 def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
 	"""
@@ -91,8 +98,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		entity_status: str = player_update.status
 
 		if entity_id == client_id:
-			world.player.rect.x = entity_pos[0]
-			world.player.rect.y = entity_pos[1]
+			world.player.update_pos(entity_pos)
 			world.player.status = entity_status
 		elif entity_id in world.enemies:
 			world.enemies[entity_id].status = entity_status
@@ -114,20 +120,30 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 	while changes and changes[0].seq < update_msg.ack:
 		changes.popleft()
 
+	# Check if difference is too large; reset to server state if it is
+	# TODO interpolate between the states instead of teleporting the enemy
+	ids_to_remove = []
+	for tick_update in changes:
+		for enemy_change in tick_update.enemies_update:
+			if pygame.Vector2(world.enemies[enemy_change.entity_id].rect.topleft).distance_squared_to(pygame.Vector2(enemy_change.pos)) > MAX_DIVERGENCE_SQUARED:
+				ids_to_remove.append(enemy_change.entity_id)
+	for tick_update in changes:
+		new_enemies_update = tick_update.enemies_update.copy()
+		for enemy_change in new_enemies_update:
+			if enemy_change.entity_id in ids_to_remove:
+				tick_update.enemies_update.remove(enemy_change)
+
 	# Apply the changes
 	for tick_update in changes:
 		if tick_update.player_update is not None:
 			player_change: Server.Output.PlayerUpdate = tick_update.player_update
-			world.player.rect.x = player_change.pos[0]
-			world.player.rect.y = player_change.pos[1]
+			world.player.update_pos(player_change.pos)
 			world.player.attacking = player_change.attacking
 			world.player.weapon = player_change.weapon
 			world.player.status = player_change.status
 
 		for enemy_change in tick_update.enemies_update:
-			world.enemies[enemy_change.entity_id].rect.x = enemy_change.pos[0]
-			world.enemies[enemy_change.entity_id].rect.y = enemy_change.pos[1]
-
+			world.enemies[enemy_change.entity_id].update_pos(enemy_change.pos)
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
 	"""
