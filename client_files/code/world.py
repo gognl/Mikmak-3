@@ -1,6 +1,6 @@
 import random
 import pygame
-from typing import Dict
+from typing import Dict, Union, List
 from client_files.code.item import Item
 from client_files.code.settings import *
 from client_files.code.tile import Tile
@@ -25,8 +25,9 @@ class World:
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
+
         self.item_sprites: pygame.sprite.Group = pygame.sprite.Group()
-        self.nametags: list[NameTag] = []
+        self.nametags: List[NameTag] = []
 
         # User interface
         self.ui = UI()
@@ -49,8 +50,11 @@ class World:
         # enemies dict
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
 
+        # other players
+        self.all_players: List[Union[Enemy, Player]] = []
+
         # All layout csv files of the map
-        self.layout: dict[str: list[list[int]]] = {
+        self.layout: Dict[str, List[List[str]]] = {
             'floor': import_csv_layout('../graphics/map/map_Ground.csv'),
             'objects': import_csv_layout('../graphics/map/map_Objects.csv'),
             'boundary': import_csv_layout('../graphics/map/map_Barriers.csv'),
@@ -71,23 +75,22 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player("gognl", (1024, 1024), [self.visible_sprites, self.server_sprites],
+        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.server_sprites),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, 0)  # TODO - make starting player position random (or a spawn)
+
+        self.all_players.append(self.player)
 
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
-        # Spawn enemies
-        self.spawn_enemies(100)  # TODO: enemy count, spawn more if under 100
-
         # Spawn items
         self.spawn_items(1000)
 
     def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, [self.visible_sprites], 2)
+        self.current_weapon = Weapon(self.player, (self.visible_sprites,), 2)
 
     def destroy_attack(self):
         if self.current_weapon:
@@ -133,7 +136,7 @@ class World:
     def get_inventory_box_pressed(self, mouse):
         return self.ui.get_inventory_box_pressed(mouse)
 
-    def run(self) -> Server.Output.StateUpdate:
+    def run(self) -> (TickUpdate, Server.Output.StateUpdate):
         """
         Run one world frame
         :return: None
@@ -162,13 +165,13 @@ class World:
 
                                 if style == 'floor':
                                     surface: pygame.Surface = self.graphics['floor'][col]
-                                    Tile((x, y), [self.visible_sprites], 'floor', col in SPAWNABLE_TILES, 0, surface)
+                                    Tile((x, y), (self.visible_sprites,), 'floor', col in SPAWNABLE_TILES, 0, surface)
                                 elif style == 'objects':
                                     surface: pygame.Surface = self.graphics['objects'][col]
                                     Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', False, 1,
                                          surface)
                                 elif style == 'boundary':
-                                    Tile((x, y), [self.obstacle_sprites], 'barrier', False)
+                                    Tile((x, y), (self.obstacle_sprites,), 'barrier', False)
 
         # Display all visible sprites
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
@@ -181,7 +184,7 @@ class World:
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
-        self.visible_sprites.enemy_update(self.player)
+        self.visible_sprites.enemy_update(self.all_players)
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
@@ -193,16 +196,21 @@ class World:
         for nametag in self.nametags:
             nametag.display()
 
-        local_changes = [[], [], []]  # A list of changes made in this tick. 0 - player, 1 - enemies, 2 - items.
+        # Get info about changes made in this tick (used for server synchronization)
+        local_changes = [None, []]  # A list of changes made in this tick. player, enemies
+        state_update: Server.Output.StateUpdate = None
         for sprite in self.server_sprites.sprites():
             if sprite.changes is None:  # If no new changes were made
                 continue
             if type(sprite) is Player:
-                local_changes[0].append(Server.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes))
+                player_changes = Server.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes)
+                state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)
+                local_changes[0] = player_changes
             elif type(sprite) is Enemy:
-                pass  # append EnemyUpdate to local_changes[1]
+                local_changes[1].append(EnemyUpdate(sprite.entity_id, sprite.changes['pos']))
 
-        return Server.Output.StateUpdate(changes=local_changes)
+        tick_update: TickUpdate = TickUpdate(*local_changes)
+        return tick_update, state_update
 
     def update_camera(self) -> None:
         """
@@ -261,7 +269,7 @@ class GroupYSort(pygame.sprite.Group):
             # Display the sprite on screen, moving it by the calculated offset
             self.display_surface.blit(sprite.image, sprite.rect.topleft - camera + screen_center)
 
-    def enemy_update(self, player):
-        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy']
+    def enemy_update(self, players):
+        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy' and sprite.enemy_name != 'other_player']
         for enemy in enemy_sprites:
-            enemy.enemy_update(player)
+            enemy.enemy_update(players)

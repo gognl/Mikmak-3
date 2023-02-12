@@ -1,3 +1,5 @@
+from typing import Sequence
+
 import pygame
 from client_files.code.settings import *
 from client_files.code.item import Item

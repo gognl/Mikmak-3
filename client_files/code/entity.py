@@ -57,3 +57,7 @@ class Entity(pygame.sprite.Sprite):
 							self.hitbox.top = sprite.hitbox.bottom
 						elif sprite.direction.y < 0:  # Sprite going up
 							self.hitbox.bottom = sprite.hitbox.top
+
+	def update_pos(self, pos):
+		self.rect.topleft = pos
+		self.hitbox = self.rect.inflate(-20, -26)
