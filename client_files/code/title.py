@@ -62,7 +62,7 @@ class Title:
         surface = pygame.image.load('../graphics/tiles/10.png').convert_alpha()
         for y in range(12):
             for x in range(20):
-                Tile((x * TILESIZE, y * TILESIZE), [self.visible_sprites], 'floor', True, 0, surface)
+                Tile((x * TILESIZE, y * TILESIZE), (self.visible_sprites,), 'floor', True, 0, surface)
 
     def background(self):
         self.visible_sprites.custom_draw(pygame.math.Vector2(0, 0), pygame.math.Vector2(0, 0))
@@ -71,7 +71,7 @@ class Title:
         side = random.randrange(-1, 2, 2)
         x = (SCREEN_WIDTH if side == 1 else 0) + (side * TILESIZE)
         y = random.randint(-TILESIZE, SCREEN_HEIGHT + TILESIZE)
-        self.enemies.append(TitleEnemy("white_cow", (x, y), [self.visible_sprites], (-side, 0)))
+        self.enemies.append(TitleEnemy("white_cow", (x, y), (self.visible_sprites,), (-side, 0)))
 
         for enemy in self.enemies:
             if enemy.rect.x + enemy.direction[0] > SCREEN_WIDTH + TILESIZE or enemy.rect.x + enemy.direction[0] < -TILESIZE:

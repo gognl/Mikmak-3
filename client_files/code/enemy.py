@@ -1,7 +1,5 @@
 from typing import List, Union
 
-import pygame
-
 from client_files.code.player import Player
 from client_files.code.settings import *
 from client_files.code.entity import Entity
@@ -61,7 +59,7 @@ class Enemy(Entity):
         animate through images
         :return: None
         """
-		animation: list[pygame.Surface] = self.animations[self.status]
+		animation: List[pygame.Surface] = self.animations[self.status]
 
 		self.frame_index += self.animation_speed
 		if self.frame_index >= len(animation):
@@ -97,8 +95,7 @@ class Enemy(Entity):
 
 	def actions(self, player):
 		if self.status == 'attack':
-			pass
-			#print('attack')
+			pass  # attack
 		elif self.status == 'move':
 			self.direction = self.get_player_distance_direction(player)[1]
 			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]

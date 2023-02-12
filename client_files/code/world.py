@@ -1,7 +1,5 @@
 import random
-import pygame
 from typing import Dict, Union
-from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
 from client_files.code.support import *
@@ -24,7 +22,7 @@ class World:
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
-        self.nametags: list[NameTag] = []
+        self.nametags: List[NameTag] = []
 
         # User interface
         self.ui = UI()
@@ -51,7 +49,7 @@ class World:
         self.all_players: List[Union[Enemy, Player]] = []
 
         # All layout csv files of the map
-        self.layout: dict[str: list[list[int]]] = {
+        self.layout: Dict[str, List[List[str]]] = {
             'floor': import_csv_layout('../graphics/map/map_Ground.csv'),
             'objects': import_csv_layout('../graphics/map/map_Objects.csv'),
             'boundary': import_csv_layout('../graphics/map/map_Barriers.csv'),

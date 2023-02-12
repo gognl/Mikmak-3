@@ -1,4 +1,5 @@
-import pygame
+from typing import Dict, List, Sequence
+
 from client_files.code.settings import *
 from client_files.code.support import *
 from client_files.code.entity import Entity
@@ -44,7 +45,7 @@ class Player(Entity):
         self.switch_duration_cooldown = 400
 
         # Animations
-        self.animations: dict[str: list[pygame.Surface]] = {}
+        self.animations: Dict[str, List[pygame.Surface]] = {}
         self.import_player_assets()
         self.status = 'down'
 
@@ -98,8 +99,8 @@ class Player(Entity):
         Get keyboard input and process it
         :return: None
         """
-        keys: list[pygame.Key] = pygame.key.get_pressed()
-        mouse: list[bool] = pygame.mouse.get_pressed()
+        keys: Sequence[pygame.Key] = pygame.key.get_pressed()
+        mouse: Sequence[bool] = pygame.mouse.get_pressed()
 
         if keys[pygame.K_w]:
             self.direction.y = -1
@@ -222,7 +223,7 @@ class Player(Entity):
         animate through images
         :return: None
         """
-        animation: list[pygame.Surface] = self.animations[self.status]
+        animation: List[pygame.Surface] = self.animations[self.status]
 
         self.frame_index += self.animation_speed
         if self.frame_index >= len(animation):

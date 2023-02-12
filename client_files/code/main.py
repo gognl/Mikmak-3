@@ -7,7 +7,6 @@ from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
 from struct import pack, unpack  # serialize
 
-from client_files.code.circle import Circle
 from client_files.code.structures import *
 from client_files.code.settings import *
 from client_files.code.world import World
@@ -71,10 +70,6 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
 			print('got empty msg')
 		msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
 		updates_queue.put(msg)
-
-circles: Dict[int, Circle] = {}
-red_circles: Dict[int, Circle] = {}
-green_circles: Dict[int, Circle] = {}
 
 def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
 	"""

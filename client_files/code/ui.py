@@ -1,3 +1,5 @@
+from typing import Sequence
+
 import pygame
 from client_files.code.settings import *
 
@@ -21,7 +23,7 @@ class UI:
 
         # Inventory
         self.inventory_active: bool = False
-        self.items: list[list[int]] = [[0] * 3] * 8
+        self.items: List[List[int]] = [[0] * 3] * 8
         self.item_size = 64
         self.item_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 72)
         self.items_distance = 10
@@ -73,7 +75,7 @@ class UI:
         self.display_surface.blit(weapon_surf, weapon_rect)
 
     def input(self):
-        mouse: list[bool] = pygame.mouse.get_pressed()
+        mouse: Sequence[bool] = pygame.mouse.get_pressed()
 
         if self.release_mouse and not mouse[0]:
             self.release_mouse = False
@@ -81,8 +83,8 @@ class UI:
         if mouse[0] and not self.release_mouse:
             self.release_mouse = True
             if self.inventory_active and pygame.mouse.get_pos()[0] > SCREEN_WIDTH - INVENTORY_WIDTH:
-                mouse = pygame.mouse.get_pos()
-                print(mouse)
+                mouse_pos: (int, int) = pygame.mouse.get_pos()
+                print(mouse_pos)
 
     def show_inventory(self):
         x = self.display_surface.get_size()[0] - INVENTORY_WIDTH

@@ -1,3 +1,5 @@
+from typing import List
+
 import pygame
 import random
 from client_files.code.tile import Tile
@@ -17,12 +19,12 @@ class Projectile(pygame.sprite.Sprite):
 			self.kill()
 
 		self.original_image: pygame.Surface = pygame.image.load(image_path).convert_alpha()
-		self.degree: int = -self.direction.as_polar()[1]
+		self.degree: float = -self.direction.as_polar()[1]
 		self.image: pygame.Surface = pygame.transform.rotate(self.original_image, self.degree)
 
 		self.rect: pygame.Rect = self.image.get_rect(center=weapon.rect.center)
 		self.hitbox = self.rect
-		self.pos: list[int, int] = list(self.rect.center)
+		self.pos: List[int, int] = list(self.rect.center)
 		self.speed: int = speed
 
 		# Kill time
