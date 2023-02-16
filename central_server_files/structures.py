@@ -40,15 +40,3 @@ class Server:
 	def __init__(self, ip, port):
 		self.ip: str = ip
 		self.port: int = port
-
-
-class Region:
-	def __init__(self, c: Point, rw: int, rh: int):
-		self.c: Point = c
-		self.rw: int = rw
-		self.rh: int = rh
-
-	def __contains__(self, p):
-		assert isinstance(p, Point)
-		return -self.rw <= p.x - self.c.x <= self.rw and \
-				-self.rh <= p.y - self.c.y <= self.rh
