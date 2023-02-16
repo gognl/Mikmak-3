@@ -1,17 +1,14 @@
 from csv import reader
-from os import walk
-from typing import List
-
 import pygame
+from os import walk
 
-
-def import_csv_layout(path: str) -> List[List[str]]:
+def import_csv_layout(path: str) -> list[list[str]]:
     """
     Loads layout from csv file
     :return: 2D list of numbers representing layout
     """
     # Output
-    tiles: List[List[str]] = []
+    tiles: list[list[str]] = []
 
     with open(path) as file:
         # Read lines of csv file
@@ -21,7 +18,6 @@ def import_csv_layout(path: str) -> List[List[str]]:
             tiles.append(list(row))
 
     return tiles
-
 
 def import_folder(path: str) -> dict[str: pygame.Surface]:
     """
@@ -36,7 +32,7 @@ def import_folder(path: str) -> dict[str: pygame.Surface]:
         for image in img_files:
             full_path = path + '/' + image
             # Load files to pygame surface
-            image_surface: pygame.Surface = pygame.image.load(full_path).convert_alpha()
+            image_surface: pygame.Surface = pygame.image.load(full_path)
             surface_list[image[:-4]] = image_surface  # Ignore the .png at the end
 
     return surface_list
