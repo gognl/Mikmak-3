@@ -86,6 +86,9 @@ class GameManager(threading.Thread):
 		# Create custom events
 		cmd_received_event = pygame.USEREVENT + 1
 
+		tick_count = 0
+		enemy_changes = []
+
 		running: bool = True
 		while running:
 			for event in pygame.event.get():
@@ -93,7 +96,6 @@ class GameManager(threading.Thread):
 					self.handle_cmds(event.cmds)
 
 			# Run enemies simulation
-			enemy_changes = []
 			for enemy in self.enemies.sprites():
 				previous_pos = (enemy.rect.x, enemy.rect.y)
 				for i in range(CLIENT_FPS//FPS):
@@ -104,11 +106,14 @@ class GameManager(threading.Thread):
 				changes = {'pos': (enemy.rect.x, enemy.rect.y)}
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, changes=changes))
 
-			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
-			self.broadcast_msg(state_update)
-			self.players_updates.clear()  # clear the list
+			if tick_count % FPS/UPDATE_FREQUENCY == 0:
+				enemy_changes = []
+				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
+				self.broadcast_msg(state_update)
+				self.players_updates.clear()  # clear the list
 
 			self.clock.tick(FPS)
+			tick_count += 1
 
 			# Check if a cmd was received
 			cmds: List[(ClientManager, Client.Input.ClientCMD)] = []
