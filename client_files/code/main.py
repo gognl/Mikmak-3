@@ -95,11 +95,15 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 			world.player.update_pos(entity_pos)
 			world.player.status = entity_status
 		elif entity_id in world.other_players:
-			world.other_players[entity_id].status = entity_status
-			world.other_players[entity_id].animate()
-			world.other_players[entity_id].update_pos(entity_pos)
+			world.other_players[entity_id].update_queue.append(player_update)
+			#world.other_players[entity_id].status = entity_status
+			#world.other_players[entity_id].animate()
+			#world.other_players[entity_id].update_pos(entity_pos)
 		else:
-			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites,), entity_id, world.obstacle_sprites)
+			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites,), entity_id,
+														 world.obstacle_sprites, world.create_attack,
+														 world.destroy_attack, world.create_bullet,
+														 world.create_kettle)
 			world.all_players.append(world.other_players[entity_id])
 
 	for enemy_update in update_msg.state_update.enemy_changes:
