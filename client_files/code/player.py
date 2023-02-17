@@ -1,7 +1,9 @@
 import random
+from collections import deque
 from typing import Dict, Sequence
 
 from client_files.code.settings import *
+from client_files.code.structures import Server
 from client_files.code.support import *
 from client_files.code.entity import Entity
 
@@ -56,6 +58,7 @@ class Player(Entity):
 
         # Server
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
+        self.attacks: deque = deque()
 
         # Stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}
@@ -157,6 +160,7 @@ class Player(Entity):
         if mouse[0] and not self.attacking and not self.release_mouse[0]:
             if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
                 if self.weapon_index not in self.on_screen:
+                    self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
                     self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
@@ -227,6 +231,8 @@ class Player(Entity):
         if self.weapon_index in self.on_screen:
             self.create_attack(self)
 
+        self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
+
     def get_status(self) -> None:
         """
         update player status
@@ -284,7 +290,8 @@ class Player(Entity):
         """
 
         # Clear the changes dict
-        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+        self.attacks: deque = deque()
+        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
 
         # Get keyboard inputs
         self.input()
@@ -302,7 +309,7 @@ class Player(Entity):
         # Pick up items
         self.item_collision()
 
-        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
         if self.changes == previous_state:
             self.changes = None
 

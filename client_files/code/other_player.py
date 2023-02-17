@@ -26,7 +26,6 @@ class OtherPlayer(Entity):
 		self.enemy_name = 'other_player'
 
 		# violence
-		self.begin_attack = False
 		self.attacking: bool = False
 		self.attack_cooldown: int = 400
 		self.attack_time: int = 0
@@ -69,26 +68,31 @@ class OtherPlayer(Entity):
 	def process_server_update(self, update: Server.Input.PlayerUpdate):
 		self.status = update.status
 
-		if update.attacking:
-
-			# switch weapon if needed
-			if self.weapon != update.weapon:
-				self.weapon = update.weapon
+		for attack in update.attacks:
+			if attack.attack_type == 0:  # switch
+				if self.weapon_index in self.on_screen:
+					self.destroy_attack(self)
+				self.weapon_index = attack.weapon_id
+				self.weapon = list(weapon_data.keys())[self.weapon_index]
+				self.attacking = False
 				if self.weapon_index in self.on_screen:
 					self.create_attack(self)
+			elif attack.attack_type == 1:  # attack
+				if self.weapon_index not in self.on_screen:
+					self.create_attack(self)
+					self.attacking = True
+					self.attack_time = pygame.time.get_ticks()
+				else:
+					if self.weapon_index == 1:
+						self.create_bullet(self, attack.direction)
+					elif self.weapon_index == 2:
+						self.create_kettle(self, attack.direction)
 
-			if self.weapon_index not in self.on_screen:
-				self.create_attack(self)
-				self.attacking = True
-				self.attack_time = pygame.time.get_ticks()
-			else:
-				if self.weapon_index == 1:
-					self.create_bullet(self)
-				elif self.weapon_index == 2:
-					self.create_kettle(self)
-					self.destroy_attack(self)
-					self.weapon = 'sword'
-					self.attacking = False
+						# switch to sword
+						self.destroy_attack(self)
+						self.weapon_index = 0
+						self.weapon = list(weapon_data.keys())[self.weapon_index]
+						self.attacking = False
 
 		self.update_pos(update.pos)
 

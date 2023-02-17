@@ -71,11 +71,11 @@ class GameManager(threading.Thread):
 
 			# Update the player
 			player.rect = player.image.get_rect(topleft=player_update.pos)
-			player.attacking = player_update.attacking
-			player.weapon = player_update.weapon
+			# TODO violence
+			attacks = player_update.attacks
 			player.status = player_update.status
 
-			changes = {'pos': (player.rect.x, player.rect.y), 'attacking': player.attacking, 'weapon': player.weapon, 'status': player.status}
+			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': attacks, 'status': player.status}
 			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 			self.players_updates.append(player_update)
 

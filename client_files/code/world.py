@@ -98,16 +98,26 @@ class World:
             player.current_weapon.kill()
         player.current_weapon = None
 
-    def create_bullet(self, player: Union[Player, OtherPlayer]):
-        Projectile(player, self.camera, self.screen_center, player.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
+    def create_bullet(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
                    '../graphics/weapons/bullet.png')
 
-    def create_kettle(self, player: Union[Player, OtherPlayer]):
-        Projectile(player, self.camera, self.screen_center, player.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
+    def create_kettle(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', 'explode', True)
 
     def create_inventory(self):
@@ -241,7 +251,7 @@ class World:
             name = list(enemy_data.keys())[int(random.randint(1, 3))]
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?
+                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)
             # TODO - add else if not spawnable
 
     def spawn_items(self, amount: int) -> None:

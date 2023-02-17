@@ -6,13 +6,13 @@ from client_files.code.tile import Tile
 
 
 class Projectile(pygame.sprite.Sprite):
-	def __init__(self, player, camera, screen_center, weapon, mouse, groups, obstacle_sprites, height, speed, despawn_time, image_path, action=None, spin=False):
+	def __init__(self, player, weapon, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, action=None, spin=False):
 		super().__init__(groups)
 		self.player = player
 		self.height: int = height
 		self.obstacle_sprites: pygame.sprite.Group = obstacle_sprites
 
-		self.direction: pygame.math.Vector2 = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - camera + screen_center)
+		self.direction: pygame.math.Vector2 = direction
 		if self.direction.magnitude() != 0:
 			self.direction = self.direction.normalize()
 		else:

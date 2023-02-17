@@ -43,8 +43,7 @@ class Server:
 			def __init__(self, **kwargs):
 				self.id: int = None
 				self.pos: Tuple[int, int] = None
-				self.attacking: bool = None
-				self.weapon: str = None
+				self.attacks: Tuple[Server.Input.AttackUpdate] = None
 				self.status: str = None
 
 				s: bytes = kwargs.pop('ser', b'')
@@ -53,9 +52,22 @@ class Server:
 					return
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacking': (bool, 'b'),
-						'weapon': (str, 'str'),
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Server.Output.AttackUpdate, 'o')),
 						'status': (str, 'str')}
+
+		class AttackUpdate(Serializable):
+			def __init__(self, **kwargs):
+				self.weapon_id: int = None
+				self.attack_type: int = None
+				self.direction: (int, int) = None
+
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+
+			def _get_attr(self) -> dict:
+				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
 
 		class EnemyUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -103,13 +115,25 @@ class Server:
 
 				changes = kwargs.pop('changes')
 				self.pos = changes['pos']
-				self.attacking = changes['attacking']
-				self.weapon = changes['weapon']
+				self.attacks = changes['attacks']
 				self.status = changes['status']
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacking': (bool, 'b'),
-						'weapon': (str, 'str'), 'status': (str, 'str')}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Server.Input.AttackUpdate, 'o')), 'status': (str, 'str')}
+
+		class AttackUpdate(Serializable):
+			def __init__(self, **kwargs):
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+
+				self.weapon_id = kwargs.pop('weapon_id')  # 0 = sword, 1 = rifle, 2 = kettle
+				self.attack_type = kwargs.pop('attack_type')  # switch=0, attack=1
+				self.direction = kwargs.pop('direction')
+
+			def _get_attr(self) -> dict:
+				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
 
 class EnemyUpdate:
 	def __init__(self, entity_id: int, pos: (int, int)):
