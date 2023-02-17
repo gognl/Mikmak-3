@@ -20,10 +20,10 @@ H = 600  # 30720
 
 normal_servers = [Server("0.0.0.0", i) for i in range(amount_servers)]
 center = Point(W//2, H//2)
-players = {player_id: Player(Point(rand(W), rand(H)), player_id) for player_id in range(100)}
+players = {player_id: PlayerCentral(Point(rand(W), rand(H)), player_id) for player_id in range(100)}
 
 
-def get_new_center(players: dict[ID, Player]):
+def get_new_center(players: dict[ID, PlayerCentral]):
 
 	if len(players) == 0:
 		return Point(W//2, H//2)
@@ -34,12 +34,12 @@ def get_new_center(players: dict[ID, Player]):
 	avg.div(len(players))
 	return avg
 
-def find_suitable_server_index(player: Player, center: Point) -> int:
+def find_suitable_server_index(player: PlayerCentral, center: Point) -> int:
 	b0 = player.pos.x > center.x
 	b1 = player.pos.y > center.y
 	return 2*b1+b0
 
-def look_for_new_client(new_clients_q: deque[Player], msgs_to_clients_q: deque[MsgToClient], servers: list[Server]):
+def look_for_new_client(new_clients_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToClient], servers: list[Server]):
 	while True:
 		if len(new_clients_q) == 0:
 			continue
@@ -66,7 +66,7 @@ def get_msgs_from_socket(sock: socket.socket, servers: list[Server]):
 		
 
 
-def LB_main(new_players_q: deque[Player], msgs_to_clients_q: deque[MsgToClient]):
+def LB_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToClient]):
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.bind(('0.0.0.0', PORT))
 

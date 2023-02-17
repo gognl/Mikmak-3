@@ -24,11 +24,11 @@ class Point:
 		return (self.x - other.x) ** 2 + (self.y - other.y) ** 2
 
 
-class Player:
-	def __init__(self, pos: Point, client_id: ID):
+class PlayerCentral:
+	def __init__(self, pos: Point, client_id: ID, name: str):
 		self.pos: Point = pos
 		self.id: ID = client_id
-
+		self.name: str = name
 
 class MsgToClient:
 	def __init__(self, dest_id: ID, msg):

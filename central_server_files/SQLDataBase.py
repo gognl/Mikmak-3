@@ -2,42 +2,38 @@ import sqlalchemy
 from sqlalchemy import Table, Column, MetaData, VARCHAR, TEXT, INT, JSON
 from sqlalchemy.engine import Connection
 
-from Constant import *
+from central_server_files.Constant import *
 
 
 class SQLDataBase:
-    def __init__(self):
+    def __init__(self, hostname: str, user_password: str):
         self.engine: sqlalchemy.engine = sqlalchemy.create_engine(
-            # mysql://<db_user>:<db_pass>@<db_host>:<db_port>/<db_name>
             sqlalchemy.engine.url.URL.create(
                 drivername=SQL_TYPE,
                 username=DB_USER,
-                password=DB_PASSWORD,
-                host=DB_HOST,
+                password=user_password,
+                host=hostname,
                 port=DB_PORT,
                 database=DB_NAME
             )
         )
-
         self.metadata: MetaData = MetaData(bind=self.engine)
+
         self.users_table: Table = Table(TABLE_NAME, self.metadata,
+                                        Column("id", INT),
                                         Column("username", VARCHAR(MAX_SIZE)),
                                         Column("password", TEXT),
                                         Column("pos_x", INT),
                                         Column("pos_y", INT),
-                                        Column("health", INT),
-                                        Column("slot_index", INT),
-                                        Column("inventory", JSON))
+                                        Column("health", INT)
+                                        )
 
-        self.connection: Connection = self.engine.connect()
+        connection: Connection = engine.connect()
 
         self.metadata.create_all(bind=self.engine)
 
-    def execute(self, statement):
-        return self.connection.execute(statement)
+        def exec(statement):
+            return connection.execute(statement)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.connection.close()
+        def _exit_(exc_type, exc_val, exc_tb):
+            connection.close()
