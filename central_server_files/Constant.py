@@ -12,3 +12,9 @@ SALT = "WfLc6hyf"
 # Servers related constants:
 LOAD_BALANCING_PORT = 15151
 CLIENT_PORT = 26262
+
+#Defaults
+DEFAULT_HEALTH = 100
+DEFAULT_INVENTORY = {}
+DEFAULT_X = 0
+DEFAULT_Y = 0
