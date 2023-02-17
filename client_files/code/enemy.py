@@ -1,5 +1,6 @@
-from typing import List, Union
+from typing import Union
 
+from client_files.code.other_player import OtherPlayer
 from client_files.code.player import Player
 from client_files.code.settings import *
 from client_files.code.entity import Entity
@@ -38,21 +39,10 @@ class Enemy(Entity):
 		self.changes = {'pos': (self.rect.x, self.rect.y)}  # changes made in this tick
 
 	def import_graphics(self, name):
-
-		if name == 'other_player':
-			path: str = '../graphics/player/'
-			self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
-							   'left_idle': [], 'right_idle': []}
-			for animation in self.animations.keys():
-				self.animations[animation] = list(import_folder(path + animation).values())
-
-			self.status = 'down_idle'
-
-		else:
-			self.animations = {'move': []}
-			path = f'../graphics/monsters/{name}/move/'
-			self.animations['move'] = list(import_folder(path).values())
-			self.status = 'move'
+		self.animations = {'move': []}
+		path = f'../graphics/monsters/{name}/move/'
+		self.animations['move'] = list(import_folder(path).values())
+		self.status = 'move'
 
 	def animate(self) -> None:
 		"""
@@ -69,7 +59,7 @@ class Enemy(Entity):
 		self.image = animation[int(self.frame_index)]
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 
-	def get_closest_player(self, players: List[Union[Player, 'Enemy']]) -> Union[Player, 'Enemy']:
+	def get_closest_player(self, players: List[Union[Player, 'OtherPlayer']]) -> Union[Player, 'OtherPlayer']:
 		enemy_pos = pygame.Vector2(self.rect.center)
 		return min(players, key=lambda p: enemy_pos.distance_squared_to(pygame.Vector2(p.rect.center)))
 
@@ -103,9 +93,6 @@ class Enemy(Entity):
 			self.direction = pygame.math.Vector2()
 
 	def update(self):
-
-		if self.enemy_name == 'other_player':
-			return
 
 		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
 

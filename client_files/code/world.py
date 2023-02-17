@@ -2,6 +2,7 @@ import random
 import pygame
 from typing import Dict, Union, List
 from client_files.code.item import Item
+from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
@@ -51,7 +52,10 @@ class World:
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
 
         # other players
-        self.all_players: List[Union[Enemy, Player]] = []
+        self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
+
+        # all players
+        self.all_players: List[Union[Player, OtherPlayer]] = []
 
         # All layout csv files of the map
         self.layout: Dict[str, List[List[str]]] = {

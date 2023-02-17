@@ -1,5 +1,4 @@
 import socket  # Socket
-from typing import Dict
 
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
@@ -12,7 +11,7 @@ from client_files.code.settings import *
 from client_files.code.world import World
 from client_files.code.enemy import Enemy
 from client_files.code.title import Title
-
+from client_files.code.other_player import OtherPlayer
 
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
 	"""
@@ -95,13 +94,13 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if entity_id == client_id:
 			world.player.update_pos(entity_pos)
 			world.player.status = entity_status
-		elif entity_id in world.enemies:
-			world.enemies[entity_id].status = entity_status
-			world.enemies[entity_id].animate()
-			world.enemies[entity_id].update_pos(entity_pos)
+		elif entity_id in world.other_players:
+			world.other_players[entity_id].status = entity_status
+			world.other_players[entity_id].animate()
+			world.other_players[entity_id].update_pos(entity_pos)
 		else:
-			world.enemies[entity_id] = Enemy('other_player', entity_pos, (world.visible_sprites,), entity_id, world.obstacle_sprites)
-			world.all_players.append(world.enemies[entity_id])
+			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites,), entity_id, world.obstacle_sprites)
+			world.all_players.append(world.other_players[entity_id])
 
 	for enemy_update in update_msg.state_update.enemy_changes:
 		entity_id: int = enemy_update.id
