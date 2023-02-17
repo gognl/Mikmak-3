@@ -19,11 +19,16 @@ class Item(pygame.sprite.Sprite):
         self.pick_up_cooldown = ITEM_PICK_UP_COOLDOWN
         self.can_pick_up = False
 
+        self.despawn_time = ITEM_DESPAWN_TIME
+
     def update(self):
         current_time = pygame.time.get_ticks()
 
         if current_time - self.spawn_time > self.pick_up_cooldown:
             self.can_pick_up = True
+
+        if current_time - self.spawn_time > self.despawn_time:
+            del self
 
     def used(self):
         pass  # TODO - add uses for items
