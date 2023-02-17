@@ -20,20 +20,21 @@ class SQLDataBase:
         self.metadata: MetaData = MetaData(bind=self.engine)
 
         self.users_table: Table = Table(TABLE_NAME, self.metadata,
-                                        Column("id", INT),
+                                        Column("id", INT,primary_key=True),
                                         Column("username", VARCHAR(MAX_SIZE)),
                                         Column("password", TEXT),
                                         Column("pos_x", INT),
                                         Column("pos_y", INT),
-                                        Column("health", INT)
+                                        Column("health", INT),
+                                        Column("inventory",JSON)
                                         )
 
         connection: Connection = engine.connect()
 
         self.metadata.create_all(bind=self.engine)
 
-        def exec(statement):
-            return connection.execute(statement)
+    def exec(self, statement):
+        return connection.execute(statement)
 
-        def _exit_(exc_type, exc_val, exc_tb):
-            connection.close()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        connection.close()
