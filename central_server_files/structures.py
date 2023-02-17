@@ -35,8 +35,8 @@ class MsgToClient:
 		self.dest_id: ID = dest_id
 		self.msg = msg
 
-
 class Server:
 	def __init__(self, ip, port):
 		self.ip: str = ip
 		self.port: int = port
+		self.key: bytes = bytes(0)
