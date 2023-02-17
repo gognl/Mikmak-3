@@ -33,9 +33,6 @@ class World:
         # User interface
         self.ui = UI()
 
-        # attack sprites
-        self.current_weapon = None
-
         # Calculate screen center
         self.half_width: int = self.display_surface.get_size()[0] // 2
         self.half_height: int = self.display_surface.get_size()[1] // 2
@@ -93,22 +90,22 @@ class World:
         # Spawn items
         self.spawn_items(1000)
 
-    def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, (self.visible_sprites,), 2)
+    def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
+        player.current_weapon = Weapon(player, (self.visible_sprites,), 2)
 
-    def destroy_attack(self):
-        if self.current_weapon:
-            self.current_weapon.kill()
-        self.current_weapon = None
+    def destroy_attack(self, player: Union[Player, OtherPlayer]):
+        if player.current_weapon:
+            player.current_weapon.kill()
+        player.current_weapon = None
 
-    def create_bullet(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
+    def create_bullet(self, player: Union[Player, OtherPlayer]):
+        Projectile(player, self.camera, self.screen_center, player.current_weapon,
                    pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
                                             self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
                    '../graphics/weapons/bullet.png')
 
-    def create_kettle(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
+    def create_kettle(self, player: Union[Player, OtherPlayer]):
+        Projectile(player, self.camera, self.screen_center, player.current_weapon,
                    pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
                                             self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', 'explode', True)

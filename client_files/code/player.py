@@ -46,6 +46,8 @@ class Player(Entity):
         self.can_switch_weapon = True
         self.weapon_switch_time = None
         self.switch_duration_cooldown = 400
+        # attack sprites
+        self.current_weapon = None
 
         # Animations
         self.animations: Dict[str, List[pygame.Surface]] = {}
@@ -155,18 +157,18 @@ class Player(Entity):
         if mouse[0] and not self.attacking and not self.release_mouse[0]:
             if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
                 if self.weapon_index not in self.on_screen:
-                    self.create_attack()
+                    self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
                     self.attack_time = pygame.time.get_ticks()
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
-                            self.create_bullet()
+                            self.create_bullet(self)
                             self.can_shoot = False
                             self.shoot_time = pygame.time.get_ticks()
                     elif self.weapon_index == 2:
-                        self.create_kettle()
+                        self.create_kettle(self)
                         self.switch_weapon()
 
         if self.inventory_active and pygame.mouse.get_pos()[0] > SCREEN_WIDTH - INVENTORY_WIDTH:
@@ -210,7 +212,7 @@ class Player(Entity):
         self.release_mouse[0] = True
 
         if self.weapon_index in self.on_screen:
-            self.destroy_attack()
+            self.destroy_attack(self)
 
         self.can_switch_weapon = False
         self.weapon_switch_time = pygame.time.get_ticks()
@@ -223,7 +225,7 @@ class Player(Entity):
         self.attacking = False
 
         if self.weapon_index in self.on_screen:
-            self.create_attack()
+            self.create_attack(self)
 
     def get_status(self) -> None:
         """
@@ -246,7 +248,7 @@ class Player(Entity):
         if self.attacking:
             if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:
                 self.attacking = False
-                self.destroy_attack()
+                self.destroy_attack(self)
 
         if not self.can_switch_weapon:
             if current_time - self.weapon_switch_time >= self.switch_duration_cooldown:
