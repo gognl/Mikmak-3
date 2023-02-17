@@ -51,19 +51,27 @@ BOX_BG_COLOR = '#444444'
 INPUT_BG_COLOR = '#cc99ff'
 BUTTON_BG_COLOR = '#66ff66'
 BUTTON_TEXT_COLOR = '#222222'
+TITLE_MOUSE_RADIUS = 100
+TITLE_RANDOM_COW = ['green_cow', 'red_cow', 'pet_cow']
 
 # Inventory
-INVENTORY_SIZE = (3, 8)
+INVENTORY_SIZE = (3, 5)
 INVENTORY_ITEMS = INVENTORY_SIZE[0] * INVENTORY_SIZE[1]
 INVENTORY_FONT_SIZE = 10
 ITEM_PICK_UP_COOLDOWN = 2000
+ITEM_DESPAWN_TIME = 600000
 
 # TODO: make the red cow explode
 enemy_data = {
 	'other_player': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
 	'red_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
 	'green_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
-	'white_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300}
+	'white_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
+	'pet_cow': {'health': 100, 'exp': 10, 'damage': 0, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 300}
 }
 
-item_names = ['kettle', 'nerf', 'sword', 'cow']
+item_names = ['heal', 'strength', 'kettle', 'spawn_white', 'spawn_green', 'spawn_red', 'spawn_pet']
+
+RANDOM_NAMETAG = ['goni', 'omri', 'bar', 'alon', 'liron', 'gabriel', 'god', 'dog', 'not a cow', 'friend',
+				  'epstein', 'shmulik', 'holy cow', 'cat', 'milk factory', '123456', 'password', 'user',
+				  'not a bot', 'pet', 'SOS', 'obama', 'allah']  # TODO - add more

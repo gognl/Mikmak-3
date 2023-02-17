@@ -7,7 +7,7 @@ from client_files.code.tile import Tile
 from client_files.code.player import Player
 from client_files.code.support import *
 from client_files.code.weapon import Weapon
-from client_files.code.enemy import Enemy
+from client_files.code.enemy import Enemy, Pet
 from client_files.code.projectile import Projectile
 from client_files.code.ui import *
 from client_files.code.structures import *
@@ -78,7 +78,8 @@ class World:
         self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.server_sprites),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
-                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, 0)  # TODO - make starting player position random (or a spawn)
+                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
+                             0)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -87,7 +88,7 @@ class World:
         self.camera.y = self.player.rect.centery
 
         # Spawn items
-        self.spawn_items(1000)
+        self.spawn_items(100)
 
     def create_attack(self) -> None:
         self.current_weapon = Weapon(self.player, (self.visible_sprites,), 2)
@@ -119,15 +120,18 @@ class World:
         self.screen_center.x = self.half_width
         self.camera_distance_from_player = list(CAMERA_DISTANCE_FROM_PLAYER)
 
-    def create_nametag(self, player):
-        nametag = NameTag(player)
+    def create_nametag(self, player, name):
+        nametag = NameTag(player, name)
         self.nametags.append(nametag)
 
         return nametag
 
     def create_dropped_item(self, name, pos):
-        if int(self.layout['floor'][pos[0] // 64][pos[1] // 64]) in SPAWNABLE_TILES:
-            Item(name, (self.visible_sprites, self.item_sprites), pos)
+        random_x = pos[0] // 64 + random.randrange(-1, 2)
+        random_y = pos[1] // 64 + random.randrange(-1, 2)
+
+        if int(self.layout['floor'][random_x][random_y]) in SPAWNABLE_TILES:
+            Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64, random_y * 64))
         # TODO - add else if not spawnable
 
     def nametag_update(self, nametag):
@@ -135,6 +139,20 @@ class World:
 
     def get_inventory_box_pressed(self, mouse):
         return self.ui.get_inventory_box_pressed(mouse)
+
+    def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
+        random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
+        random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
+
+        if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
+            if is_pet:
+                Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites,), 1, self.obstacle_sprites,
+                    player, safe=[player], nametag=True, name="random", create_nametag=self.create_nametag,
+                    nametag_update=self.nametag_update)
+            else:
+                Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites,), 1, self.obstacle_sprites,
+                      safe=[player])
+        # TODO - add else if not spawnable
 
     def run(self) -> (TickUpdate, Server.Output.StateUpdate):
         """
@@ -192,9 +210,9 @@ class World:
                 sprite.kill()
 
         # UI
-        self.ui.display(self.player)
         for nametag in self.nametags:
             nametag.display()
+        self.ui.display(self.player)
 
         # Get info about changes made in this tick (used for server synchronization)
         local_changes = [None, []]  # A list of changes made in this tick. player, enemies
@@ -233,14 +251,14 @@ class World:
             else:  # Move the camera from to the bottom of the bound if it's further down than the player
                 self.camera.y = self.player.rect.centery + self.camera_distance_from_player[1]
 
-    def spawn_enemies(self, amount: int) -> None:  # TODO: should be random, dont spawn on water/player, collidable block
+    def spawn_enemies(self, amount: int) -> None:
         for enemy in range(amount):
             random_x = random.randint(0, 1280 * 40 // 64 - 1)
             random_y = random.randint(0, 720 * 40 // 64 - 1)
-            name = list(enemy_data.keys())[int(random.randint(1, 3))]
+            name = list(enemy_data.keys())[int(random.randint(1, 3))]  # Don't include other_player or pets
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?
+                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)
             # TODO - add else if not spawnable
 
     def spawn_items(self, amount: int) -> None:
