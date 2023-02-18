@@ -10,7 +10,6 @@ from server_files_normal.structures import *
 
 class Player(pygame.sprite.Sprite):
 	def __init__(self, groups: AbstractGroup, entity_id: int, pos: (int, int), create_bullet, create_kettle):
-		super().__init__(groups)
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -54,6 +53,8 @@ class Player(pygame.sprite.Sprite):
 		# updates queue
 		self.update_queue: deque = deque()
 
+		super().__init__(groups)
+
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
 		self.status = update.status
 
@@ -71,12 +72,9 @@ class Player(pygame.sprite.Sprite):
 				else:
 					if self.weapon_index == 1:
 						if self.can_shoot:
-							print('creating bullet')
 							self.create_bullet(self, attack.direction)
 							self.can_shoot = False
 							self.shoot_time = pygame.time.get_ticks()
-						else:
-							print('cannot shoot')
 					elif self.weapon_index == 2:
 						self.create_kettle(self, attack.direction)
 						self.switch_weapon(0)

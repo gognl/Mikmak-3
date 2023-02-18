@@ -68,31 +68,32 @@ class OtherPlayer(Entity):
 	def process_server_update(self, update: Server.Input.PlayerUpdate):
 		self.status = update.status
 
-		for attack in update.attacks:
-			if attack.attack_type == 0:  # switch
-				if self.weapon_index in self.on_screen:
-					self.destroy_attack(self)
-				self.weapon_index = attack.weapon_id
-				self.weapon = list(weapon_data.keys())[self.weapon_index]
-				self.attacking = False
-				if self.weapon_index in self.on_screen:
-					self.create_attack(self)
-			elif attack.attack_type == 1:  # attack
-				if self.weapon_index not in self.on_screen:
-					self.create_attack(self)
-					self.attacking = True
-					self.attack_time = pygame.time.get_ticks()
-				else:
-					if self.weapon_index == 1:
-						self.create_bullet(self, attack.direction)
-					elif self.weapon_index == 2:
-						self.create_kettle(self, attack.direction)
-
-						# switch to sword
+		if not self.attacking:
+			for attack in update.attacks:
+				if attack.attack_type == 0:  # switch
+					if self.weapon_index in self.on_screen:
 						self.destroy_attack(self)
-						self.weapon_index = 0
-						self.weapon = list(weapon_data.keys())[self.weapon_index]
-						self.attacking = False
+					self.weapon_index = attack.weapon_id
+					self.weapon = list(weapon_data.keys())[self.weapon_index]
+					self.attacking = False
+					if self.weapon_index in self.on_screen:
+						self.create_attack(self)
+				elif attack.attack_type == 1:  # attack
+					if self.weapon_index not in self.on_screen:
+						self.create_attack(self)
+						self.attacking = True
+						self.attack_time = pygame.time.get_ticks()
+					else:
+						if self.weapon_index == 1:
+							self.create_bullet(self, attack.direction)
+						elif self.weapon_index == 2:
+							self.create_kettle(self, attack.direction)
+
+							# switch to sword
+							self.destroy_attack(self)
+							self.weapon_index = 0
+							self.weapon = list(weapon_data.keys())[self.weapon_index]
+							self.attacking = False
 
 		self.update_pos(update.pos)
 
@@ -107,7 +108,6 @@ class OtherPlayer(Entity):
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
-
 		if self.attacking:
 			if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:
 				self.attacking = False
