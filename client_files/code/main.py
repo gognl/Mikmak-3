@@ -100,7 +100,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 			world.enemies[entity_id].animate()
 			world.enemies[entity_id].update_pos(entity_pos)
 		else:
-			world.enemies[entity_id] = Enemy('other_player', entity_pos, (world.visible_sprites,), entity_id, world.obstacle_sprites)
+			world.enemies[entity_id] = Enemy('other_player', entity_pos, (world.visible_sprites,), entity_id, world.obstacle_sprites, world.create_dropped_item)
 			world.all_players.append(world.enemies[entity_id])
 
 	for enemy_update in update_msg.state_update.enemy_changes:
@@ -109,7 +109,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if entity_id in world.enemies:
 			world.enemies[entity_id].update_pos(entity_pos)
 		else:
-			world.enemies[entity_id] = Enemy('white_cow', entity_pos, (world.visible_sprites, world.server_sprites), entity_id, world.obstacle_sprites)
+			world.enemies[entity_id] = Enemy('white_cow', entity_pos, (world.visible_sprites, world.server_sprites), entity_id, world.obstacle_sprites, world.create_dropped_item)
 
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:

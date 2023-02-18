@@ -6,7 +6,7 @@ from client_files.code.tile import Tile
 
 
 class Projectile(pygame.sprite.Sprite):
-	def __init__(self, player, camera, screen_center, weapon, mouse, groups, obstacle_sprites, height, speed, despawn_time, image_path, action=None, spin=False):
+	def __init__(self, player, camera, screen_center, weapon, mouse, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
 		super().__init__(groups)
 		self.player = player
 		self.height: int = height
@@ -37,32 +37,26 @@ class Projectile(pygame.sprite.Sprite):
 			self.spin = random.randint(8, 15) * (random.randrange(-1, 2, 2))
 
 		# Action
-		self.kill_cooldown: int = 200
-		self.to_kill: bool = False
-		self.kill_time = None
+		self.damage = damage
+		self.create_explosion = create_explosion
+		self.exploded = False
 
 	def update(self) -> None:
 		"""
 		Move forwards
 		:return: None
 		"""
-		if self.to_kill:
-			current_time: int = pygame.time.get_ticks()
+		self.move()
 
-			if current_time - self.kill_time >= self.kill_cooldown:
+		# Check if despawn
+		current_time: int = pygame.time.get_ticks()
+		if current_time - self.spawn_time >= self.despawn_time:
+			if self.action == 'explode':
+				self.explode()
+			else:
 				self.kill()
-		else:
-			self.move()
 
-			# Check if despawn
-			current_time: int = pygame.time.get_ticks()
-			if current_time - self.spawn_time >= self.despawn_time:
-				if self.action == 'explode':
-					self.do_action()
-				else:
-					self.kill()
-
-			self.collision()
+		self.collision()
 
 	def move(self) -> None:
 		"""
@@ -94,17 +88,18 @@ class Projectile(pygame.sprite.Sprite):
 			if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and sprite is not self.player:  # Do not collide with own player
 				if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers
 					if self.action == 'explode':
-						self.do_action()
+						self.explode()
 					else:
+						if hasattr(sprite, "health"):
+							sprite.health -= self.damage
 						self.kill()
 
-	def do_action(self) -> None:
+	def explode(self) -> None:
 		"""
-		Do action based on self.action
+		Explode.
 		:return: None
 		"""
-		if self.action == 'explode':
-			self.direction = 0  # TODO - add explosion
-
-		self.to_kill = True
-		self.kill_time = pygame.time.get_ticks()
+		if not self.exploded:
+			self.exploded = True
+			self.create_explosion(self.rect.center, self.damage)
+			self.kill()
