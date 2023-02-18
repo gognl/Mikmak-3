@@ -13,6 +13,7 @@ ROW_UNLOAD_TILE_DISTANCE: int = 30
 COL_UNLOAD_TILE_DISTANCE: int = 40
 SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24]
 MAX_DIVERGENCE_SQUARED: int = 100**2
+MAX_PETS_PER_PLAYER: int = 5
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
@@ -51,19 +52,31 @@ BOX_BG_COLOR = '#444444'
 INPUT_BG_COLOR = '#cc99ff'
 BUTTON_BG_COLOR = '#66ff66'
 BUTTON_TEXT_COLOR = '#222222'
+TITLE_MOUSE_RADIUS = 100
+TITLE_RANDOM_COW = ['green_cow', 'red_cow', 'pet_cow']
 
 # Inventory
-INVENTORY_SIZE = (3, 8)
+INVENTORY_SIZE = (3, 5)
 INVENTORY_ITEMS = INVENTORY_SIZE[0] * INVENTORY_SIZE[1]
 INVENTORY_FONT_SIZE = 10
-ITEM_PICK_UP_COOLDOWN = 2000
+ITEM_PICK_UP_COOLDOWN = 1000
+ITEM_DESPAWN_TIME = 600000
 
-# TODO: make the red cow explode
+# Explosion
+EXPLOSION_SPEED = 1.3
+EXPLOSION_RADIUS = 150
+
+# TODO: make the red cow xplode
 enemy_data = {
-	'other_player': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
-	'red_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
-	'green_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300},
-	'white_cow': {'health': 100, 'exp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300}
+	'other_player': {'health': 100, 'xp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['grave_player'], 'xp': 0},
+	'red_cow': {'health': 100, 'xp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'], 'xp': 20},
+	'green_cow': {'health': 100, 'xp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green', 'spawn_pet'], 'xp': 10},
+	'white_cow': {'health': 100, 'xp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
+	'pet_cow': {'health': 100, 'xp': 10, 'damage': 0, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 300, 'death_items': ['grave_pet'], 'xp': 5}
 }
 
-item_names = ['kettle', 'nerf', 'sword', 'cow']
+item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green', 'spawn_red', 'spawn_pet', 'xp']  # TODO - keep only items that need to be naturally spawned
+
+RANDOM_NAMETAG = ['goni', 'omri', 'bar', 'alon', 'liron', 'gabriel', 'god', 'dog', 'not a cow', 'friend',
+				  'epstein', 'shmulik', 'holy cow', 'cat', 'milk factory', '123456', 'password', 'user',
+				  'not a bot', 'pet', 'SOS', 'obama', 'allah']  # TODO - add more

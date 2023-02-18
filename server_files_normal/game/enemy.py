@@ -25,7 +25,7 @@ class Enemy(pygame.sprite.Sprite):
 		self.enemy_name = enemy_name
 		enemy_info = enemy_data[enemy_name]
 		self.health = enemy_info['health']
-		self.exp = enemy_info['exp']
+		self.xp = enemy_info['xp']
 		self.speed = enemy_info['speed']
 		self.damage = enemy_info['damage']
 		self.resistance = enemy_info['resistance']

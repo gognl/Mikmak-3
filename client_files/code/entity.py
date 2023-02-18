@@ -1,14 +1,30 @@
 import pygame
+import random
 from client_files.code.projectile import Projectile
+from client_files.code.settings import *
 
 
 class Entity(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id):
+	def __init__(self, groups, entity_id, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		super().__init__(groups)
 		self.frame_index = 0
 		self.animation_speed = 0.25
 		self.direction = pygame.math.Vector2()
 		self.entity_id = entity_id
+
+		# Name tag
+		if nametag:
+			if name == "random":
+				self.name = random.choice(RANDOM_NAMETAG)
+			else:
+				self.name = name
+
+		self.create_nametag = create_nametag
+		self.nametag_update = nametag_update
+		self.nametag = None
+
+	def initialize_nametag(self):
+		self.nametag = self.create_nametag(self, self.name)
 
 	def move(self, speed: int) -> None:
 		"""
@@ -16,6 +32,10 @@ class Entity(pygame.sprite.Sprite):
 		:param speed: maximum pixels per direction per frame (may vary if both directions are active)
 		:return: None
 		"""
+		# Update nametag right after moving
+		if self.nametag is not None:
+			self.nametag_update(self.nametag)
+
 		# Normalize direction
 		if self.direction.magnitude() != 0:
 			self.direction = self.direction.normalize()

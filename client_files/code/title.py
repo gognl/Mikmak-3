@@ -73,11 +73,22 @@ class Title:
         y = random.randint(-TILESIZE, SCREEN_HEIGHT + TILESIZE)
         self.enemies.append(TitleEnemy("white_cow", (x, y), (self.visible_sprites,), (-side, 0)))
 
+        # mouse = pygame.mouse.get_pos()
         for enemy in self.enemies:
             if enemy.rect.x + enemy.direction[0] > SCREEN_WIDTH + TILESIZE or enemy.rect.x + enemy.direction[0] < -TILESIZE:
                 enemy.kill()
 
             enemy.title_move()
+
+            # if pygame.math.Vector2(enemy.rect.x, enemy.rect.y).distance_to(mouse) < TITLE_MOUSE_RADIUS:
+            #     if enemy.enemy_name is "white_cow":
+            #         enemy.enemy_name = random.choice(TITLE_RANDOM_COW)
+            #         enemy.import_graphics(enemy.enemy_name)
+            #         enemy.image = enemy.animations[enemy.status][enemy.frame_index]
+            # else:
+            #     enemy.enemy_name = "white_cow"
+            #     enemy.import_graphics(enemy.enemy_name)
+            #     enemy.image = enemy.animations[enemy.status][enemy.frame_index]
 
     def display(self):
         self.background()
