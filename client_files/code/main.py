@@ -12,6 +12,7 @@ from client_files.code.world import World
 from client_files.code.enemy import Enemy
 from client_files.code.title import Title
 from client_files.code.other_player import OtherPlayer
+from client_files.code.circle import Circle
 
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
 	"""
@@ -70,6 +71,8 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
 		msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
 		updates_queue.put(msg)
 
+circles = {}
+
 def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
 	"""
 	Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
@@ -95,7 +98,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		elif entity_id in world.other_players:
 			world.other_players[entity_id].update_queue.append(player_update)
 		else:
-			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites,), entity_id,
+			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites, world.obstacle_sprites, world.all_obstacles), entity_id,
 														 world.obstacle_sprites, world.create_attack,
 														 world.destroy_attack, world.create_bullet,
 														 world.create_kettle)
@@ -104,10 +107,13 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 	for enemy_update in update_msg.state_update.enemy_changes:
 		entity_id: int = enemy_update.id
 		entity_pos: (int, int) = enemy_update.pos
+		enemy_name: str = enemy_update.type
 		if entity_id in world.enemies:
 			world.enemies[entity_id].update_pos(entity_pos)
+			circles[entity_id].rect = circles[entity_id].image.get_rect(topleft=entity_pos)
 		else:
-			world.enemies[entity_id] = Enemy('white_cow', entity_pos, (world.visible_sprites, world.server_sprites), entity_id, world.obstacle_sprites, world.create_dropped_item)
+			world.enemies[entity_id] = Enemy(enemy_name, entity_pos, (world.visible_sprites, world.server_sprites, world.all_obstacles), entity_id, world.all_obstacles, world.create_dropped_item)
+			circles[entity_id] = Circle((world.visible_sprites,), 10, entity_pos)
 
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:

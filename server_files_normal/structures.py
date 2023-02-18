@@ -67,11 +67,12 @@ class Client:
                     return
 
                 self.id = kwargs.pop('id')
+                self.type = kwargs.pop('type')
                 changes = kwargs.pop('changes')
                 self.pos = changes['pos']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8'))}
+                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str')}
 
         class ServerSwitch(Serializable):
             """A class of a message to the client which included data about switching to a different server (and region)"""

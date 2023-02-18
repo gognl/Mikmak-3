@@ -9,7 +9,7 @@ from server_files_normal.structures import *
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups: AbstractGroup, entity_id: int, pos: (int, int), create_bullet, create_kettle):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 

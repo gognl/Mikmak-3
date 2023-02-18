@@ -24,7 +24,8 @@ class World:
         # Obstacle sprites: sprite the player can collide with
         # Server sprites: sprites whose updates have to be sent to the server
         self.visible_sprites: GroupYSort = GroupYSort()
-        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
+        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # cows, players, and walls
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
@@ -77,7 +78,7 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites),
+        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
