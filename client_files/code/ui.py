@@ -26,7 +26,7 @@ class UI:
         self.inventory_active: bool = False
         self.boxes: list[list[int]] = []
         self.box_size = 64
-        self.box_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 180)
+        self.box_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 190)
         self.boxes_distance = 10
         self.setup_inventory()
 
@@ -107,9 +107,10 @@ class UI:
         # UI
         text = [f'{player.name}',
                 f'',
-                f'Health   - {player.health}',
-                f'Speed    - {player.speed}',
-                f'Strength - {player.strength}']
+                f'Health     - {player.health}',
+                f'Speed      - {player.speed}',
+                f'Strength   - {player.strength}',
+                f'Resistance - {player.resistance}']
 
         for i, entry in enumerate(text):
             inventory_ui_text = self.font.render(entry, False, TITLE_TEXT_COLOR)

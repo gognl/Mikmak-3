@@ -70,7 +70,7 @@ enemy_data = {
 	'pet_cow': {'health': 100, 'exp': 10, 'damage': 0, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 300}
 }
 
-item_names = ['heal', 'strength', 'kettle', 'spawn_white', 'spawn_green', 'spawn_red', 'spawn_pet']
+item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green', 'spawn_red', 'spawn_pet', 'xp']
 
 RANDOM_NAMETAG = ['goni', 'omri', 'bar', 'alon', 'liron', 'gabriel', 'god', 'dog', 'not a cow', 'friend',
 				  'epstein', 'shmulik', 'holy cow', 'cat', 'milk factory', '123456', 'password', 'user',

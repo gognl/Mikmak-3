@@ -60,6 +60,7 @@ class Player(Entity):
         self.exp = 0
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
+        self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
 
         # Nametag
         self.initialize_nametag()
@@ -190,6 +191,8 @@ class Player(Entity):
                     elif item == "kettle":
                         if self.can_switch_weapon and not self.attacking and self.weapon_index != 2:
                             self.switch_weapon(2)
+                    elif item == "shield":
+                        self.resistance += 1
                     elif item == "spawn_white":
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
                     elif item == "spawn_green":
@@ -352,9 +355,13 @@ class Player(Entity):
         for item in self.item_sprites:
             if self.rect.colliderect(item.rect):
                 if item.can_pick_up:
-                    if item.name in list(self.inventory_items.keys()):
-                        self.inventory_items[item.name] += 1
+                    if item.name == "xp":
+                        self.exp += 1
                         item.kill()
-                    elif len(self.inventory_items) < INVENTORY_ITEMS:
-                        self.inventory_items[item.name] = 1
-                        item.kill()
+                    else:
+                        if item.name in list(self.inventory_items.keys()):
+                            self.inventory_items[item.name] += 1
+                            item.kill()
+                        elif len(self.inventory_items) < INVENTORY_ITEMS:
+                            self.inventory_items[item.name] = 1
+                            item.kill()

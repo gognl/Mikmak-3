@@ -130,8 +130,8 @@ class World:
         random_x = pos[0] // 64 + random.randrange(-1, 2)
         random_y = pos[1] // 64 + random.randrange(-1, 2)
 
-        if int(self.layout['floor'][random_x][random_y]) in SPAWNABLE_TILES:
-            Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64, random_y * 64))
+        if int(self.layout['floor'][random_x][random_y]) in SPAWNABLE_TILES:  # TODO - include barriers
+            Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))  # TODO - dont spawn tile perfect
         # TODO - add else if not spawnable
 
     def nametag_update(self, nametag):
@@ -144,14 +144,14 @@ class World:
         random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
         random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
 
-        if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
+        if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
             if is_pet:
                 Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites,), 1, self.obstacle_sprites,
                     player, safe=[player], nametag=True, name="random", create_nametag=self.create_nametag,
-                    nametag_update=self.nametag_update)
+                    nametag_update=self.nametag_update)  # TODO - dont spawn tile perfect
             else:
                 Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites,), 1, self.obstacle_sprites,
-                      safe=[player])
+                      safe=[player])  # TODO - dont spawn tile perfect
         # TODO - add else if not spawnable
 
     def run(self) -> (TickUpdate, Server.Output.StateUpdate):
@@ -257,8 +257,8 @@ class World:
             random_y = random.randint(0, 720 * 40 // 64 - 1)
             name = list(enemy_data.keys())[int(random.randint(1, 3))]  # Don't include other_player or pets
 
-            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)
+            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+                Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites,), 1, self.obstacle_sprites)  # TODO - dont spawn tile perfect
             # TODO - add else if not spawnable
 
     def spawn_items(self, amount: int) -> None:
@@ -267,8 +267,8 @@ class World:
             random_y = random.randint(20, 21)
             name = item_names[int(random.randint(0, len(item_names) - 1))]
 
-            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
+            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))  # TODO - dont spawn tile perfect
             # TODO - add else if not spawnable
 
 
