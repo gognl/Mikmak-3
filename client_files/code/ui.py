@@ -1,5 +1,4 @@
 from typing import Sequence
-
 import pygame
 from client_files.code.settings import *
 from client_files.code.item import Item
@@ -50,8 +49,8 @@ class UI:
         pygame.draw.rect(self.display_surface, color, current_rect)
         pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, bg_rect, 3)
 
-    def show_exp(self, exp):
-        text_surf = self.font.render(str(int(exp)), False, TEXT_COLOR)
+    def show_xp(self, xp):
+        text_surf = self.font.render(str(int(xp)), False, TEXT_COLOR)
         x = self.display_surface.get_size()[0] - 20
         y = self.display_surface.get_size()[1] - 20
         if self.inventory_active:
@@ -151,7 +150,7 @@ class UI:
         # Creates the bars
         self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
-        self.show_exp(player.exp)
+        self.show_xp(player.xp)
 
         # Create weapon box
         self.weapon_overlay(player.weapon_index, not player.can_switch_weapon, player.inventory_items)
@@ -181,6 +180,8 @@ class NameTag:
 
         # Initial position
         self.text, self.rect = self.initialize_rect()
+
+        self.kill = False
 
     def initialize_rect(self):
         text = self.font.render(self.name, False, TEXT_COLOR)

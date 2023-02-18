@@ -1,4 +1,5 @@
 import pygame
+import re
 from client_files.code.settings import *
 
 
@@ -7,7 +8,7 @@ class Item(pygame.sprite.Sprite):
         super().__init__(groups)
 
         # Inventory
-        self.name = name
+        self.name = re.sub("\(.*?\)", "", name)
 
         # Sprite
         self.image = pygame.image.load(f'../graphics/items/{self.name}.png').convert_alpha()
@@ -29,6 +30,3 @@ class Item(pygame.sprite.Sprite):
 
         if current_time - self.spawn_time > self.despawn_time:
             del self
-
-    def used(self):
-        pass  # TODO - add uses for items

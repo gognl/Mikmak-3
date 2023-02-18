@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.9" tiledversion="1.9.2" orientation="orthogonal" renderorder="right-down" width="800" height="450" tilewidth="64" tileheight="64" infinite="0" nextlayerid="4" nextobjectid="1">
  <editorsettings>
-  <export target="map.csv" format="csv"/>
+  <xport target="map.csv" format="csv"/>
  </editorsettings>
  <tileset firstgid="1" source="tiles.tsx"/>
  <layer id="1" name="Ground" width="800" height="450">

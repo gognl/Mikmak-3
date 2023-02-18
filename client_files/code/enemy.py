@@ -1,4 +1,5 @@
 from typing import List, Union
+import random
 
 from client_files.code.player import Player
 from client_files.code.settings import *
@@ -7,7 +8,7 @@ from client_files.code.support import *
 
 
 class Enemy(Entity):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
+	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		# general setup
 		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
 		self.status = None
@@ -26,12 +27,17 @@ class Enemy(Entity):
 		self.enemy_name = enemy_name
 		enemy_info = enemy_data[enemy_name]
 		self.health = enemy_info['health']
-		self.exp = enemy_info['exp']
+		self.xp = enemy_info['xp']
 		self.speed = enemy_info['speed']
 		self.damage = enemy_info['damage']
 		self.resistance = enemy_info['resistance']
 		self.attack_radius = enemy_info['attack_radius']
 		self.notice_radius = enemy_info['notice_radius']
+
+		# Death
+		self.xp = enemy_info['xp']
+		self.death_items = enemy_info['death_items']
+		self.create_dropped_item = create_dropped_item
 
 		# Server
 		self.changes = {'pos': (self.rect.x, self.rect.y)}  # changes made in this tick
@@ -101,7 +107,7 @@ class Enemy(Entity):
 
 	def actions(self, player):
 		if self.status == 'attack':
-			pass  #  TODO - attack
+			pass  # TODO - attack
 		elif self.status == 'move':
 			self.direction = self.get_player_distance_direction(player)[1]
 			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
@@ -120,13 +126,21 @@ class Enemy(Entity):
 		if self.changes == previous_state:
 			self.changes = None
 
+		# Death
+		if self.health <= 0:
+			for i in range(min(2, len(self.death_items))):
+				self.create_dropped_item(random.choice(self.death_items), self.rect.center)
+			for i in range(self.xp):
+				self.create_dropped_item("xp", self.rect.center)
+			self.kill()
+
 	def enemy_update(self, players):
 		if not players:
 			return
 
 		# Don't use players who are safe from this enemy
 		for i, player in enumerate(players):
-			if player in self.safe:
+			if self.safe is not None and player in self.safe:
 				del players[i]
 
 		if not players:
@@ -138,8 +152,8 @@ class Enemy(Entity):
 
 
 class Pet(Enemy):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, owner, safe, nametag, name, create_nametag, nametag_update):
-		super().__init__(enemy_name, pos, groups, entity_id, obstacle_sprites, safe, nametag, name, create_nametag, nametag_update)
+	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, owner, create_dropped_item, safe, nametag, name, create_nametag, nametag_update):
+		super().__init__(enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, safe, nametag, name, create_nametag, nametag_update)
 		self.owner = owner
 
 		self.stop_walking_radius = 100
@@ -169,6 +183,17 @@ class Pet(Enemy):
 		if self.changes == previous_state:
 			self.changes = None
 
+		# Death
+		if self.health <= 0:
+			for i in range(min(2, len(self.death_items))):
+				self.create_dropped_item(random.choice(self.death_items), self.rect.center)
+			for i in range(self.xp):
+				self.create_dropped_item("xp", self.rect.center)
+
+			self.nametag.kill = True
+			self.owner.pets -= 1
+			self.kill()
+
 	def enemy_update(self, players):
 		self.get_status(self.owner)
 		self.actions(self.owner)
@@ -176,7 +201,7 @@ class Pet(Enemy):
 
 class TitleEnemy(Enemy):
 	def __init__(self, enemy_name, pos, groups, direction):
-		super().__init__(enemy_name, pos, groups, 0, None)
+		super().__init__(enemy_name, pos, groups, 0, None, None)
 
 		self.direction = direction
 		self.image = self.animations['move'][0 if self.direction[0] < 0 else 1]

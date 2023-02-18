@@ -57,7 +57,7 @@ class Player(Entity):
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
         self.health = self.stats['health']
         self.energy = self.stats['energy']
-        self.exp = 0
+        self.xp = 0
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
         self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
@@ -88,6 +88,7 @@ class Player(Entity):
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
+        self.pets = 0
 
     def import_player_assets(self) -> None:
         """
@@ -181,6 +182,7 @@ class Player(Entity):
 
                 if mouse[0] and not self.release_mouse[0]:
                     self.release_mouse[0] = True
+                    used = True
 
                     if item == "heal":
                         self.health += 20
@@ -191,6 +193,7 @@ class Player(Entity):
                     elif item == "kettle":
                         if self.can_switch_weapon and not self.attacking and self.weapon_index != 2:
                             self.switch_weapon(2)
+                        used = False
                     elif item == "shield":
                         self.resistance += 1
                     elif item == "spawn_white":
@@ -200,13 +203,18 @@ class Player(Entity):
                     elif item == "spawn_red":
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
                     elif item == "spawn_pet":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
+                        if self.pets < MAX_PETS_PER_PLAYER:
+                            self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
+                            self.pets += 1
+                        else:
+                            used = False
 
-                    if item != "kettle":
+                    if used:
                         self.inventory_items[item] -= 1
 
-                    if self.inventory_items[item] == 0:
-                        del self.inventory_items[item]
+                        if self.inventory_items[item] == 0:
+                            del self.inventory_items[item]
+
                 elif mouse[2] and not self.release_mouse[1]:
                     self.release_mouse[1] = True
 
@@ -219,6 +227,8 @@ class Player(Entity):
                         self.inventory_items[item] -= 1
 
                     if self.inventory_items[item] == 0:
+                        if item == "kettle" and self.weapon_index == 2:
+                            self.switch_weapon()
                         del self.inventory_items[item]
 
         if keys[pygame.K_q] and self.can_switch_weapon and not self.attacking:
@@ -335,6 +345,22 @@ class Player(Entity):
         if self.changes == previous_state:
             self.changes = None
 
+        # Death
+        if self.health <= 0:
+            for item in list(self.inventory_items.keys()):
+                for i in range(self.inventory_items[item]):
+                    self.create_dropped_item(item, self.rect.center)
+            self.inventory_items = {}
+
+            for i in range(self.xp):
+                self.create_dropped_item("xp", self.rect.center)
+            self.xp = 0
+
+            self.create_dropped_item("grave_player", self.rect.center)
+
+            self.nametag.kill = True
+            self.kill()  # TODO - add death screen
+
     def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
         """
         update the obstacle_sprite group
@@ -356,8 +382,12 @@ class Player(Entity):
             if self.rect.colliderect(item.rect):
                 if item.can_pick_up:
                     if item.name == "xp":
-                        self.exp += 1
+                        self.xp += 1
                         item.kill()
+                    elif item.name == "grave_player" or item.name == "grave_pet":
+                        if len(self.inventory_items) < INVENTORY_ITEMS:
+                            self.inventory_items[item.name + f'({len(self.inventory_items)})'] = 1
+                            item.kill()
                     else:
                         if item.name in list(self.inventory_items.keys()):
                             self.inventory_items[item.name] += 1
