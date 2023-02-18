@@ -57,8 +57,8 @@ class Player(Entity):
 
         # Stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}
-        self.health = self.stats['health'] * 0.5
-        self.energy = self.stats['energy'] * 0.8
+        self.health = self.stats['health']
+        self.energy = self.stats['energy']
         self.exp = 123
         # Speed of the player
         self.speed = self.stats['speed']
@@ -70,6 +70,21 @@ class Player(Entity):
 
         # Mouse press
         self.release_mouse = [False, False]
+
+        # Magnet skill
+        self.can_magnet = True
+        self.is_magnet = False
+        self.magnet_start = None
+        self.magnet_time = 10000
+        self.magnet_skill_cooldown = 50000
+
+        # Speed skill
+        self.can_speed = True
+        self.is_fast = False
+        self.speed_start = None
+        self.speed_time = 1000
+        self.speed_skill_cooldown = 8000
+        self.speed_skill_factor = 2
 
         # Inventory
         self.create_inventory = create_inventory
@@ -129,6 +144,20 @@ class Player(Entity):
             self.status = 'right'
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
+
+        # Check if using speed skill
+        if self.can_speed and keys[pygame.K_1]:
+            self.can_speed = False
+            self.is_fast = True
+            self.speed *= self.speed_skill_factor
+            self.speed_start = pygame.time.get_ticks()
+
+        # Check if using magnet skill
+        if self.can_magnet and keys[pygame.K_2]:
+            self.can_magnet = False
+            self.is_magnet = True
+            print("here")
+            self.magnet_start = pygame.time.get_ticks()
 
         # Move nametag right after moving
         self.nametag_update(self.nametag)
@@ -242,6 +271,21 @@ class Player(Entity):
         :return: None
         """
         current_time: int = pygame.time.get_ticks()
+
+        # Speed skill timers
+        if not self.can_speed:
+            if current_time - self.speed_start >= self.speed_time and self.is_fast:
+                self.speed /= self.speed_skill_factor
+                self.is_fast = False
+            if current_time - self.speed_start >= self.speed_skill_cooldown:
+                self.can_speed = True
+
+        # Magnet skill timers
+        if not self.can_magnet:
+            if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
+                self.is_magnet = False
+            if current_time - self.magnet_start >= self.magnet_skill_cooldown:
+                self.can_magnet = True
 
         if self.attacking:
             if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:

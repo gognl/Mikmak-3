@@ -18,6 +18,9 @@ class World:
         # Pygame window
         self.display_surface: pygame.Surface = pygame.display.get_surface()
 
+        # list of players using magnetic skill
+        self.magnetic_players = pygame.sprite.Group()
+
         # Visible sprites: sprites that show on screen
         # Obstacle sprites: sprite the player can collide with
         # Server sprites: sprites whose updates have to be sent to the server
@@ -141,6 +144,14 @@ class World:
         Run one world frame
         :return: None
         """
+
+        # Update the items positions based on magnetic players
+        self.magnetic_players = []
+        for player in self.all_players:
+            if player.is_magnet:
+                self.magnetic_players.append(player)
+        for item in self.item_sprites:
+            item.update_movement(self.magnetic_players)
 
         # Update the camera position
         self.update_camera()
