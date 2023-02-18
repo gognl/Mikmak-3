@@ -108,8 +108,10 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		entity_id: int = enemy_update.id
 		entity_pos: (int, int) = enemy_update.pos
 		enemy_name: str = enemy_update.type
+		entity_direction = enemy_update.direction
 		if entity_id in world.enemies:
 			world.enemies[entity_id].update_pos(entity_pos)
+			world.enemies[entity_id].direction = pygame.math.Vector2(entity_direction)
 			circles[entity_id].rect = circles[entity_id].image.get_rect(topleft=entity_pos)
 		else:
 			world.enemies[entity_id] = Enemy(enemy_name, entity_pos, (world.visible_sprites, world.server_sprites, world.all_obstacles), entity_id, world.all_obstacles, world.create_dropped_item)

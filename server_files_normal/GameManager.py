@@ -107,7 +107,7 @@ class GameManager(threading.Thread):
 					enemy.enemy_update(self.players)
 				if previous_pos == (enemy.rect.x, enemy.rect.y):
 					continue
-				changes = {'pos': (enemy.rect.x, enemy.rect.y)}
+				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 			for i in range(CLIENT_FPS // FPS):
