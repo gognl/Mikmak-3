@@ -2,6 +2,7 @@ import random
 import pygame
 from typing import Dict, Union, List
 from client_files.code.item import Item
+from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
@@ -33,9 +34,6 @@ class World:
         # User interface
         self.ui = UI()
 
-        # attack sprites
-        self.current_weapon = None
-
         # Calculate screen center
         self.half_width: int = self.display_surface.get_size()[0] // 2
         self.half_height: int = self.display_surface.get_size()[1] // 2
@@ -52,7 +50,10 @@ class World:
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
 
         # other players
-        self.all_players: List[Union[Enemy, Player]] = []
+        self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
+
+        # all players
+        self.all_players: List[Union[Player, OtherPlayer]] = []
 
         # All layout csv files of the map
         self.layout: Dict[str, List[List[str]]] = {
@@ -91,24 +92,34 @@ class World:
         # Spawn items
         self.spawn_items(1000)
 
-    def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, (self.visible_sprites,), 2)
+    def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
+        player.current_weapon = Weapon(player, (self.visible_sprites,), 2)
 
-    def destroy_attack(self):
-        if self.current_weapon:
-            self.current_weapon.kill()
-        self.current_weapon = None
+    def destroy_attack(self, player: Union[Player, OtherPlayer]):
+        if player.current_weapon:
+            player.current_weapon.kill()
+        player.current_weapon = None
 
-    def create_bullet(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
+    def create_bullet(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
                    '../graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
 
-    def create_kettle(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
+    def create_kettle(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
 
     def create_inventory(self):

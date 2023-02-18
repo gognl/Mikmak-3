@@ -1,7 +1,9 @@
 import random
+from collections import deque
 from typing import Dict, Sequence
 
 from client_files.code.settings import *
+from client_files.code.structures import Server
 from client_files.code.support import *
 from client_files.code.entity import Entity
 
@@ -44,6 +46,8 @@ class Player(Entity):
         self.can_switch_weapon = True
         self.weapon_switch_time = None
         self.switch_duration_cooldown = 400
+        # attack sprites
+        self.current_weapon = None
 
         # Animations
         self.animations: Dict[str, List[pygame.Surface]] = {}
@@ -52,6 +56,7 @@ class Player(Entity):
 
         # Server
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
+        self.attacks: deque = deque()
 
         # Stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
@@ -68,7 +73,7 @@ class Player(Entity):
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = None
-        self.shoot_cooldown = 200
+        self.shoot_cooldown = 400
 
         # Mouse press
         self.release_mouse = [False, False]
@@ -150,14 +155,15 @@ class Player(Entity):
         if mouse[0] and not self.attacking and not self.release_mouse[0]:
             if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
                 if self.weapon_index not in self.on_screen:
-                    self.create_attack()
+                    self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
+                    self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
                     self.attack_time = pygame.time.get_ticks()
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
-                            self.create_bullet()
+                            self.create_bullet(self)
                             self.can_shoot = False
                             self.shoot_time = pygame.time.get_ticks()
                     elif self.weapon_index == 2:
@@ -165,7 +171,7 @@ class Player(Entity):
                         self.release_mouse[0] = True
                         self.attack_time = pygame.time.get_ticks()
 
-                        self.create_kettle()
+                        self.create_kettle(self)
                         self.inventory_items['kettle'] -= 1
                         if self.inventory_items['kettle'] == 0:
                             del self.inventory_items['kettle']
@@ -242,7 +248,7 @@ class Player(Entity):
         self.release_mouse[0] = True
 
         if self.weapon_index in self.on_screen:
-            self.destroy_attack()
+            self.destroy_attack(self)
 
         self.can_switch_weapon = False
         self.weapon_switch_time = pygame.time.get_ticks()
@@ -259,7 +265,9 @@ class Player(Entity):
         self.attacking = False
 
         if self.weapon_index in self.on_screen:
-            self.create_attack()
+            self.create_attack(self)
+
+        self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
 
         # if switched to kettle and have no kettle, reswitch
         if self.weapon_index == 2 and 'kettle' not in self.inventory_items:
@@ -287,7 +295,7 @@ class Player(Entity):
             if current_time - self.attack_time >= self.attack_cooldown:
                 self.attacking = False
                 if self.weapon_index not in self.on_screen:
-                    self.destroy_attack()
+                    self.destroy_attack(self)
 
         if not self.can_switch_weapon:
             if current_time - self.weapon_switch_time >= self.switch_duration_cooldown:
@@ -323,7 +331,8 @@ class Player(Entity):
         """
 
         # Clear the changes dict
-        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+        self.attacks: deque = deque()
+        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
 
         # Get keyboard inputs
         self.input()
@@ -341,7 +350,7 @@ class Player(Entity):
         # Pick up items
         self.item_collision()
 
-        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
         if self.changes == previous_state:
             self.changes = None
 

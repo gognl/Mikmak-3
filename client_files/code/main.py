@@ -1,5 +1,4 @@
 import socket  # Socket
-from typing import Dict
 
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
@@ -12,7 +11,7 @@ from client_files.code.settings import *
 from client_files.code.world import World
 from client_files.code.enemy import Enemy
 from client_files.code.title import Title
-
+from client_files.code.other_player import OtherPlayer
 
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
 	"""
@@ -21,11 +20,11 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
 	:return: A tuple containing the server socket, updates queue and the id of the client.
 	"""
 
-	# Create the socket - TODO
+	# Create the socket
 	server_socket: socket.socket = socket.socket()  # CHANGE LATER - TODO
 	server_socket.connect(server_addr)
 
-	# Establish some synchronization stuff - TODO
+	# Establish some synchronization stuff
 	client_id: int = int(server_socket.recv(5)[3:])  # id_<2 bytes>
 	print(f'client {client_id} connected')
 
@@ -46,7 +45,7 @@ def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpd
 	server_socket.send(data)
 
 
-def get_server_pkt(server_socket: socket.socket) -> bytes:  # TODO
+def get_server_pkt(server_socket: socket.socket) -> bytes:
 	"""
 	Gets a packet from the server (and decrypts them...)
 	:return: The packet from the server.
@@ -81,8 +80,6 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 	:return: None
 	"""
 
-	# Update the game according to the update + changes since its ack (and remove them from the queue) - TODO
-
 	# Reset to the server state
 	if None in (update_msg.state_update.player_changes, update_msg.state_update.enemy_changes):
 		print(f'Returning from update_game():\n\tplayer_changes: {update_msg.state_update.player_changes}\n\tenemy_changes: {update_msg.state_update.enemy_changes}')
@@ -95,13 +92,14 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if entity_id == client_id:
 			world.player.update_pos(entity_pos)
 			world.player.status = entity_status
-		elif entity_id in world.enemies:
-			world.enemies[entity_id].status = entity_status
-			world.enemies[entity_id].animate()
-			world.enemies[entity_id].update_pos(entity_pos)
+		elif entity_id in world.other_players:
+			world.other_players[entity_id].update_queue.append(player_update)
 		else:
-			world.enemies[entity_id] = Enemy('other_player', entity_pos, (world.visible_sprites,), entity_id, world.obstacle_sprites, world.create_dropped_item)
-			world.all_players.append(world.enemies[entity_id])
+			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites,), entity_id,
+														 world.obstacle_sprites, world.create_attack,
+														 world.destroy_attack, world.create_bullet,
+														 world.create_kettle)
+			world.all_players.append(world.other_players[entity_id])
 
 	for enemy_update in update_msg.state_update.enemy_changes:
 		entity_id: int = enemy_update.id
@@ -133,8 +131,6 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if tick_update.player_update is not None:
 			player_change: Server.Output.PlayerUpdate = tick_update.player_update
 			world.player.update_pos(player_change.pos)
-			world.player.attacking = player_change.attacking
-			world.player.weapon = player_change.weapon
 			world.player.status = player_change.status
 
 		for enemy_change in tick_update.enemies_update:
@@ -176,7 +172,7 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
 	return screen, clock, world, tick_update, state_update
 
 
-def run_game(*args) -> None:  # TODO
+def run_game(*args) -> None:
 	"""
 	Runs the game.
 	:return: None

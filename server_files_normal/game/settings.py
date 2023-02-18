@@ -1,5 +1,6 @@
-FPS: int = 5
+FPS: int = 60
 CLIENT_FPS: int = 120
+UPDATE_FREQUENCY: int = 10
 TILESIZE = 64
 ROW_TILES: int = 450
 COL_TILES: int = 800
