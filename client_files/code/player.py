@@ -71,7 +71,7 @@ class Player(Entity):
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = None
-        self.shoot_cooldown = 200
+        self.shoot_cooldown = 400
 
         # Mouse press
         self.release_mouse = [False, False]

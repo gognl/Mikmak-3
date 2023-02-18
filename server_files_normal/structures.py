@@ -106,6 +106,12 @@ class Client:
             """
 
             def __init__(self, **kwargs):
+
+                self.id: int = None
+                self.pos: Tuple[int, int] = None
+                self.attacks: Tuple[Client.Input.AttackUpdate] = None
+                self.status: str = None
+
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
