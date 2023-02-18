@@ -81,7 +81,8 @@ class World:
         self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.server_sprites),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
-                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, 0)  # TODO - make starting player position random (or a spawn)
+                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, 0,
+                             self.magnetic_players)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -146,10 +147,6 @@ class World:
         """
 
         # Update the items positions based on magnetic players
-        self.magnetic_players = []
-        for player in self.all_players:
-            if player.is_magnet:
-                self.magnetic_players.append(player)
         for item in self.item_sprites:
             item.update_movement(self.magnetic_players)
 

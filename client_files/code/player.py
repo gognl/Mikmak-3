@@ -9,8 +9,11 @@ from client_files.code.entity import Entity
 class Player(Entity):
     def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack,
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag,
-                 nametag_update, get_inventory_box_pressed, create_dropped_item, entity_id) -> None:
+                 nametag_update, get_inventory_box_pressed, create_dropped_item, entity_id, magnetic_players) -> None:
         super().__init__(groups, entity_id)
+
+        # sprite group of magnetic players
+        self.magnetic_players = magnetic_players
 
         # Load player sprite from files
         self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
@@ -155,6 +158,7 @@ class Player(Entity):
         # Check if using magnet skill
         if self.can_magnet and keys[pygame.K_2]:
             self.can_magnet = False
+            self.add(self.magnetic_players)
             self.is_magnet = True
             print("here")
             self.magnet_start = pygame.time.get_ticks()
