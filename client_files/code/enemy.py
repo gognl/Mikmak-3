@@ -121,6 +121,9 @@ class Enemy(Entity):
 			self.changes = None
 
 	def enemy_update(self, players):
+		if not players:
+			return
+
 		# Don't use players who are safe from this enemy
 		for i, player in enumerate(players):
 			if player in self.safe:
