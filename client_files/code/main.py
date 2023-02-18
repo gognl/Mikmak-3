@@ -12,7 +12,6 @@ from client_files.code.world import World
 from client_files.code.enemy import Enemy
 from client_files.code.title import Title
 from client_files.code.other_player import OtherPlayer
-from client_files.code.circle import Circle
 
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
 	"""
@@ -71,8 +70,6 @@ def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> No
 		msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
 		updates_queue.put(msg)
 
-circles = {}
-
 def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
 	"""
 	Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
@@ -112,10 +109,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if entity_id in world.enemies:
 			world.enemies[entity_id].update_pos(entity_pos)
 			world.enemies[entity_id].direction = pygame.math.Vector2(entity_direction)
-			circles[entity_id].rect = circles[entity_id].image.get_rect(topleft=entity_pos)
 		else:
 			world.enemies[entity_id] = Enemy(enemy_name, entity_pos, (world.visible_sprites, world.server_sprites, world.all_obstacles), entity_id, world.all_obstacles, world.create_dropped_item)
-			circles[entity_id] = Circle((world.visible_sprites,), 10, entity_pos)
 
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:
