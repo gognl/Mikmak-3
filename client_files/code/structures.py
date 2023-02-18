@@ -72,14 +72,16 @@ class Server:
 		class EnemyUpdate(Serializable):
 			def __init__(self, **kwargs):
 				self.id: int = None
-				self.pos: Tuple[int, int] = None
+				self.pos: (int, int) = None
+				self.type: str = None
+				self.direction: (int, int) = None
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
 					return
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8'))}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8'))}
 
 	class Output:
 		class StateUpdate(Serializable):

@@ -95,7 +95,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		elif entity_id in world.other_players:
 			world.other_players[entity_id].update_queue.append(player_update)
 		else:
-			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites,), entity_id,
+			world.other_players[entity_id] = OtherPlayer(entity_pos, (world.visible_sprites, world.obstacle_sprites, world.all_obstacles), entity_id,
 														 world.obstacle_sprites, world.create_attack,
 														 world.destroy_attack, world.create_bullet,
 														 world.create_kettle)
@@ -104,10 +104,13 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 	for enemy_update in update_msg.state_update.enemy_changes:
 		entity_id: int = enemy_update.id
 		entity_pos: (int, int) = enemy_update.pos
+		enemy_name: str = enemy_update.type
+		entity_direction = enemy_update.direction
 		if entity_id in world.enemies:
 			world.enemies[entity_id].update_pos(entity_pos)
+			world.enemies[entity_id].direction = pygame.math.Vector2(entity_direction)
 		else:
-			world.enemies[entity_id] = Enemy('white_cow', entity_pos, (world.visible_sprites, world.server_sprites), entity_id, world.obstacle_sprites, world.create_dropped_item)
+			world.enemies[entity_id] = Enemy(enemy_name, entity_pos, (world.visible_sprites, world.server_sprites, world.all_obstacles), entity_id, world.all_obstacles, world.create_dropped_item)
 
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:
