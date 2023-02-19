@@ -11,14 +11,15 @@ ROW_LOAD_TILE_DISTANCE: int = 20
 COL_LOAD_TILE_DISTANCE: int = 30
 ROW_UNLOAD_TILE_DISTANCE: int = 30
 COL_UNLOAD_TILE_DISTANCE: int = 40
-SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24]
-MAX_DIVERGENCE_SQUARED: int = 80**2
+SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36]
+MAX_DIVERGENCE_SQUARED: int = 80 ** 2
 MAX_PETS_PER_PLAYER: int = 5
+ENEMY_ATTACK_COOLDOWN: int = 15
 
 weapon_data = {
-	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
-	'nerf': {'cooldown': 100, 'damage': 35, 'graphic': '../graphics/weapons/nerf/full.png'},
-	'kettle': {'cooldown': 100, 'damage': 25, 'graphic': '../graphics/weapons/kettle/full.png'}
+    'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
+    'nerf': {'cooldown': 100, 'damage': 35, 'graphic': '../graphics/weapons/nerf/full.png'},
+    'kettle': {'cooldown': 100, 'damage': 25, 'graphic': '../graphics/weapons/kettle/full.png'}
 }
 
 # UI
@@ -43,7 +44,7 @@ HEALTH_COLOR = 'red'
 ENERGY_COLOR = 'blue'
 UI_BORDER_COLOR_ACTIVE = 'gold'
 
-# Openning screen
+# Opening screen
 TITLE_BG_COLOR = '#71ddee'
 TITLE_FONT = UI_FONT  # TODO - change
 TITLE_FONT_SIZE = 24
@@ -68,16 +69,23 @@ EXPLOSION_RADIUS = 150
 
 # TODO: make the red cow explode
 enemy_data = {
-	'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['grave_player'], 'xp': 0},
-	'red_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'], 'xp': 20},
-	'green_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green', 'spawn_pet'], 'xp': 10},
-	'white_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
-	'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 300, 'death_items': ['grave_pet'], 'xp': 5}
+    'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55,
+                     'notice_radius': 300, 'death_items': ['grave_player'], 'xp': 0},
+    'red_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55, 'notice_radius': 300,
+                'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'], 'xp': 20},
+    'green_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55, 'notice_radius': 300,
+                  'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green', 'spawn_pet'], 'xp': 10},
+    'white_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55, 'notice_radius': 300,
+                  'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
+    'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 300,
+                'death_items': ['grave_pet'], 'xp': 5}
 }
 
-item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green', 'spawn_red', 'spawn_pet', 'xp']  # TODO - keep only items that need to be naturally spawned
+item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green', 'spawn_red', 'spawn_pet',
+              'xp']  # TODO - keep only items that need to be naturally spawned
 
 RANDOM_NAMETAG = ['goni', 'omri', 'bar', 'alon', 'liron', 'gabriel', 'god', 'dog', 'not a cow', 'friend',
-				  'epstein', 'shmulik', 'holy cow', 'cat', 'milk factory', '123456', 'password', 'user',
-				  'not a bot', 'pet', 'SOS', 'obama', 'allah', 'not a cow', 'meow', 'woof', 'moo', 'BLOOD', 'VIOLENCE',
-				  'DEATH', 'MASSACRE', 'GENOCIDE', 'what', 'server', 'alt+f4', 'die', 'mom', 'dad', 'joe']  # TODO - add more
+                  'epstein', 'shmulik', 'holy cow', 'cat', 'milk factory', '123456', 'password', 'user',
+                  'not a bot', 'pet', 'SOS', 'obama', 'allah', 'not a cow', 'meow', 'woof', 'moo', 'BLOOD', 'VIOLENCE',
+                  'DEATH', 'MASSACRE', 'GENOCIDE', 'what', 'server', 'alt+f4', 'die', 'mom', 'dad',
+                  'joe', 'this game was encrypted using-']  # TODO - add more

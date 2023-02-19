@@ -78,6 +78,15 @@ class World:
         :return: None
         """
         # Create player with starting position
+
+        # Semi-random player starting position generator
+        random_x = random.randint(0, 1280 * 40 // 64 - 1)
+        random_y = random.randint(0, 720 * 40 // 64 - 1)
+        pos = (2048, 2048)
+        if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+            pos = (random_x * 64, random_y * 64)
+        # TODO - add else if not spawnable
+
         self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,

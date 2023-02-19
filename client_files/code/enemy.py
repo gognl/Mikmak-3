@@ -12,6 +12,7 @@ class Enemy(Entity):
 	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		# general setup
 		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
+		self.cooldown = ENEMY_ATTACK_COOLDOWN
 		self.status = None
 		self.sprite_type = 'enemy'
 
@@ -95,9 +96,18 @@ class Enemy(Entity):
 		else:
 			self.status = 'idle'
 
+		print("status:", self.status, "dist:", distance)
+
 	def actions(self, player):
+		# demo attack
 		if self.status == 'attack':
-			pass  # TODO - attack
+			if self.cooldown == ENEMY_ATTACK_COOLDOWN:
+				player.health -= self.damage
+				self.cooldown = 0
+			else:
+				self.cooldown += 1
+				pass  # TODO - attack
+
 		elif self.status == 'move':
 			self.direction = self.get_player_distance_direction(player)[1]
 			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
