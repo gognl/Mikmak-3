@@ -69,15 +69,15 @@ def get_msgs_from_socket(sock: socket.socket, servers: list[Server]):
 			continue
 		decrypt(data, server.key)
 
-		if data[0] == '\x00':
+		if data[0] == '\x00':  # Player positing
 			player = PlayerCentral(data[1:])  # TODO: Do it with serializable
 			players[player.id] = player
 
-		elif data[0] == '\x01':
+		elif data[0] == '\x01':  # Player in overlapping zone details
 			player = game.player.Player(data[1:])  # TODO: Do it with serializable
 			players_overlap[player.entity_id] = player
 
-		elif data[0] == '\x02':
+		elif data[0] == '\x02':  # Player left the overlapping zone
 			player_id = data[1:]
 			players_overlap.pop(player_id)
 
@@ -100,7 +100,7 @@ def LB_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToC
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.bind(('0.0.0.0', PORT))
 
-	threads: [threading.Thread] = []
+	threads: list[threading.Thread] = []
 
 	look_for_new_client_Thread = threading.Thread(target=look_for_new_client, args=(new_players_q, msgs_to_clients_q))
 	threads.append(look_for_new_client_Thread)
