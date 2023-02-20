@@ -12,8 +12,11 @@ class Player(Entity):
     def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack,
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag,
                  nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg,
-                 entity_id) -> None:
+                 entity_id, magnetic_players) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
+
+        # sprite group of magnetic players
+        self.magnetic_players = magnetic_players
 
         # Load player sprite from files
         self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
@@ -78,6 +81,21 @@ class Player(Entity):
         # Mouse press
         self.release_mouse = [False, False]
 
+        # Magnet skill
+        self.can_magnet = True
+        self.is_magnet = False
+        self.magnet_start = None
+        self.magnet_time = 10000
+        self.magnet_skill_cooldown = 50000
+
+        # Speed skill
+        self.can_speed = True
+        self.is_fast = False
+        self.speed_start = None
+        self.speed_time = 1000
+        self.speed_skill_cooldown = 8000
+        self.speed_skill_factor = 2
+
         # Inventory
         self.create_inventory = create_inventory
         self.destroy_inventory = destroy_inventory
@@ -132,6 +150,24 @@ class Player(Entity):
             self.status = 'right'
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
+
+        # Check if using speed skill
+        if self.can_speed and keys[pygame.K_1]:
+            self.can_speed = False
+            self.is_fast = True
+            self.speed *= self.speed_skill_factor
+            self.speed_start = pygame.time.get_ticks()
+
+        # Check if using magnet skill
+        if self.can_magnet and keys[pygame.K_2]:
+            self.can_magnet = False
+            self.add(self.magnetic_players)
+            self.is_magnet = True
+            print("here")
+            self.magnet_start = pygame.time.get_ticks()
+
+        # Move nametag right after moving
+        self.nametag_update(self.nametag)
 
         if keys[pygame.K_e]:
             if self.can_change_inventory and not self.last_inventory:
@@ -290,6 +326,21 @@ class Player(Entity):
         :return: None
         """
         current_time: int = pygame.time.get_ticks()
+
+        # Speed skill timers
+        if not self.can_speed:
+            if current_time - self.speed_start >= self.speed_time and self.is_fast:
+                self.speed /= self.speed_skill_factor
+                self.is_fast = False
+            if current_time - self.speed_start >= self.speed_skill_cooldown:
+                self.can_speed = True
+
+        # Magnet skill timers
+        if not self.can_magnet:
+            if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
+                self.is_magnet = False
+            if current_time - self.magnet_start >= self.magnet_skill_cooldown:
+                self.can_magnet = True
 
         if self.attacking:
             if current_time - self.attack_time >= self.attack_cooldown:

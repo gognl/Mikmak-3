@@ -20,6 +20,9 @@ class World:
         # Pygame window
         self.display_surface: pygame.Surface = pygame.display.get_surface()
 
+        # list of players using magnetic skill
+        self.magnetic_players = pygame.sprite.Group()
+
         # Visible sprites: sprites that show on screen
         # Obstacle sprites: sprite the player can collide with
         # Server sprites: sprites whose updates have to be sent to the server
@@ -91,7 +94,7 @@ class World:
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
-                             0)  # TODO - make starting player position random (or a spawn)
+                             0, self.magnetic_players)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -188,6 +191,10 @@ class World:
         Run one world frame
         :return: None
         """
+
+        # Update the items positions based on magnetic players
+        for item in self.item_sprites:
+            item.update_movement(self.magnetic_players)
 
         # Update the camera position
         self.update_camera()
