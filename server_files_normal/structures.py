@@ -119,13 +119,6 @@ class Client:
                 if s != b'':
                     return
 
-                self.id = kwargs.pop('id')
-
-                changes = kwargs.pop('changes')
-                self.pos = changes['pos']
-                self.attacks = changes['attacks']
-                self.status = changes['status']
-
             def _get_attr(self) -> dict:
                 return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Client.Input.AttackUpdate, 'o')), 'status': (str, 'str')}
 
@@ -142,3 +135,19 @@ class Client:
 
             def _get_attr(self) -> dict:
                 return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
+
+class Rect:
+    def __init__(self, x1: int, y1: int, x2: int, y2: int):
+        self.x1: int = x1
+        self.y1: int = y1
+        self.x2: int = x2
+        self.y2: int = y2
+
+    def __contains__(self, item):
+        assert isinstance(item) and isinstance(item[0], int), isinstance(item[1], int)
+        return self.x1 <= item[0] <= self.x2 and self.y1 <= item[1] <= self.y2
+
+class Point:
+    def __init__(self, x: int, y : int):
+        self.x: int = x
+        self.y: int = y

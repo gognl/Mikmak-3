@@ -21,6 +21,7 @@ from server_files_normal.LoadBalancerManager import LoadBalancerManager
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
 from server_files_normal.game.player import Player
+from game.settings import NORMAL_SERVERS
 
 
 def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socket.socket, LoadBalancerManager):
@@ -78,7 +79,7 @@ def main():
 
 	cmd_semaphore: Semaphore = Semaphore(0)
 	client_managers: deque[ClientManager] = deque([])
-	game_manager = GameManager(client_managers, cmd_semaphore)
+	game_manager = GameManager(client_managers, cmd_semaphore, 14760)
 	game_manager.start()
 
 	accept_new_clients(server_sock, client_managers, game_manager, cmd_semaphore)

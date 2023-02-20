@@ -1,7 +1,10 @@
 import threading
 from collections import deque
 from queue import Queue, Empty
+import socket
+from struct import unpack, pack
 
+import client_files.code.settings
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
 from server_files_normal.ClientManager import ClientManager
@@ -14,7 +17,7 @@ from random import randint
 import pygame
 
 class GameManager(threading.Thread):
-	def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore):
+	def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, sock_to_other_normals: int):
 		super().__init__()
 		self.client_managers: deque[ClientManager] = client_managers
 		self.cmd_queue: Queue[Tuple[ClientManager, Client.Input.ClientCMD]] = Queue()
@@ -31,6 +34,13 @@ class GameManager(threading.Thread):
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
+
+		self.sock_to_other_normals: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.sock_to_other_normals.bind(("0.0.0.0", sock_to_other_normals))
+		self.read_only_players = pygame.sprite.Group()
+		self.center: Point = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
+		threading.Thread(target=self.receive_from_another_normal_server).start()
+
 		#self.initialize_obstacle_sprites()
 
 		# TODO temporary
@@ -67,6 +77,56 @@ class GameManager(threading.Thread):
 		pos: (int, int) = (1024, 1024)
 		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle)
 
+	def handle_read_only_player_update(self, player_update: Client.Input.PlayerUpdate):
+		for p in self.read_only_players:
+			if player_update.id == p.entity_id:
+				player = p
+				break
+		else:
+			player = Player((self.read_only_players,), player_update.id, player_update.pos, self.create_bullet,
+			                self.create_kettle)
+
+		# Update the player
+		player.process_client_updates(player_update)
+
+		changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks,
+		           'status': player.status}
+
+		player.reset_attacks()
+		player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
+
+		self.players_updates.append(player_update)
+
+	def receive_from_another_normal_server(self):
+		while True:
+			size: int = unpack("<H", self.sock_to_other_normals.recvfrom(2)[0])[0]
+			data, addr = self.sock_to_other_normals.recvfrom(size)
+			player_update = Client.Input.PlayerUpdate(ser=data)
+			if Server(addr[0], addr[1]) in NORMAL_SERVERS:
+				self.handle_read_only_player_update(player_update)
+
+	def send_to_another_normal_server(self, server: Server, player_update: Client.Input.PlayerUpdate):
+		msg = player_update.serialize()
+		size: bytes = pack("<H", len(msg))
+
+		self.sock_to_other_normals.send(size, server.addr())
+		self.sock_to_other_normals.send(msg, server.addr())
+
+	def send_overlapped_player_details(self, player_update: Client.Input.PlayerUpdate):
+		pos = player_update.pos
+		if pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
+			self.send_to_another_normal_server(NORMAL_SERVERS[0], player_update)
+
+		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y - OVERLAPPING_AREA_T):
+			self.send_to_another_normal_server(NORMAL_SERVERS[1], player_update)
+
+		if pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
+			self.send_to_another_normal_server(NORMAL_SERVERS[2], player_update)
+
+		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
+			self.send_to_another_normal_server(NORMAL_SERVERS[3], player_update)
+
+
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
 		for cmd in cmds:
 			client_manager = cmd[0]
@@ -81,6 +141,9 @@ class GameManager(threading.Thread):
 			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
 			player.reset_attacks()
 			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
+
+			self.send_overlapped_player_details(player_update)
+
 			self.players_updates.append(player_update)
 
 			client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
@@ -98,6 +161,7 @@ class GameManager(threading.Thread):
 			for event in pygame.event.get():
 				if event.type == cmd_received_event:
 					self.handle_cmds(event.cmds)
+
 
 			# Run enemies simulation
 			for enemy in self.enemies.sprites():

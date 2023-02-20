@@ -4,6 +4,24 @@ UPDATE_FREQUENCY: int = 10
 TILESIZE = 64
 ROW_TILES: int = 450
 COL_TILES: int = 800
+MAP_WIDTH = TILESIZE * COL_TILES
+MAP_HEIGHT = TILESIZE * ROW_TILES
+OVERLAPPING_AREA_T = 100
+
+class Server:
+    def __init__(self, ip, port):
+        self.ip: str = ip
+        self.port: int = port
+
+    def addr(self):
+        return self.ip, self.port
+
+    def __eq__(self, other):
+        assert isinstance(other, Server)
+        return self.ip == other.ip and self.port == other.port
+
+# TODO: get this list in the starting of the server
+NORMAL_SERVERS = [Server('192.168.172.117', 14760), Server('192.168.174.189', 14760), Server('127.0.0.1', 14760), Server('127.0.0.1', 14760)]
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
