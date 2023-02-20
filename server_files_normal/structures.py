@@ -144,7 +144,7 @@ class Rect:
         self.y2: int = y2
 
     def __contains__(self, item):
-        assert isinstance(item) and isinstance(item[0], int), isinstance(item[1], int)
+        assert isinstance(item, tuple) and isinstance(item[0], int), isinstance(item[1], int)
         return self.x1 <= item[0] <= self.x2 and self.y1 <= item[1] <= self.y2
 
 class Point:

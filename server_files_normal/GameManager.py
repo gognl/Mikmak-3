@@ -108,9 +108,8 @@ class GameManager(threading.Thread):
 	def send_to_another_normal_server(self, server: Server, player_update: Client.Input.PlayerUpdate):
 		msg = player_update.serialize()
 		size: bytes = pack("<H", len(msg))
-
-		self.sock_to_other_normals.send(size, server.addr())
-		self.sock_to_other_normals.send(msg, server.addr())
+		self.sock_to_other_normals.sendto(size, server.addr())
+		self.sock_to_other_normals.sendto(msg, server.addr())
 
 	def send_overlapped_player_details(self, player_update: Client.Input.PlayerUpdate):
 		pos = player_update.pos

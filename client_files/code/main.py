@@ -223,7 +223,7 @@ def run_game(*args) -> None:
             pygame.quit()
 
     # Initialize the connection with the server
-    server_addr: (str, int) = ('127.0.0.1', 34865)  # TEMPORARY
+    server_addr: (str, int) = ('192.168.172.117', 34865)  # TEMPORARY
     server_socket: socket.socket
     update_queue: Queue
     client_id: int
