@@ -7,7 +7,7 @@ from client_files.code.support import *
 
 class OtherPlayer(Entity):
 	def __init__(self, pos, groups, entity_id, obstacle_sprites, create_attack, destroy_attack,
-                 create_bullet, create_kettle):
+                 create_bullet, create_kettle, create_dropped_item):
 		super().__init__(groups, entity_id)
 
 		self.status = None
@@ -40,6 +40,17 @@ class OtherPlayer(Entity):
 
 		# updates queue
 		self.update_queue: deque = deque()
+
+		# Stats
+		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
+		self.health = self.stats['health']
+		self.energy = self.stats['energy']
+		self.xp = 0
+		self.speed = self.stats['speed']
+		self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
+		self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
+
+		self.create_dropped_item = create_dropped_item
 
 	def import_graphics(self):
 		path: str = '../graphics/player/'
@@ -105,6 +116,12 @@ class OtherPlayer(Entity):
 
 		self.cooldowns()
 		self.animate()
+
+		# Death
+		if self.health <= 0:
+			self.xp = 0
+			self.create_dropped_item("grave_player", self.rect.center)
+			self.kill()  # TODO - add death screen
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()

@@ -102,7 +102,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
                 world.visible_sprites, world.obstacle_sprites, world.all_obstacles), entity_id,
                                                          world.obstacle_sprites, world.create_attack,
                                                          world.destroy_attack, world.create_bullet,
-                                                         world.create_kettle)
+                                                         world.create_kettle, world.create_dropped_item)
             world.all_players.append(world.other_players[entity_id])
 
     for enemy_update in update_msg.state_update.enemy_changes:
@@ -149,9 +149,9 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     """
-	Initializes the game.
-	:return: screen, clock, world
-	"""
+    Initializes the game.
+    :return: screen, clock, world
+    """
     pygame.init()
     f = (SCREEN_WIDTH, SCREEN_HEIGHT)
     screen = pygame.display.set_mode(f)
