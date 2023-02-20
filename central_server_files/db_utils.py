@@ -25,19 +25,19 @@ def update_user_info(db: SQLDataBase, user: Player) -> None:
     return db.exec(onDuplicateKey)
 
 
-def load_info(db: SQLDataBase, ID: int) -> []:
+def load_info(db: SQLDataBase, username: str) -> list:
     """Return a list with all the info of the given id. Return format: [(val0, val1, val2,...,valn)]."""
     statement = (
-        select(db.users_table).where(db.users_table.c.id == ID)
+        select(db.users_table).where(db.users_table.c.username == username)
     )
 
     return db.exec(statement).fetchall()
 
 
-def delete_user_info(db: SQLDataBase, ID: int) -> None:
+def delete_user_info(db: SQLDataBase, username: str) -> None:
     """Delete user info of the give id."""
     statement = (
-        delete(db.users_table).where(db.users_table.c.id == ID)
+        delete(db.users_table).where(db.users_table.c.username == username)
     )
 
     return db.exec(statement)
