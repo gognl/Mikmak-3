@@ -339,6 +339,7 @@ class Player(Entity):
         if not self.can_magnet:
             if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
                 self.is_magnet = False
+                self.remove(self.magnetic_players)
             if current_time - self.magnet_start >= self.magnet_skill_cooldown:
                 self.can_magnet = True
 
