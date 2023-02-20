@@ -2,6 +2,7 @@ import threading
 from collections import deque
 from queue import Queue, Empty
 
+from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.game.barrier import Barrier
@@ -24,16 +25,21 @@ class GameManager(threading.Thread):
 
 		self.players: pygame.sprite.Group = pygame.sprite.Group()
 		self.enemies: pygame.sprite.Group = pygame.sprite.Group()
+		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.players_updates: List[Client.Output.PlayerUpdate] = []
 
-		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
-		self.initialize_obstacle_sprites()
+		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
+		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
+		#self.initialize_obstacle_sprites()
 
 		# TODO temporary
 		for i in range(20):
 			pos = (randint(2000, 3000), randint(2000, 3000))
-			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies,), entity_id=i, obstacle_sprites=self.obstacle_sprites)
+			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles), entity_id=i, obstacle_sprites=self.all_obstacles)
+
+	def get_obstacle_sprites(self):
+		return self.obstacle_sprites
 
 	def initialize_obstacle_sprites(self):
 		layout = import_csv_layout('./graphics/map/map_Barriers.csv')
@@ -59,7 +65,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (1024, 1024)
-		return Player(self.players, entity_id, pos)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle)
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
 		for cmd in cmds:
@@ -70,12 +76,10 @@ class GameManager(threading.Thread):
 			player = client_manager.player
 
 			# Update the player
-			player.rect = player.image.get_rect(topleft=player_update.pos)
-			player.attacking = player_update.attacking
-			player.weapon = player_update.weapon
-			player.status = player_update.status
+			player.process_client_updates(player_update)
 
-			changes = {'pos': (player.rect.x, player.rect.y), 'attacking': player.attacking, 'weapon': player.weapon, 'status': player.status}
+			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
+			player.reset_attacks()
 			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 			self.players_updates.append(player_update)
 
@@ -86,6 +90,9 @@ class GameManager(threading.Thread):
 		# Create custom events
 		cmd_received_event = pygame.USEREVENT + 1
 
+		tick_count = 0
+		enemy_changes = []
+
 		running: bool = True
 		while running:
 			for event in pygame.event.get():
@@ -93,7 +100,6 @@ class GameManager(threading.Thread):
 					self.handle_cmds(event.cmds)
 
 			# Run enemies simulation
-			enemy_changes = []
 			for enemy in self.enemies.sprites():
 				previous_pos = (enemy.rect.x, enemy.rect.y)
 				for i in range(CLIENT_FPS//FPS):
@@ -101,14 +107,21 @@ class GameManager(threading.Thread):
 					enemy.enemy_update(self.players)
 				if previous_pos == (enemy.rect.x, enemy.rect.y):
 					continue
-				changes = {'pos': (enemy.rect.x, enemy.rect.y)}
-				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, changes=changes))
+				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
+				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
-			state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
-			self.broadcast_msg(state_update)
-			self.players_updates.clear()  # clear the list
+			for i in range(CLIENT_FPS // FPS):
+				self.players.update()
+				self.projectiles.update()
+
+			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
+				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
+				self.broadcast_msg(state_update)
+				self.players_updates.clear()  # clear the list
+				enemy_changes = []
 
 			self.clock.tick(FPS)
+			tick_count += 1
 
 			# Check if a cmd was received
 			cmds: List[(ClientManager, Client.Input.ClientCMD)] = []
@@ -129,3 +142,15 @@ class GameManager(threading.Thread):
 				pygame.event.post(pygame.event.Event(cmd_received_event, {"cmds": cmds}))
 
 		pygame.quit()
+
+	def create_bullet(self, player: Player, mouse):
+		direction = pygame.math.Vector2(mouse)
+		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
+		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
+				   self.obstacle_sprites, 3, 15, 2000, './graphics/weapons/bullet.png')
+
+	def create_kettle(self, player: Player, mouse):
+		direction = pygame.math.Vector2(mouse)
+		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
+		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
+				   self.obstacle_sprites, 3, 5, 750, './graphics/weapons/kettle/full.png', 'explode', True)

@@ -1,5 +1,4 @@
 from typing import Sequence
-
 import pygame
 from client_files.code.settings import *
 from client_files.code.item import Item
@@ -26,9 +25,12 @@ class UI:
         self.inventory_active: bool = False
         self.boxes: list[list[int]] = []
         self.box_size = 64
-        self.box_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 72)
+        self.box_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 190)
         self.boxes_distance = 10
         self.setup_inventory()
+
+        # Inventory UI
+        self.inventory_ui_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 48)
 
         # Mouse
         self.release_mouse: bool = False
@@ -47,8 +49,8 @@ class UI:
         pygame.draw.rect(self.display_surface, color, current_rect)
         pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, bg_rect, 3)
 
-    def show_exp(self, exp):
-        text_surf = self.font.render(str(int(exp)), False, TEXT_COLOR)
+    def show_xp(self, xp):
+        text_surf = self.font.render(str(int(xp)), False, TEXT_COLOR)
         x = self.display_surface.get_size()[0] - 20
         y = self.display_surface.get_size()[1] - 20
         if self.inventory_active:
@@ -68,7 +70,7 @@ class UI:
             pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, bg_rect, 3)
         return bg_rect
 
-    def weapon_overlay(self, weapon_index, has_switched):
+    def weapon_overlay(self, weapon_index, has_switched, inventory_items):
         # Create weapon box
         bg_rect = self.selection_box(10, 630, has_switched)
         weapon_surf = self.weapon_graphics[weapon_index]
@@ -76,22 +78,46 @@ class UI:
 
         self.display_surface.blit(weapon_surf, weapon_rect)
 
+        if weapon_index == 2:
+            item_amount = inventory_items['kettle']
+            if item_amount > 1:
+                font = pygame.font.Font(UI_FONT, INVENTORY_FONT_SIZE)
+                item_text = font.render(f'{item_amount}', False, TEXT_COLOR)
+                item_text_rect = item_text.get_rect(bottomright=(bg_rect.bottomright[0] - 4, bg_rect.bottomright[1] - 4))
+                self.display_surface.blit(item_text, item_text_rect)
+
     def setup_inventory(self):
         for y in range(INVENTORY_SIZE[1]):
             row = []
             for x in range(INVENTORY_SIZE[0]):
                 row.append(pygame.Rect(self.box_starting_position[0] + (self.box_size + self.boxes_distance) * x,
-                                            self.box_starting_position[1] + (self.box_size + self.boxes_distance) * y,
-                                            self.box_size, self.box_size))
+                                       self.box_starting_position[1] + (self.box_size + self.boxes_distance) * y,
+                                       self.box_size, self.box_size))
             self.boxes.append(row)
 
-    def show_inventory(self, inventory_items):
+    def show_inventory(self, player, inventory_items):
         x = self.display_surface.get_size()[0] - INVENTORY_WIDTH
         y = 0
 
+        # Background
         rect = pygame.Rect(x, y, INVENTORY_WIDTH, self.display_surface.get_size()[1])
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
 
+        # UI
+        text = [f'{player.name}',
+                f'',
+                f'Health     - {player.health}',
+                f'Speed      - {player.speed}',
+                f'Strength   - {player.strength}',
+                f'Resistance - {player.resistance}']
+
+        for i, entry in enumerate(text):
+            inventory_ui_text = self.font.render(entry, False, TITLE_TEXT_COLOR)
+            inventory_ui_text_rect = inventory_ui_text.get_rect(topleft=(self.inventory_ui_starting_position[0], self.inventory_ui_starting_position[1] + i * 20))
+
+            self.display_surface.blit(inventory_ui_text, inventory_ui_text_rect)
+
+        # Boxes
         for y, row in enumerate(self.boxes):
             for x in range(len(row)):
                 rect = self.boxes[y][x]
@@ -124,10 +150,10 @@ class UI:
         # Creates the bars
         self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
-        self.show_exp(player.exp)
+        self.show_xp(player.xp)
 
         # Create weapon box
-        self.weapon_overlay(player.weapon_index, not player.can_switch_weapon)
+        self.weapon_overlay(player.weapon_index, not player.can_switch_weapon, player.inventory_items)
 
         # after we add magic
         # Create magic box
@@ -135,7 +161,7 @@ class UI:
 
         # Inventory
         if self.inventory_active:
-            self.show_inventory(player.inventory_items)
+            self.show_inventory(player, player.inventory_items)
 
     def create_inventory(self):
         self.inventory_active = True
@@ -145,15 +171,17 @@ class UI:
 
 
 class NameTag:
-    def __init__(self, player):
+    def __init__(self, player, name):
         self.player = player
-        self.name = self.player.name
+        self.name = name
 
         self.display_surface = pygame.display.get_surface()
         self.font = pygame.font.Font(UI_FONT, NAMETAG_FONT_SIZE)
 
         # Initial position
         self.text, self.rect = self.initialize_rect()
+
+        self.kill = False
 
     def initialize_rect(self):
         text = self.font.render(self.name, False, TEXT_COLOR)
