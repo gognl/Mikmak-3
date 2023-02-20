@@ -1,19 +1,18 @@
 import json
 from central_server_files.SQLDataBase import SQLDataBase
 from client_files.code.player import Player
-from central_server_files.structures import PlayerCentral
 from sqlalchemy import select, delete
 from sqlalchemy.dialects.mysql import insert
 from encryption import hash_and_salt
 from Constant import *
 
 
-def update_user_info(db: SQLDataBase, user: Player, user_extended_info: PlayerCentral) -> None:
+def update_user_info(db: SQLDataBase, user: Player) -> None:
     """Updating user's info in database - done by id because names are not exclusive."""
     x, y = user.get_pos()
     inventory = json.dumps(user.inventory_items)
     statement = (
-        insert(db.users_table).values(id=user_extended_info.id, pos_x=x, pos_y=y, health=user.health, inventory=inventory)
+        insert(db.users_table).values(id=user.entity_id, pos_x=x, pos_y=y, health=user.health, inventory=inventory)
     )
 
     onDuplicateKey = statement.on_duplicate_key_update(

@@ -7,7 +7,7 @@ from structures import *
 
 
 def main():
-	new_players_q: deque[Player] = deque()
+	new_players_q: deque[PlayerCentral] = deque()
 	msgs_to_clients_q: deque[MsgToClient] = deque()
 
 	threads: list[threading.Thread] = []
