@@ -1,4 +1,5 @@
 import pygame
+import re
 from client_files.code.settings import *
 
 class Item(pygame.sprite.Sprite):
@@ -6,7 +7,7 @@ class Item(pygame.sprite.Sprite):
         super().__init__(groups)
 
         # Inventory
-        self.name = name
+        self.name = re.sub("\(.*?\)", "", name)
 
         # Sprite
         self.image = pygame.image.load(f'../graphics/items/{self.name}.png').convert_alpha()
@@ -21,6 +22,8 @@ class Item(pygame.sprite.Sprite):
         self.spawn_time = pygame.time.get_ticks()
         self.pick_up_cooldown = ITEM_PICK_UP_COOLDOWN
         self.can_pick_up = False
+
+        self.despawn_time = ITEM_DESPAWN_TIME
 
     def update_movement(self, magnetic_players):
         if len(magnetic_players) != 0:
@@ -44,13 +47,10 @@ class Item(pygame.sprite.Sprite):
                 self.rect.x = int(self.xpos)
                 self.rect.y = int(self.ypos)
 
-
-
-
     def update(self):
         current_time = pygame.time.get_ticks()
         if current_time - self.spawn_time > self.pick_up_cooldown:
             self.can_pick_up = True
 
-    def used(self):
-        pass  # TODO - add uses for items
+        if current_time - self.spawn_time > self.despawn_time:
+            del self

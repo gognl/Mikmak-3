@@ -2,15 +2,17 @@ import random
 import pygame
 from typing import Dict, Union, List
 from client_files.code.item import Item
+from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
 from client_files.code.support import *
 from client_files.code.weapon import Weapon
-from client_files.code.enemy import Enemy
+from client_files.code.enemy import Enemy, Pet
 from client_files.code.projectile import Projectile
 from client_files.code.ui import *
 from client_files.code.structures import *
+from client_files.code.explosion import *
 
 
 class World:
@@ -25,7 +27,8 @@ class World:
         # Obstacle sprites: sprite the player can collide with
         # Server sprites: sprites whose updates have to be sent to the server
         self.visible_sprites: GroupYSort = GroupYSort()
-        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
+        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # cows, players, and walls
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
@@ -34,9 +37,6 @@ class World:
 
         # User interface
         self.ui = UI()
-
-        # attack sprites
-        self.current_weapon = None
 
         # Calculate screen center
         self.half_width: int = self.display_surface.get_size()[0] // 2
@@ -54,7 +54,10 @@ class World:
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
 
         # other players
-        self.all_players: List[Union[Enemy, Player]] = []
+        self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
+
+        # all players
+        self.all_players: List[Union[Player, OtherPlayer]] = []
 
         # All layout csv files of the map
         self.layout: Dict[str, List[List[str]]] = {
@@ -78,11 +81,20 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.server_sprites),
+
+        # Semi-random player starting position generator
+        random_x = random.randint(0, 1280 * 40 // 64 - 1)
+        random_y = random.randint(0, 720 * 40 // 64 - 1)
+        pos = (2048, 2048)
+        if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+            pos = (random_x * 64, random_y * 64)
+        # TODO - add else if not spawnable
+
+        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
-                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, 0,
-                             self.magnetic_players)  # TODO - make starting player position random (or a spawn)
+                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
+                             0, self.magnetic_players)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -93,25 +105,35 @@ class World:
         # Spawn items
         self.spawn_items(1000)
 
-    def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, (self.visible_sprites,), 2)
+    def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
+        player.current_weapon = Weapon(player, (self.visible_sprites,), 2)
 
-    def destroy_attack(self):
-        if self.current_weapon:
-            self.current_weapon.kill()
-        self.current_weapon = None
+    def destroy_attack(self, player: Union[Player, OtherPlayer]):
+        if player.current_weapon:
+            player.current_weapon.kill()
+        player.current_weapon = None
 
-    def create_bullet(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
-                   '../graphics/weapons/bullet.png')
+    def create_bullet(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
+                   '../graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
 
-    def create_kettle(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
-                   '../graphics/weapons/kettle/full.png', 'explode', True)
+    def create_kettle(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
+                   '../graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
 
     def create_inventory(self):
         self.ui.create_inventory()
@@ -123,15 +145,22 @@ class World:
         self.screen_center.x = self.half_width
         self.camera_distance_from_player = list(CAMERA_DISTANCE_FROM_PLAYER)
 
-    def create_nametag(self, player):
-        nametag = NameTag(player)
+    def create_nametag(self, player, name):
+        nametag = NameTag(player, name)
         self.nametags.append(nametag)
 
         return nametag
 
-    def create_dropped_item(self, name, pos):
-        if int(self.layout['floor'][pos[0] // 64][pos[1] // 64]) in SPAWNABLE_TILES:
-            Item(name, (self.visible_sprites, self.item_sprites), pos)
+    def create_dropped_item(self, name, pos, fixed_place=False):
+        random_x = pos[0] // 64
+        random_y = pos[1] // 64
+
+        if not fixed_place:
+            random_x += random.randrange(-1, 2)
+            random_y += random.randrange(-1, 2)
+
+        if int(self.layout['floor'][random_x][random_y]) in SPAWNABLE_TILES:  # TODO - include barriers
+            Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))  # TODO - dont spawn tile perfect
         # TODO - add else if not spawnable
 
     def nametag_update(self, nametag):
@@ -139,6 +168,23 @@ class World:
 
     def get_inventory_box_pressed(self, mouse):
         return self.ui.get_inventory_box_pressed(mouse)
+
+    def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
+        random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
+        random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
+
+        if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+            if is_pet:
+                Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
+                    self.obstacle_sprites, player, self.create_dropped_item, safe=[player], nametag=True, name="random", create_nametag=self.create_nametag,
+                    nametag_update=self.nametag_update)  # TODO - dont spawn tile perfect
+            else:
+                Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
+                      self.obstacle_sprites, self.create_dropped_item, safe=[])  # TODO - dont spawn tile perfect
+        # TODO - add else if not spawnable
+
+    def create_explosion(self, pos, damage):
+        Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
 
     def run(self) -> (TickUpdate, Server.Output.StateUpdate):
         """
@@ -185,7 +231,7 @@ class World:
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
 
         # Update the obstacle sprites for the player
-        self.player.update_obstacles(self.obstacle_sprites)
+        self.player.update_obstacles(self.obstacle_sprites)  # TODO - fix lag when next to water (probably because of obstacle collision checking)
         self.player.update_items(self.item_sprites)
         for projectile in self.projectile_sprites:
             projectile.update_obstacles(self.obstacle_sprites)
@@ -200,9 +246,12 @@ class World:
                 sprite.kill()
 
         # UI
-        self.ui.display(self.player)
         for nametag in self.nametags:
-            nametag.display()
+            if nametag.kill:
+                del nametag
+            else:
+                nametag.display()
+        self.ui.display(self.player)
 
         # Get info about changes made in this tick (used for server synchronization)
         local_changes = [None, []]  # A list of changes made in this tick. player, enemies
@@ -241,24 +290,25 @@ class World:
             else:  # Move the camera from to the bottom of the bound if it's further down than the player
                 self.camera.y = self.player.rect.centery + self.camera_distance_from_player[1]
 
-    def spawn_enemies(self, amount: int) -> None:  # TODO: should be random, dont spawn on water/player, collidable block
+    def spawn_enemies(self, amount: int) -> None:
         for enemy in range(amount):
             random_x = random.randint(0, 1280 * 40 // 64 - 1)
             random_y = random.randint(0, 720 * 40 // 64 - 1)
-            name = list(enemy_data.keys())[int(random.randint(1, 3))]
+            name = list(enemy_data.keys())[int(random.randint(1, 3))]  # Don't include other_player or pets
 
-            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Enemy(name, (random_x * 64, random_y * 64), [self.visible_sprites], 1, self.obstacle_sprites)  # TODO: @gognl whats # entity id?
+            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+                Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
+                      self.obstacle_sprites, self.create_dropped_item)  # TODO - dont spawn tile perfect
             # TODO - add else if not spawnable
 
     def spawn_items(self, amount: int) -> None:
         for item in range(amount):
-            random_x = random.randint(20, 21)
-            random_y = random.randint(20, 21)
+            random_x = random.randint(20, 30)
+            random_y = random.randint(20, 30)
             name = item_names[int(random.randint(0, len(item_names) - 1))]
 
-            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:
-                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
+            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))  # TODO - dont spawn tile perfect
             # TODO - add else if not spawnable
 
 
