@@ -25,10 +25,9 @@ class Point:
 
 
 class PlayerCentral:
-	def __init__(self, pos: Point, client_id: ID, name: str):
+	def __init__(self, pos: Point, client_id: ID):
 		self.pos: Point = pos
 		self.id: ID = client_id
-		self.name: str = name
 
 class MsgToClient:
 	def __init__(self, dest_id: ID, msg):
