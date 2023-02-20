@@ -20,8 +20,8 @@ class SQLDataBase:
         self.metadata: MetaData = MetaData(bind=self.engine)
 
         self.users_table: Table = Table(TABLE_NAME, self.metadata,
-                                        Column("id", INT,primary_key=True),
-                                        Column("username", VARCHAR(MAX_SIZE)),
+                                        Column("id", INT, primary_key=True),
+                                        Column("username", VARCHAR(MAX_SIZE), primary_key=True),
                                         Column("password", TEXT),
                                         Column("pos_x", INT),
                                         Column("pos_y", INT),
@@ -29,12 +29,12 @@ class SQLDataBase:
                                         Column("inventory",JSON)
                                         )
 
-        connection: Connection = engine.connect()
+        self.connection: Connection = self.engine.connect()
 
         self.metadata.create_all(bind=self.engine)
 
     def exec(self, statement):
-        return connection.execute(statement)
+        return self.connection.execute(statement)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        connection.close()
+        self.connection.close()
