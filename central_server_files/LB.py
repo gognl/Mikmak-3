@@ -20,7 +20,7 @@ H = 600  # 30720
 
 normal_servers = [Server("0.0.0.0", i) for i in range(amount_servers)]
 center = Point(W//2, H//2)
-players = {player_id: PlayerCentral(Point(rand(W), rand(H)), player_id) for player_id in range(100)}
+players = {player_id: PlayerCentral(Point(rand(W), rand(H)), player_id, '') for player_id in range(100)}
 players_overlap = {}
 overlapping_area_T = 10
 
@@ -69,31 +69,22 @@ def get_msgs_from_socket(sock: socket.socket, servers: list[Server]):
 			continue
 		decrypt(data, server.key)
 
-		if data[0] == '\x00':  # Player positing
-			player = PlayerCentral(data[1:])  # TODO: Do it with serializable
-			players[player.id] = player
+		player = PlayerCentral(data[1:])  # TODO: Do it with serializable
+		players[player.id] = player
 
-		elif data[0] == '\x01':  # Player in overlapping zone details
-			player = game.player.Player(data[1:])  # TODO: Do it with serializable
-			players_overlap[player.entity_id] = player
-
-		elif data[0] == '\x02':  # Player left the overlapping zone
-			player_id = data[1:]
-			players_overlap.pop(player_id)
-
-def send_overlapped_players_details(sock: socket.socket, servers: list[Server]):
-	for player in players_overlap:
-		if player.pos in Rect(0, 0, center.x+overlapping_area_T, center.y+overlapping_area_T):
-			send(sock, servers[0], player)
-
-		if player.pos in Rect(center.x-overlapping_area_T, 0, W, center.y-overlapping_area_T):
-			send(sock, servers[1], player)
-
-		if player.pos in Rect(0, center.x-overlapping_area_T, center.x+overlapping_area_T, H):
-			send(sock, servers[2], player)
-
-		if player.pos in Rect(center.x-overlapping_area_T, center.y-overlapping_area_T, W, H):
-			send(sock, servers[3], player)
+# def send_overlapped_players_details(sock: socket.socket, servers: list[Server]):
+# 	for player in players_overlap:
+# 		if player.pos in Rect(0, 0, center.x+overlapping_area_T, center.y+overlapping_area_T):
+# 			send(sock, servers[0], player)
+#
+# 		if player.pos in Rect(center.x-overlapping_area_T, 0, W, center.y-overlapping_area_T):
+# 			send(sock, servers[1], player)
+#
+# 		if player.pos in Rect(0, center.x-overlapping_area_T, center.x+overlapping_area_T, H):
+# 			send(sock, servers[2], player)
+#
+# 		if player.pos in Rect(center.x-overlapping_area_T, center.y-overlapping_area_T, W, H):
+# 			send(sock, servers[3], player)
 
 
 def LB_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToClient]):
