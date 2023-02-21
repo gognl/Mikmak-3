@@ -7,12 +7,14 @@ from SQLDataBase import SQLDataBase
 PORT = 12402
 PROTOCOL_LEN = 1
 DATA_MAX_LENGTH = 510
-id_port_dict = {}
-id = 0  # to change!!!!
+id_socket_dict = {}
+Id = 0  # to change!!!!
 
-def login_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToClient], db: SQLDataBase):
+
+def login_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToClient], db: SQLDataBase) -> None:
     sock: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('0.0.0.0', PORT))
+
 
 def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: socket.socket) -> None:
     sock.listen()
@@ -23,6 +25,17 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         username = data.split(" ")[0]
         password = data.split(" ")[1]
         if not is_user_in_db(db, username):
-            add_new_to_db(db, id, username, password)
+            add_new_to_db(db, Id, username, password)
+            list_user_info = load_info(db, username)
         else:
             list_user_info = load_info(db, username)
+
+        info_tuple = list_user_info[0]
+        id_socket_dict[info_tuple[0]] = client_sock
+        new_players_q.append(PlayerCentral(Point(info_tuple[3], info_tuple[4]), info_tuple[0]))
+
+
+def send_server_ip_to_client(msgs_to_client_q: deque[MsgToClient], db: SQLDataBase, sock: socket.socket) -> None:
+    msg_to_client = msgs_to_client_q.pop()
+    client_dest_sock: socket.socket = id_socket_dict.get(msg_to_client.dest_id)
+    client_dest_sock.send(msg_to_client.msg)

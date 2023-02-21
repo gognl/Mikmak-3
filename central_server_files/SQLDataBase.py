@@ -17,7 +17,7 @@ class SQLDataBase:
                 database=DB_NAME
             )
         )
-        self.metadata: MetaData = MetaData(bind=self.engine)
+        self.metadata: MetaData = MetaData()
 
         self.users_table: Table = Table(TABLE_NAME, self.metadata,
                                         Column("id", INT, primary_key=True),

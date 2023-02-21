@@ -96,8 +96,8 @@ def LB_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToC
 	look_for_new_client_Thread = threading.Thread(target=look_for_new_client, args=(new_players_q, msgs_to_clients_q))
 	threads.append(look_for_new_client_Thread)
 
-	send_overlapped_players_details_Thread = threading.Thread(target=send_overlapped_players_details, args=(sock, normal_servers))
-	threads.append(send_overlapped_players_details_Thread)
+	#send_overlapped_players_details_Thread = threading.Thread(target=send_overlapped_players_details, args=(sock, normal_servers))
+	#threads.append(send_overlapped_players_details_Thread)
 
 	get_msgs_from_socket_Thread = threading.Thread(target=get_msgs_from_socket, args=(sock, normal_servers))
 	threads.append(get_msgs_from_socket_Thread)
