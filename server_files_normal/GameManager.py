@@ -40,8 +40,10 @@ class GameManager(threading.Thread):
 
 		self.sock_to_other_normals: list[socket.socket] = [socket.socket(socket.AF_INET, socket.SOCK_DGRAM) for _ in range(4)]
 		for i in range(4):
-			self.sock_to_other_normals[i].bind((NORMAL_SERVERS[i], sock_to_other_normals_port))
-			self.sock_to_other_normals[i].setblocking(0)
+			self.sock_to_other_normals[i].bind(('0.0.0.0', sock_to_other_normals_port+i))
+			self.sock_to_other_normals[i].setblocking(False)
+
+		self.my_server_index = input("Enter the index of the server: ")
 
 		self.read_only_players = pygame.sprite.Group()
 		self.center: Point = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
@@ -122,22 +124,23 @@ class GameManager(threading.Thread):
 	def send_to_another_normal_server(self, server_index: int, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate, prefix: bytes):
 		msg = update.serialize()
 		size: bytes = pack("<H", len(msg))
-		self.sock_to_other_normals[server_index].sendto(size, NORMAL_SERVERS[server_index].addr())
-		self.sock_to_other_normals[server_index].sendto(prefix + msg, NORMAL_SERVERS[server_index].addr())
+		self.sock_to_other_normals[server_index].sendto(size, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
+		self.sock_to_other_normals[server_index].sendto(prefix + msg, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
+		self.sock_to_other_normals[server_index].sendto(prefix + msg, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
 
 	def send_overlapped_entities_details(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate):
 		pos = update.pos
-		prefix = b'\x00' if isinstance(update, Client.Output.PlayerUpdate) else b'\x00'
-		if pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
+		prefix = b'\x00' if isinstance(update, Client.Output.PlayerUpdate) else b'\x01'
+		if self.my_server_port != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
 			self.send_to_another_normal_server(0, update, prefix)
 
-		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y + OVERLAPPING_AREA_T):
+		if self.my_server_port != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y + OVERLAPPING_AREA_T):
 			self.send_to_another_normal_server(1, update, prefix)
 
-		if pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
+		if self.my_server_port != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
 			self.send_to_another_normal_server(2, update, prefix)
 
-		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
+		if self.my_server_port != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
 			self.send_to_another_normal_server(3, update, prefix)
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
@@ -193,7 +196,7 @@ class GameManager(threading.Thread):
 				self.projectiles.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
-				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
+				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(self.enemy_changes))
 				self.broadcast_msg(state_update)
 				self.players_updates.clear()  # clear the list
 				self.enemy_changes = []
