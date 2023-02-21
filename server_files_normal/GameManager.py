@@ -127,8 +127,8 @@ class GameManager(threading.Thread):
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 			for i in range(CLIENT_FPS // FPS):
-				self.players.update()
 				self.projectiles.update()
+				self.players.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
@@ -160,13 +160,18 @@ class GameManager(threading.Thread):
 		pygame.quit()
 
 	def create_bullet(self, player: Player, mouse):
+		print('proj')
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.obstacle_sprites, 3, 15, 2000, './graphics/weapons/bullet.png')
+				   self.players, 3, 15, 2000, './graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
 
 	def create_kettle(self, player: Player, mouse):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.obstacle_sprites, 3, 5, 750, './graphics/weapons/kettle/full.png', 'explode', True)
+				   self.all_obstacles, 3, 5, 750, './graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
+
+	def create_explosion(self, pos, damage):
+		pass
+		#Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)

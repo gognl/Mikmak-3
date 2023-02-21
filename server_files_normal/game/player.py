@@ -52,6 +52,15 @@ class Player(pygame.sprite.Sprite):
 		# updates queue
 		self.update_queue: deque = deque()
 
+		# Stats
+		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
+		self.health = self.stats['health']
+		self.energy = self.stats['energy']
+		self.xp = 0
+		self.speed = self.stats['speed']
+		self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
+		self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
+
 		super().__init__(groups)
 
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
@@ -82,6 +91,13 @@ class Player(pygame.sprite.Sprite):
 
 	def update(self):
 		self.cooldowns()
+
+		# Death
+		if self.health <= 0:
+			self.xp = 0
+			self.kill()
+			print('he died lmao')
+			# TODO Notify clients
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
