@@ -33,7 +33,7 @@ class GameManager(threading.Thread):
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.players_updates: List[Client.Output.PlayerUpdate] = []
-		self.enemy_changes: List[Client.Output.EnemyUpdate]
+		self.enemy_changes: List[Client.Output.EnemyUpdate] = []
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
@@ -41,9 +41,9 @@ class GameManager(threading.Thread):
 		self.sock_to_other_normals: list[socket.socket] = [socket.socket(socket.AF_INET, socket.SOCK_DGRAM) for _ in range(4)]
 		for i in range(4):
 			self.sock_to_other_normals[i].bind(('0.0.0.0', sock_to_other_normals_port+i))
-			self.sock_to_other_normals[i].setblocking(False)
+			self.sock_to_other_normals[i].settimeout(0.02)
 
-		self.my_server_index = input("Enter the index of the server: ")
+		self.my_server_index = int(input("Enter the index of the server: "))
 
 		self.read_only_players = pygame.sprite.Group()
 		self.center: Point = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
@@ -109,8 +109,12 @@ class GameManager(threading.Thread):
 		while True:
 			for i in range(4):
 				sock = self.sock_to_other_normals[i]
-				size: int = unpack("<H", sock.recvfrom(2)[0])[0]
-				data, addr = sock.recvfrom(size)
+				try:
+					size: int = unpack("<H", sock.recvfrom(2)[0])[0]
+					data, addr = sock.recvfrom(size)
+				except socket.timeout:
+					continue
+
 				print(addr)
 				if Server(addr[0], addr[1]) in NORMAL_SERVERS:
 					if data[0] == b'\x00':  # Player
@@ -131,16 +135,16 @@ class GameManager(threading.Thread):
 	def send_overlapped_entities_details(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate):
 		pos = update.pos
 		prefix = b'\x00' if isinstance(update, Client.Output.PlayerUpdate) else b'\x01'
-		if self.my_server_port != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
+		if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
 			self.send_to_another_normal_server(0, update, prefix)
 
-		if self.my_server_port != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y + OVERLAPPING_AREA_T):
+		if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y + OVERLAPPING_AREA_T):
 			self.send_to_another_normal_server(1, update, prefix)
 
-		if self.my_server_port != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
+		if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
 			self.send_to_another_normal_server(2, update, prefix)
 
-		if self.my_server_port != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
+		if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
 			self.send_to_another_normal_server(3, update, prefix)
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
