@@ -21,7 +21,7 @@ class Server:
         return self.ip == other.ip and self.port == other.port
 
 # TODO: get this list in the starting of the server
-NORMAL_SERVERS = [Server('192.168.172.117', 14760), Server('192.168.174.189', 14760), Server('127.0.0.1', 14760), Server('127.0.0.1', 14760)]
+NORMAL_SERVERS = [Server('192.168.172.117', 14760), Server('192.168.174.189', 14760), Server('127.0.0.1', 14769), Server('127.0.0.1', 14769)]
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},

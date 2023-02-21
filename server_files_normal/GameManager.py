@@ -6,7 +6,6 @@ from queue import Queue, Empty
 import socket
 from struct import unpack, pack
 
-import client_files.code.other_player
 import client_files.code.settings
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
@@ -20,7 +19,7 @@ from random import randint
 import pygame
 
 class GameManager(threading.Thread):
-	def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, sock_to_other_normals: int):
+	def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, sock_to_other_normals_port: int):
 		super().__init__()
 		self.client_managers: deque[ClientManager] = client_managers
 		self.cmd_queue: Queue[Tuple[ClientManager, Client.Input.ClientCMD]] = Queue()
@@ -34,13 +33,16 @@ class GameManager(threading.Thread):
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.players_updates: List[Client.Output.PlayerUpdate] = []
-		self.enemy_changes: List[Client.Output.EnemyUpdate] = []
+		self.enemy_changes: List[Client.Output.EnemyUpdate]
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
 
-		self.sock_to_other_normals: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.sock_to_other_normals.bind(("0.0.0.0", sock_to_other_normals))
+		self.sock_to_other_normals: list[socket.socket] = [socket.socket(socket.AF_INET, socket.SOCK_DGRAM) for _ in range(4)]
+		for i in range(4):
+			self.sock_to_other_normals[i].bind((NORMAL_SERVERS[i], sock_to_other_normals_port))
+			self.sock_to_other_normals[i].setblocking(0)
+
 		self.read_only_players = pygame.sprite.Group()
 		self.center: Point = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 		threading.Thread(target=self.receive_from_another_normal_server).start()
@@ -103,38 +105,40 @@ class GameManager(threading.Thread):
 
 	def receive_from_another_normal_server(self):
 		while True:
-			size: int = unpack("<H", self.sock_to_other_normals.recvfrom(2)[0])[0]
-			data, addr = self.sock_to_other_normals.recvfrom(size)
-			if Server(addr[0], addr[1]) in NORMAL_SERVERS:
-				if data[0] == b'\x00':  # Player
-					player_update = Client.Output.PlayerUpdate(ser=data[1:])
-					self.handle_read_only_player_update(player_update)
+			for i in range(4):
+				sock = self.sock_to_other_normals[i]
+				size: int = unpack("<H", sock.recvfrom(2)[0])[0]
+				data, addr = sock.recvfrom(size)
+				print(addr)
+				if Server(addr[0], addr[1]) in NORMAL_SERVERS:
+					if data[0] == b'\x00':  # Player
+						player_update = Client.Output.PlayerUpdate(ser=data[1:])
+						self.handle_read_only_player_update(player_update)
 
-				else:
-					enemy_update = Client.Output.EnemyUpdate(ser=data[1:])
-					self.enemy_changes.append(enemy_update)
+					else:
+						enemy_update = Client.Output.EnemyUpdate(ser=data[1:])
+						self.enemy_changes.append(enemy_update)
 
-	def send_to_another_normal_server(self, server: Server, update: Client.Output.PlayerUpdate | Client.Output.PlayerUpdate, prefix: bytes = b''):
+	def send_to_another_normal_server(self, server_index: int, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate, prefix: bytes):
 		msg = update.serialize()
 		size: bytes = pack("<H", len(msg))
-		self.sock_to_other_normals.sendto(size, server.addr())
-		self.sock_to_other_normals.sendto(prefix + msg, server.addr())
+		self.sock_to_other_normals[server_index].sendto(size, NORMAL_SERVERS[server_index].addr())
+		self.sock_to_other_normals[server_index].sendto(prefix + msg, NORMAL_SERVERS[server_index].addr())
 
-	def send_overlapped_player_details(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate):
+	def send_overlapped_entities_details(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate):
 		pos = update.pos
-		prefix = b'\x00' if isinstance(update, Client.Output.PlayerUpdate) else b'\x01'
+		prefix = b'\x00' if isinstance(update, Client.Output.PlayerUpdate) else b'\x00'
 		if pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
-			self.send_to_another_normal_server(NORMAL_SERVERS[0], update, prefix)
+			self.send_to_another_normal_server(0, update, prefix)
 
-		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y - OVERLAPPING_AREA_T):
-			self.send_to_another_normal_server(NORMAL_SERVERS[1], update, prefix)
+		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y + OVERLAPPING_AREA_T):
+			self.send_to_another_normal_server(1, update, prefix)
 
 		if pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
-			self.send_to_another_normal_server(NORMAL_SERVERS[2], update, prefix)
+			self.send_to_another_normal_server(2, update, prefix)
 
 		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
-			self.send_to_another_normal_server(NORMAL_SERVERS[3], update, prefix)
-
+			self.send_to_another_normal_server(3, update, prefix)
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
 		for cmd in cmds:
@@ -151,7 +155,7 @@ class GameManager(threading.Thread):
 			player.reset_attacks()
 			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
-			self.send_overlapped_player_details(player_update)
+			self.send_overlapped_entities_details(player_update)
 
 			self.players_updates.append(player_update)
 
@@ -180,8 +184,9 @@ class GameManager(threading.Thread):
 				if previous_pos == (enemy.rect.x, enemy.rect.y):
 					continue
 				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
-				self.enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
-
+				enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes)
+				self.send_overlapped_entities_details(enemy_update)
+				self.enemy_changes.append(enemy_update)
 
 			for i in range(CLIENT_FPS // FPS):
 				self.players.update()
