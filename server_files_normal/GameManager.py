@@ -26,6 +26,7 @@ class GameManager(threading.Thread):
 		self.players: pygame.sprite.Group = pygame.sprite.Group()
 		self.enemies: pygame.sprite.Group = pygame.sprite.Group()
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
+		self.weapons: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.players_updates: List[Client.Output.PlayerUpdate] = []
 
@@ -65,7 +66,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (1024, 1024)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons)
 
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
@@ -127,8 +128,9 @@ class GameManager(threading.Thread):
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 			for i in range(CLIENT_FPS // FPS):
-				self.projectiles.update()
 				self.players.update()
+				self.weapons.update()
+				self.projectiles.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))

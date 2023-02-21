@@ -2,7 +2,7 @@ from typing import List
 
 import pygame
 import random
-#from client_files.code.tile import Tile
+#  from client_files.code.tile import Tile
 
 
 class Projectile(pygame.sprite.Sprite):
@@ -85,12 +85,9 @@ class Projectile(pygame.sprite.Sprite):
 		Check for collisions
 		:return: None
 		"""
-		#print(self.obstacle_sprites.sprites())
 		for sprite in self.obstacle_sprites:
-			print(self.hitbox.center, sprite.hitbox.center, sprite.hitbox.colliderect(self.hitbox), sprite.hitbox.width, sprite.hitbox.height)
-			#print()
 			if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and sprite is not self.player:  # Do not collide with own player
-				#if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers
+				#  if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers
 				if self.action == 'explode':
 					self.explode()
 				else:

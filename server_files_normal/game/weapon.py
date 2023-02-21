@@ -13,6 +13,14 @@ class Weapon(pygame.sprite.Sprite):
 		# graphic
 		self.height: int = height
 
+		self.update()
+
+	def update(self) -> None:
+		"""
+		Updates position and direction
+		:return: None
+		"""
+
 		self.direction = self.player.status.split('_')[0]
 
 		full_path: str = f'./graphics/weapons/{self.player.weapon}/{self.direction}.png'
@@ -27,3 +35,4 @@ class Weapon(pygame.sprite.Sprite):
 			self.rect = self.image.get_rect(midright=self.player.rect.midleft + pygame.math.Vector2(27, 16))
 		elif self.direction == 'right':
 			self.rect = self.image.get_rect(midleft=self.player.rect.midright + pygame.math.Vector2(-27, 16))
+
