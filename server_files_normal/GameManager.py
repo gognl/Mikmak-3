@@ -101,17 +101,17 @@ class GameManager(threading.Thread):
 		while True:
 			size: int = unpack("<H", self.sock_to_other_normals.recvfrom(2)[0])[0]
 			data, addr = self.sock_to_other_normals.recvfrom(size)
-			player_update = Client.Input.PlayerUpdate(ser=data)
+			player_update = Client.Output.PlayerUpdate(ser=data)
 			if Server(addr[0], addr[1]) in NORMAL_SERVERS:
 				self.handle_read_only_player_update(player_update)
 
-	def send_to_another_normal_server(self, server: Server, player_update: Client.Input.PlayerUpdate):
+	def send_to_another_normal_server(self, server: Server, player_update: Client.Output.PlayerUpdate):
 		msg = player_update.serialize()
 		size: bytes = pack("<H", len(msg))
 		self.sock_to_other_normals.sendto(size, server.addr())
 		self.sock_to_other_normals.sendto(msg, server.addr())
 
-	def send_overlapped_player_details(self, player_update: Client.Input.PlayerUpdate):
+	def send_overlapped_player_details(self, player_update: Client.Output.PlayerUpdate):
 		pos = player_update.pos
 		if pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
 			self.send_to_another_normal_server(NORMAL_SERVERS[0], player_update)
