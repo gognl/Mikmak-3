@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import threading
 from collections import deque
 from queue import Queue, Empty
 import socket
 from struct import unpack, pack
 
+import client_files.code.other_player
 import client_files.code.settings
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
@@ -31,6 +34,7 @@ class GameManager(threading.Thread):
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.players_updates: List[Client.Output.PlayerUpdate] = []
+		self.enemy_changes: List[Client.Output.EnemyUpdate] = []
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
@@ -101,29 +105,35 @@ class GameManager(threading.Thread):
 		while True:
 			size: int = unpack("<H", self.sock_to_other_normals.recvfrom(2)[0])[0]
 			data, addr = self.sock_to_other_normals.recvfrom(size)
-			player_update = Client.Output.PlayerUpdate(ser=data)
 			if Server(addr[0], addr[1]) in NORMAL_SERVERS:
-				self.handle_read_only_player_update(player_update)
+				if data[0] == b'\x00':  # Player
+					player_update = Client.Output.PlayerUpdate(ser=data[1:])
+					self.handle_read_only_player_update(player_update)
 
-	def send_to_another_normal_server(self, server: Server, player_update: Client.Output.PlayerUpdate):
-		msg = player_update.serialize()
+				else:
+					enemy_update = Client.Output.EnemyUpdate(ser=data[1:])
+					self.enemy_changes.append(enemy_update)
+
+	def send_to_another_normal_server(self, server: Server, update: Client.Output.PlayerUpdate | Client.Output.PlayerUpdate, prefix: bytes = b''):
+		msg = update.serialize()
 		size: bytes = pack("<H", len(msg))
 		self.sock_to_other_normals.sendto(size, server.addr())
-		self.sock_to_other_normals.sendto(msg, server.addr())
+		self.sock_to_other_normals.sendto(prefix + msg, server.addr())
 
-	def send_overlapped_player_details(self, player_update: Client.Output.PlayerUpdate):
-		pos = player_update.pos
+	def send_overlapped_player_details(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate):
+		pos = update.pos
+		prefix = b'\x00' if isinstance(update, Client.Output.PlayerUpdate) else b'\x01'
 		if pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
-			self.send_to_another_normal_server(NORMAL_SERVERS[0], player_update)
+			self.send_to_another_normal_server(NORMAL_SERVERS[0], update, prefix)
 
 		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y - OVERLAPPING_AREA_T):
-			self.send_to_another_normal_server(NORMAL_SERVERS[1], player_update)
+			self.send_to_another_normal_server(NORMAL_SERVERS[1], update, prefix)
 
 		if pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
-			self.send_to_another_normal_server(NORMAL_SERVERS[2], player_update)
+			self.send_to_another_normal_server(NORMAL_SERVERS[2], update, prefix)
 
 		if pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
-			self.send_to_another_normal_server(NORMAL_SERVERS[3], player_update)
+			self.send_to_another_normal_server(NORMAL_SERVERS[3], update, prefix)
 
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
@@ -153,7 +163,6 @@ class GameManager(threading.Thread):
 		cmd_received_event = pygame.USEREVENT + 1
 
 		tick_count = 0
-		enemy_changes = []
 
 		running: bool = True
 		while running:
@@ -171,7 +180,8 @@ class GameManager(threading.Thread):
 				if previous_pos == (enemy.rect.x, enemy.rect.y):
 					continue
 				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
-				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
+				self.enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
+
 
 			for i in range(CLIENT_FPS // FPS):
 				self.players.update()
@@ -181,7 +191,7 @@ class GameManager(threading.Thread):
 				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
 				self.broadcast_msg(state_update)
 				self.players_updates.clear()  # clear the list
-				enemy_changes = []
+				self.enemy_changes = []
 
 			self.clock.tick(FPS)
 			tick_count += 1
