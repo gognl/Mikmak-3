@@ -1,3 +1,4 @@
+import threading
 from collections import deque
 import socket
 from structures import *
@@ -14,6 +15,19 @@ Id = 0  # to change!!!!
 def login_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToClient], db: SQLDataBase) -> None:
     sock: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('0.0.0.0', PORT))
+    threads = []
+
+    look_for_new_clients_Thread = threading.Thread(target=look_for_new, args=(new_players_q, db, sock))
+    threads.append(look_for_new_clients_Thread)
+
+    send_server_ip_to_client_Thread = threading.Thread(target=send_server_ip_to_client, args=msgs_to_clients_q)
+    threads.append(send_server_ip_to_client_Thread)
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
 
 
 def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: socket.socket) -> None:
@@ -35,7 +49,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         new_players_q.append(PlayerCentral(Point(info_tuple[3], info_tuple[4]), info_tuple[0]))
 
 
-def send_server_ip_to_client(msgs_to_client_q: deque[MsgToClient], db: SQLDataBase, sock: socket.socket) -> None:
+def send_server_ip_to_client(msgs_to_client_q: deque[MsgToClient]) -> None:
     msg_to_client = msgs_to_client_q.pop()
     client_dest_sock: socket.socket = id_socket_dict.get(msg_to_client.dest_id)
     client_dest_sock.send(msg_to_client.msg)
