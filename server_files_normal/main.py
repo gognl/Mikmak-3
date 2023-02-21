@@ -79,7 +79,7 @@ def main():
 
 	cmd_semaphore: Semaphore = Semaphore(0)
 	client_managers: deque[ClientManager] = deque([])
-	game_manager = GameManager(client_managers, cmd_semaphore, 14760)
+	game_manager = GameManager(client_managers, cmd_semaphore, 0)
 	game_manager.start()
 
 	accept_new_clients(server_sock, client_managers, game_manager, cmd_semaphore)
