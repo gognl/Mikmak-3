@@ -44,6 +44,10 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
             list_user_info = load_info(db, username)
         else:
             list_user_info = load_info(db, username)
+            if not list_user_info[0][2] == password:
+                client_sock.send("incorrect password".encode())
+                client_sock.close()
+                continue
 
         info_tuple = list_user_info[0]
         id_socket_dict[info_tuple[0]] = client_sock
