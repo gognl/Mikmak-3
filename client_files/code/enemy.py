@@ -1,6 +1,8 @@
 from typing import List, Union
 import random
 
+import pygame.time
+
 from client_files.code.other_player import OtherPlayer
 from client_files.code.player import Player
 from client_files.code.settings import *
@@ -12,7 +14,6 @@ class Enemy(Entity):
 	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		# general setup
 		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
-		self.cooldown = ENEMY_ATTACK_COOLDOWN
 		self.status = None
 		self.sprite_type = 'enemy'
 
@@ -50,6 +51,11 @@ class Enemy(Entity):
 		# Nametag
 		if nametag:
 			self.initialize_nametag()
+
+		# Attack cooldown
+		self.can_attack = True
+		self.attack_time = 0
+		self.attack_cooldown = ENEMY_ATTACK_COOLDOWN
 
 	def import_graphics(self, name):
 		self.animations = {'move': []}
@@ -96,21 +102,33 @@ class Enemy(Entity):
 		else:
 			self.status = 'idle'
 
+	def attack(self, player):
+		if self.enemy_name == "white_cow" or self.enemy_name == "cow_green":
+			self.attack_time = pygame.time.get_ticks()
+			player.health -= self.damage
+		elif self.enemy_name == "red_cow":
+			pass
+		elif self.enemy_name == "yellow_cow":
+			pass
+
 	def actions(self, player):
-		# demo attack
 		if self.status == 'attack':
-			if self.cooldown == ENEMY_ATTACK_COOLDOWN:
-				player.health -= self.damage
-				self.cooldown = 0
-			else:
-				self.cooldown += 1
-				pass  # TODO - attack
+			if self.can_attack:
+				self.can_attack = False
+				self.attack(player)
 
 		elif self.status == 'move':
 			self.direction = self.get_player_distance_direction(player)[1]
 			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
 		else:
 			self.direction = pygame.math.Vector2()
+
+	def cooldowns(self):
+		current_time = pygame.time.get_ticks()
+
+		if not self.can_attack:
+			if current_time - self.attack_time >= self.attack_cooldown:
+				self.can_attack = True
 
 	def update(self):
 
@@ -129,6 +147,8 @@ class Enemy(Entity):
 			for i in range(self.xp):
 				self.create_dropped_item("xp", self.rect.center)
 			self.kill()
+
+		self.cooldowns()
 
 	def enemy_update(self, players):
 		if not players:

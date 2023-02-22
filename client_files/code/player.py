@@ -243,6 +243,8 @@ class Player(Entity):
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
                     elif item == "spawn_red":
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+                    elif item == "spawn_yellow":
+                        self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
                     elif item == "spawn_pet":
                         if self.pets < MAX_PETS_PER_PLAYER:
                             self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
