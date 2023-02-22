@@ -78,6 +78,12 @@ class Entity(pygame.sprite.Sprite):
 						elif sprite.direction.y < 0:  # Sprite going up
 							self.hitbox.bottom = sprite.hitbox.top
 
+	def deal_damage(self, damage):
+		if hasattr(self, "health") and hasattr(self, "resistance"):
+			self.health -= int(damage - (0.1 * self.resistance))
+		else:
+			print("Doesn't have health / resistance attribute")
+
 	def update_pos(self, pos):
 		self.rect.topleft = pos
 		self.hitbox = self.rect.inflate(-20, -26)

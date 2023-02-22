@@ -14,12 +14,12 @@ COL_UNLOAD_TILE_DISTANCE: int = 40
 SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36]
 MAX_DIVERGENCE_SQUARED: int = 80 ** 2
 MAX_PETS_PER_PLAYER: int = 5
-ENEMY_ATTACK_COOLDOWN: int = 15
+ENEMY_ATTACK_COOLDOWN: int = 300
 
 weapon_data = {
-	'sword': {'damage': 100, 'graphic': '../graphics/weapons/sword/full.png'},
-	'nerf': {'damage': 20, 'graphic': '../graphics/weapons/nerf/full.png'},
-	'kettle': {'damage': 40, 'graphic': '../graphics/weapons/kettle/full.png'}
+    'sword': {'damage': 100, 'graphic': '../graphics/weapons/sword/full.png'},
+    'nerf': {'damage': 20, 'graphic': '../graphics/weapons/nerf/full.png'},
+    'kettle': {'damage': 40, 'graphic': '../graphics/weapons/kettle/full.png'}
 }
 
 # UI
@@ -68,20 +68,22 @@ EXPLOSION_SPEED = 1.3
 EXPLOSION_RADIUS = 150
 
 enemy_data = {
-    'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55,
-                     'notice_radius': 300, 'death_items': ['grave_player'], 'xp': 0},
-    'red_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55, 'notice_radius': 300,
-                'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'], 'xp': 20},
-    'green_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55, 'notice_radius': 300,
-                  'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green', 'spawn_pet'], 'xp': 10},
-    'white_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 55, 'notice_radius': 300,
-                  'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
-    'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 300,
-                'death_items': ['grave_pet'], 'xp': 5}
+    'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 400,
+                     'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_player'], 'xp': 0},
+    'red_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 100, 'notice_radius': 500,
+                'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'], 'xp': 40},
+    'green_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 50, 'attack_radius': 55, 'notice_radius': 400,
+                  'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green', 'spawn_pet'], 'xp': 20},
+    'white_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
+                  'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
+    'yellow_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
+                   'move_cooldown': 400, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow', 'spawn_pet'], 'xp': 30},
+    'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 50, 'attack_radius': 0, 'notice_radius': 400,
+                'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_pet'], 'xp': 5}
 }
 
-item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green', 'spawn_red', 'spawn_pet',
-              'xp']  # TODO - keep only items that need to be naturally spawned
+item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
+              'spawn_red', 'spawn_yellow', 'spawn_pet', 'xp']  # TODO - keep only items that need to be naturally spawned
 
 RANDOM_NAMETAG = ['goni', 'omri', 'bar', 'alon', 'liron', 'gabriel', 'god', 'dog', 'not a cow', 'friend',
                   'epstein', 'shmulik', 'holy cow', 'cat', 'milk factory', '123456', 'password', 'user',

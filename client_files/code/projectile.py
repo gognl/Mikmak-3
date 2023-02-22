@@ -6,7 +6,7 @@ from client_files.code.tile import Tile
 
 
 class Projectile(pygame.sprite.Sprite):
-	def __init__(self, player, weapon, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
+	def __init__(self, player, pos, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
 		super().__init__(groups)
 		self.player = player
 		self.height: int = height
@@ -22,7 +22,7 @@ class Projectile(pygame.sprite.Sprite):
 		self.degree: float = -self.direction.as_polar()[1]
 		self.image: pygame.Surface = pygame.transform.rotate(self.original_image, self.degree)
 
-		self.rect: pygame.Rect = self.image.get_rect(center=weapon.rect.center)
+		self.rect: pygame.Rect = self.image.get_rect(center=pos)
 		self.hitbox = self.rect
 		self.pos: List[int, int] = list(self.rect.center)
 		self.speed: int = speed
@@ -91,7 +91,7 @@ class Projectile(pygame.sprite.Sprite):
 						self.explode()
 					else:
 						if hasattr(sprite, "health"):
-							sprite.health -= self.damage
+							sprite.deal_damage(self.damage)
 						self.kill()
 
 	def explode(self) -> None:

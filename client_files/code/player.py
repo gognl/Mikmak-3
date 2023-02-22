@@ -162,7 +162,6 @@ class Player(Entity):
             self.can_magnet = False
             self.add(self.magnetic_players)
             self.is_magnet = True
-            print("here")
             self.magnet_start = pygame.time.get_ticks()
 
         # Move nametag right after moving
@@ -198,7 +197,7 @@ class Player(Entity):
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
-                            self.create_bullet(self)
+                            self.create_bullet(self, self.current_weapon.rect.center)
                             self.can_shoot = False
                             self.shoot_time = pygame.time.get_ticks()
                     elif self.weapon_index == 2:
@@ -206,7 +205,7 @@ class Player(Entity):
                         self.release_mouse[0] = True
                         self.attack_time = pygame.time.get_ticks()
 
-                        self.create_kettle(self)
+                        self.create_kettle(self, self.current_weapon.rect.center)
                         self.inventory_items['kettle'] -= 1
                         if self.inventory_items['kettle'] == 0:
                             del self.inventory_items['kettle']
@@ -243,6 +242,8 @@ class Player(Entity):
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
                     elif item == "spawn_red":
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+                    elif item == "spawn_yellow":
+                        self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
                     elif item == "spawn_pet":
                         if self.pets < MAX_PETS_PER_PLAYER:
                             self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
