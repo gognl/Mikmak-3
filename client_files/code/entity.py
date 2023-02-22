@@ -54,7 +54,7 @@ class Entity(pygame.sprite.Sprite):
 		"""
 		if direction == 'horizontal':
 			for sprite in self.obstacle_sprites:
-				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projectiles - they collide with you
 					if self.direction.x > 0:  # Player going right
 						self.hitbox.right = sprite.hitbox.left
 					elif self.direction.x < 0:  # Player going left
@@ -67,7 +67,7 @@ class Entity(pygame.sprite.Sprite):
 
 		if direction == 'vertical':
 			for sprite in self.obstacle_sprites:
-				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projectiles - they collide with you
 					if self.direction.y > 0:  # Player going down
 						self.hitbox.bottom = sprite.hitbox.top
 					elif self.direction.y < 0:  # Player going up
@@ -77,6 +77,12 @@ class Entity(pygame.sprite.Sprite):
 							self.hitbox.top = sprite.hitbox.bottom
 						elif sprite.direction.y < 0:  # Sprite going up
 							self.hitbox.bottom = sprite.hitbox.top
+
+	def deal_damage(self, damage):
+		if hasattr(self, "health") and hasattr(self, "resistance"):
+			self.health -= int(damage - (0.1 * self.resistance))
+		else:
+			print("Doesn't have health / resistance attribute")
 
 	def update_pos(self, pos):
 		self.rect.topleft = pos

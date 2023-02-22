@@ -1,7 +1,6 @@
 import random
 from collections import deque
 from typing import Dict, Sequence
-
 from client_files.code.settings import *
 from client_files.code.structures import Server
 from client_files.code.support import *
@@ -48,8 +47,8 @@ class Player(Entity):
         self.on_screen = [1, 2]  # Indices of weapons that stay on screen
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
-        self.weapon_switch_time = None
-        self.switch_duration_cooldown = 400
+        self.weapon_switch_time = 0
+        self.switch_duration_cooldown = 24
         # attack sprites
         self.current_weapon = None
 
@@ -64,12 +63,12 @@ class Player(Entity):
         self.attacks: deque = deque()
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
+        self.stats = {'health': 100000, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.xp = 0
         self.speed = self.stats['speed']
-        self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
+        self.strength = self.stats['attack']
         self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
 
         # Nametag
@@ -77,8 +76,8 @@ class Player(Entity):
 
         # Shooting cooldown
         self.can_shoot = True
-        self.shoot_time = None
-        self.shoot_cooldown = 400
+        self.shoot_time = 0
+        self.shoot_cooldown = 24
 
         # Mouse press
         self.release_mouse = [False, False]
@@ -104,7 +103,7 @@ class Player(Entity):
         self.inventory_active: bool = False
         self.can_change_inventory: bool = True
         self.inventory_time: int = 0
-        self.inventory_cooldown: int = 100
+        self.inventory_cooldown: int = 6
         self.last_inventory: bool = True
 
         # Chat
@@ -194,7 +193,6 @@ class Player(Entity):
             self.can_magnet = False
             self.add(self.magnetic_players)
             self.is_magnet = True
-            print("here")
             self.magnet_start = pygame.time.get_ticks()
 
         # Move nametag right after moving
@@ -209,7 +207,6 @@ class Player(Entity):
 
                 self.inventory_active = not self.inventory_active
                 self.can_change_inventory = False
-                self.inventory_time = pygame.time.get_ticks()
             self.last_inventory = True
         else:
             self.last_inventory = False
@@ -273,15 +270,14 @@ class Player(Entity):
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
-                            self.create_bullet(self)
+                            self.create_bullet(self, self.current_weapon.rect.center)
                             self.can_shoot = False
-                            self.shoot_time = pygame.time.get_ticks()
                     elif self.weapon_index == 2:
                         self.attacking = True
                         self.release_mouse[0] = True
                         self.attack_time = pygame.time.get_ticks()
 
-                        self.create_kettle(self)
+                        self.create_kettle(self, self.current_weapon.rect.center)
                         self.inventory_items['kettle'] -= 1
                         if self.inventory_items['kettle'] == 0:
                             del self.inventory_items['kettle']
@@ -302,8 +298,8 @@ class Player(Entity):
 
                     if item == "heal":
                         self.health += 20
-                        if self.health > 100:
-                            self.health = 100
+                        if self.health > self.stats['health']:
+                            self.health = self.stats['health']
                     elif item == "strength":
                         self.strength += 1
                     elif item == "kettle":
@@ -318,6 +314,8 @@ class Player(Entity):
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
                     elif item == "spawn_red":
                         self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+                    elif item == "spawn_yellow":
+                        self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
                     elif item == "spawn_pet":
                         if self.pets < MAX_PETS_PER_PLAYER:
                             self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
@@ -361,7 +359,6 @@ class Player(Entity):
             self.destroy_attack(self)
 
         self.can_switch_weapon = False
-        self.weapon_switch_time = pygame.time.get_ticks()
 
         if known_index is None:
             if self.weapon_index < len(list(weapon_data.keys())) - 1:
@@ -404,7 +401,7 @@ class Player(Entity):
         # Speed skill timers
         if not self.can_speed:
             if current_time - self.speed_start >= self.speed_time and self.is_fast:
-                self.speed /= self.speed_skill_factor
+                self.speed = int(self.speed / self.speed_skill_factor)
                 self.is_fast = False
             if current_time - self.speed_start >= self.speed_skill_cooldown:
                 self.can_speed = True
@@ -424,16 +421,25 @@ class Player(Entity):
                     self.destroy_attack(self)
 
         if not self.can_switch_weapon:
-            if current_time - self.weapon_switch_time >= self.switch_duration_cooldown:
+            if self.weapon_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_weapon = True
+                self.weapon_switch_time = 0
+            else:
+                self.weapon_switch_time += 1
 
         if not self.can_shoot:
-            if current_time - self.shoot_time >= self.shoot_cooldown:
+            if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
+                self.shoot_time = 0
+            else:
+                self.shoot_time += 1
 
         if not self.can_change_inventory:
-            if current_time - self.inventory_time >= self.inventory_cooldown:
+            if self.inventory_time >= self.inventory_cooldown:
                 self.can_change_inventory = True
+                self.inventory_time = 0
+            else:
+                self.inventory_time += 1
 
         if not self.can_change_chat:
             if current_time - self.chat_time >= self.chat_cooldown:

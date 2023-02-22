@@ -58,6 +58,7 @@ def accept_new_clients(server_sock, client_managers, game_manager: GameManager, 
 		client_managers.append(new_client_manager)
 		new_client_manager.start()
 		player.client_manager = new_client_manager  # Add the client manager to the player's attributes
+		game_manager.send_initial_info(new_client_manager)
 
 		client_id += 1  # also maybe change this to something less predictable
 

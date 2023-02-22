@@ -67,6 +67,22 @@ class GameManager(threading.Thread):
 		pos: (int, int) = (1024, 1024)
 		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle)
 
+	def send_initial_info(self, client_manager: ClientManager):
+		player_data: list = []
+		enemies_data: list = []
+
+		for player in self.players.sprites():
+			initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=0, direction=(0, 0))
+			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,), 'status': player.status}
+			player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
+
+		for enemy in self.enemies.sprites():
+			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
+			enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
+
+		state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data), tuple(enemies_data))
+		client_manager.send_msg(state_update)
+
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
 		for cmd in cmds:
 			client_manager = cmd[0]

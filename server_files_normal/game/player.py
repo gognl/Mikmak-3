@@ -1,7 +1,6 @@
 from collections import deque
 
 import pygame
-from pygame.sprite import AbstractGroup
 from server_files_normal import ClientManager
 from server_files_normal.game.settings import *
 from server_files_normal.game.weapon import Weapon
