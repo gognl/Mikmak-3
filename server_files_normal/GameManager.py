@@ -48,6 +48,7 @@ class GameManager(threading.Thread):
 		self.my_server_index = my_server_index
 
 		self.read_only_players = pygame.sprite.Group()
+		self.output_updates: list[Client.Output.PlayerUpdate | Client.Output.EnemyUpdate] = {}
 		self.output_seqs = {}
 		self.input_seqs = {}
 		self.center: Point = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
@@ -107,7 +108,9 @@ class GameManager(threading.Thread):
 		player.reset_attacks()
 		player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
-		self.players_updates.append(player_update)
+		state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(
+			(player_update,), tuple())
+		self.broadcast_msg(state_update)
 
 	def receive_from_another_normal_server(self):
 		while True:
@@ -140,8 +143,12 @@ class GameManager(threading.Thread):
 						current_seq: int = unpack("<H", data[1:3])[0]
 						seq = self.input_seqs.get(enemy_update.id, -1)
 						if current_seq > seq:
-							self.enemy_changes.append(enemy_update)
+							#self.enemy_changes.append(enemy_update)
+							state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(
+								tuple(), (enemy_update,))
+							self.broadcast_msg(state_update)
 							self.input_seqs[enemy_update.id] = current_seq
+
 
 	def send_entity_update_to_another_normal_server(self, server_index: int, entity_update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate, prefix: bytes, seq: int):
 		msg = entity_update.serialize()
@@ -228,6 +235,9 @@ class GameManager(threading.Thread):
 				self.projectiles.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
+				#for update in self.output_updates:
+				#	self.send_overlapped_entities_details(update)
+
 				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(self.enemy_changes))
 				self.broadcast_msg(state_update)
 				self.players_updates.clear()  # clear the list
