@@ -169,7 +169,7 @@ class UI:
             self.show_chat()
 
         if self.minimap_active:
-            self.show_minimap()
+            self.show_minimap(player)
 
     def create_inventory(self):
         self.inventory_active = True
@@ -199,7 +199,7 @@ class UI:
         transparent.fill(UI_BG_COLOR)
         self.display_surface.blit(transparent, (x, y))
 
-    def show_minimap(self):
+    def show_minimap(self, player):
         x = 128
         y = 72
 
@@ -212,11 +212,12 @@ class UI:
         map_rect = map_image.get_rect(center=rect.center)
         self.display_surface.blit(map_image, map_rect)
 
-        # Show player head TODO: make the player head match coordinates of player in minimap
+        # Show player head
         head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
-        head_rect = head_image.get_rect(center=rect.center) #(map_rect.topleft + rect.center)
+        head_rect = head_image.get_rect(center=rect.center)
+        head_rect.x = x + player.rect.x/50 - head_rect.height/2
+        head_rect.y = y + player.rect.y/50 - head_rect.width/2
         self.display_surface.blit(head_image, head_rect)
-
 
 
 class NameTag:

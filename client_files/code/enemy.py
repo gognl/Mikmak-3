@@ -96,8 +96,6 @@ class Enemy(Entity):
 		else:
 			self.status = 'idle'
 
-		print("status:", self.status, "dist:", distance)
-
 	def actions(self, player):
 		# demo attack
 		if self.status == 'attack':
