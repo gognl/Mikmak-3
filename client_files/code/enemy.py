@@ -11,7 +11,7 @@ from client_files.code.support import *
 
 
 class Enemy(Entity):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
+	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, create_explosion, create_bullet, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		# general setup
 		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
 		self.status = None
@@ -28,18 +28,18 @@ class Enemy(Entity):
 
 		# stats
 		self.enemy_name = enemy_name
-		enemy_info = enemy_data[enemy_name]
-		self.health = enemy_info['health']
-		self.xp = enemy_info['xp']
-		self.speed = enemy_info['speed']
-		self.damage = enemy_info['damage']
-		self.resistance = enemy_info['resistance']
-		self.attack_radius = enemy_info['attack_radius']
-		self.notice_radius = enemy_info['notice_radius']
+		self.enemy_info = enemy_data[enemy_name]
+		self.health = self.enemy_info['health']
+		self.xp = self.enemy_info['xp']
+		self.speed = self.enemy_info['speed']
+		self.damage = self.enemy_info['damage']
+		self.resistance = self.enemy_info['resistance']
+		self.attack_radius = self.enemy_info['attack_radius']
+		self.notice_radius = self.enemy_info['notice_radius']
 
 		# Death
-		self.xp = enemy_info['xp']
-		self.death_items = enemy_info['death_items']
+		self.xp = self.enemy_info['xp']
+		self.death_items = self.enemy_info['death_items']
 		self.create_dropped_item = create_dropped_item
 
 		# Server
@@ -56,6 +56,15 @@ class Enemy(Entity):
 		self.can_attack = True
 		self.attack_time = 0
 		self.attack_cooldown = ENEMY_ATTACK_COOLDOWN
+
+		# Move cooldown
+		self.can_move = True
+		self.move_time = 0
+		self.move_cooldown = self.enemy_info['move_cooldown']
+
+		# Attack actions
+		self.create_explosion = create_explosion
+		self.create_bullet = create_bullet
 
 	def import_graphics(self, name):
 		self.animations = {'move': []}
@@ -103,32 +112,45 @@ class Enemy(Entity):
 			self.status = 'idle'
 
 	def attack(self, player):
-		if self.enemy_name == "white_cow" or self.enemy_name == "cow_green":
-			self.attack_time = pygame.time.get_ticks()
-			player.health -= self.damage
+		if self.enemy_name == "white_cow" or self.enemy_name == "green_cow":
+			player.deal_damage(self.damage)
 		elif self.enemy_name == "red_cow":
-			pass
+			self.create_explosion(self.rect.center, self.damage)
+			self.on_kill()
+			self.kill()
 		elif self.enemy_name == "yellow_cow":
-			pass
+			self.create_bullet(self, self.rect.center, pygame.math.Vector2(player.rect.center[0], player.rect.center[1]))
 
 	def actions(self, player):
 		if self.status == 'attack':
 			if self.can_attack:
 				self.can_attack = False
+				self.attack_time = pygame.time.get_ticks()
 				self.attack(player)
 
-		elif self.status == 'move':
-			self.direction = self.get_player_distance_direction(player)[1]
-			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
+		if self.status == 'move':
+			if self.can_move:
+				self.can_move = False
+				self.move_time = pygame.time.get_ticks()
+				self.direction = self.get_player_distance_direction(player)[1]
+				self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
 		else:
 			self.direction = pygame.math.Vector2()
 
 	def cooldowns(self):
 		current_time = pygame.time.get_ticks()
 
-		if not self.can_attack:
-			if current_time - self.attack_time >= self.attack_cooldown:
-				self.can_attack = True
+		if current_time - self.attack_time >= self.attack_cooldown:
+			self.can_attack = True
+
+		if current_time - self.move_time >= self.move_cooldown:
+			self.can_move = True
+
+	def on_kill(self):
+		for i in range(min(2, len(self.death_items))):
+			self.create_dropped_item(random.choice(self.death_items), self.rect.center)
+		for i in range(self.xp):
+			self.create_dropped_item("xp", self.rect.center)
 
 	def update(self):
 
@@ -142,10 +164,7 @@ class Enemy(Entity):
 
 		# Death
 		if self.health <= 0:
-			for i in range(min(2, len(self.death_items))):
-				self.create_dropped_item(random.choice(self.death_items), self.rect.center)
-			for i in range(self.xp):
-				self.create_dropped_item("xp", self.rect.center)
+			self.on_kill()
 			self.kill()
 
 		self.cooldowns()
@@ -168,19 +187,18 @@ class Enemy(Entity):
 
 
 class Pet(Enemy):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, owner, create_dropped_item, safe, nametag, name, create_nametag, nametag_update):
-		super().__init__(enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, safe, nametag, name, create_nametag, nametag_update)
+	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, owner, create_dropped_item, create_explosion, create_bullet, safe, nametag, name, create_nametag, nametag_update):
+		super().__init__(enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, create_explosion, create_bullet, safe, nametag, name, create_nametag, nametag_update)
 		self.owner = owner
 
-		self.stop_walking_radius = 100
-		self.notice_radius = 400
+		self.stop_radius = self.enemy_info['stop_radius']
 
 	def get_status(self, owner):
 		distance = self.get_player_distance_direction(owner)[0]
 
 		if self.notice_radius < distance:
 			self.status = 'move'
-		elif self.stop_walking_radius >= distance:
+		elif self.stop_radius >= distance:
 			self.status = 'idle'
 
 	def actions(self, owner):
@@ -201,10 +219,7 @@ class Pet(Enemy):
 
 		# Death
 		if self.health <= 0:
-			for i in range(min(2, len(self.death_items))):
-				self.create_dropped_item(random.choice(self.death_items), self.rect.center)
-			for i in range(self.xp):
-				self.create_dropped_item("xp", self.rect.center)
+			self.on_kill()
 
 			self.nametag.kill = True
 			self.owner.pets -= 1
@@ -217,7 +232,7 @@ class Pet(Enemy):
 
 class TitleEnemy(Enemy):
 	def __init__(self, enemy_name, pos, groups, direction):
-		super().__init__(enemy_name, pos, groups, 0, None, None)
+		super().__init__(enemy_name, pos, groups, 0, None, None, None, None)
 
 		self.direction = direction
 		self.image = self.animations['move'][0 if self.direction[0] < 0 else 1]

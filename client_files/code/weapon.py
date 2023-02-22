@@ -67,5 +67,5 @@ class Weapon(pygame.sprite.Sprite):
 			if sprite.hitbox.colliderect(self.rect) and sprite is not self and sprite is not self.player:  # Do not collide with own player
 				if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers
 					if hasattr(sprite, "health"):
-						sprite.health -= self.damage
+						sprite.deal_damage(self.damage)
 						self.acted = True

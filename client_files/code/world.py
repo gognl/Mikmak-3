@@ -113,25 +113,25 @@ class World:
             player.current_weapon.kill()
         player.current_weapon = None
 
-    def create_bullet(self, player: Union[Player, OtherPlayer], mouse=None):
+    def create_bullet(self, player: Union[Player, OtherPlayer], pos, mouse=None):
         if isinstance(player, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
             player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
         else:
-            direction = pygame.math.Vector2(mouse)
-        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
-                    self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
+            direction = pygame.math.Vector2(mouse[0] - player.rect.center[0], mouse[1] - player.rect.center[1])
+        Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
+                                                              self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
                    '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
 
-    def create_kettle(self, player: Union[Player, OtherPlayer], mouse=None):
+    def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
         if isinstance(player, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
             player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
         else:
             direction = pygame.math.Vector2(mouse)
-        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+        Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
                     self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
                    'explode', self.create_explosion, True)
@@ -177,11 +177,11 @@ class World:
         if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
             if is_pet:
                 Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                    self.obstacle_sprites, player, self.create_dropped_item, safe=[player], nametag=True, name="random", create_nametag=self.create_nametag,
+                    self.obstacle_sprites, player, self.create_dropped_item, self.create_explosion, self.create_bullet, safe=[player], nametag=True, name="random", create_nametag=self.create_nametag,
                     nametag_update=self.nametag_update)  # TODO - dont spawn tile perfect
             else:
                 Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                      self.obstacle_sprites, self.create_dropped_item, safe=[])  # TODO - dont spawn tile perfect
+                      self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet, safe=[])  # TODO - dont spawn tile perfect
         # TODO - add else if not spawnable
 
     def create_explosion(self, pos, damage):
@@ -299,7 +299,7 @@ class World:
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
                 Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                      self.obstacle_sprites, self.create_dropped_item)  # TODO - dont spawn tile perfect
+                      self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)  # TODO - dont spawn tile perfect
             # TODO - add else if not spawnable
 
     def spawn_items(self, amount: int) -> None:
