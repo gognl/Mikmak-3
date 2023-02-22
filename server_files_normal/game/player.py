@@ -63,6 +63,8 @@ class Player(pygame.sprite.Sprite):
 
 		self.weapons_group = weapons_group
 
+		self.previous_state = {}
+
 		super().__init__(groups)
 
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
@@ -97,9 +99,11 @@ class Player(pygame.sprite.Sprite):
 		# Death
 		if self.health <= 0:
 			self.xp = 0
+			if self.current_weapon is not None:
+				self.current_weapon.kill()
 			self.kill()
 			print('he died')
-			# TODO Notify clients
+			self.status = 'dead'
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()

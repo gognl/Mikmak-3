@@ -89,12 +89,14 @@ class GameManager(threading.Thread):
 			client_manager = cmd[0]
 			client_cmd = cmd[1]
 
+			# TODO what if player died and then cmd arrived
 			player_update: Client.Input.PlayerUpdate = client_cmd.player_changes
 			player = client_manager.player
 
 			# Update the player
 			player.process_client_updates(player_update)
 
+			# TODO move this to the main loop. check if changes were made since last msg
 			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
 			player.reset_attacks()
 			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
@@ -133,9 +135,18 @@ class GameManager(threading.Thread):
 				self.projectiles.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
-				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
+				player_changes = []
+				for player in self.players.sprites():
+					current_player_state = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
+					if player.previous_state != current_player_state:
+						player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=current_player_state)
+						player_changes.append(player_update)
+					player.reset_attacks()
+					player.previous_state = current_player_state
+
+				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_changes), tuple(enemy_changes))
 				self.broadcast_msg(state_update)
-				self.players_updates.clear()  # clear the list
+
 				enemy_changes = []
 
 			self.clock.tick(FPS)

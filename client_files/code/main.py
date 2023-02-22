@@ -95,6 +95,9 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if entity_id == client_id:
 			world.player.update_pos(entity_pos)
 			world.player.status = entity_status
+			if entity_status == 'dead':
+				pass  # TODO display death screen
+				print('i died')
 		elif entity_id in world.other_players:
 			world.other_players[entity_id].update_queue.append(player_update)
 		else:

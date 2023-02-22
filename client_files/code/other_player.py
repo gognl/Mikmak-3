@@ -79,6 +79,10 @@ class OtherPlayer(Entity):
 	def process_server_update(self, update: Server.Input.PlayerUpdate):
 		self.status = update.status
 
+		if update.status == 'dead':
+			print('he died')
+			pass  # TODO die
+
 		if not self.attacking:
 			for attack in update.attacks:
 				if attack.attack_type == 0:  # switch
