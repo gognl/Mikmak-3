@@ -94,6 +94,9 @@ class Player(pygame.sprite.Sprite):
 		self.update_pos(update.pos)
 
 	def update(self):
+		if self.status == 'dead':
+			return
+
 		self.cooldowns()
 
 		# Death
@@ -101,8 +104,6 @@ class Player(pygame.sprite.Sprite):
 			self.xp = 0
 			if self.current_weapon is not None:
 				self.current_weapon.kill()
-			self.kill()
-			print('he died')
 			self.status = 'dead'
 
 	def cooldowns(self):

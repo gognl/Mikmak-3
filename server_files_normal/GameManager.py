@@ -97,10 +97,10 @@ class GameManager(threading.Thread):
 			player.process_client_updates(player_update)
 
 			# TODO move this to the main loop. check if changes were made since last msg
-			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
-			player.reset_attacks()
-			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
-			self.players_updates.append(player_update)
+			#changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
+			#player.reset_attacks()
+			#player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
+			#self.players_updates.append(player_update)
 
 			client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
@@ -143,6 +143,8 @@ class GameManager(threading.Thread):
 						player_changes.append(player_update)
 					player.reset_attacks()
 					player.previous_state = current_player_state
+					if player.status == 'dead':
+						player.kill()
 
 				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_changes), tuple(enemy_changes))
 				self.broadcast_msg(state_update)
@@ -173,7 +175,6 @@ class GameManager(threading.Thread):
 		pygame.quit()
 
 	def create_bullet(self, player: Player, mouse):
-		print('proj')
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),

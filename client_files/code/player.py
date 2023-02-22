@@ -406,21 +406,20 @@ class Player(Entity):
         if self.changes == previous_state:
             self.changes = None
 
-        # Death
-        if self.health <= 0:
-            for item in list(self.inventory_items.keys()):
-                for i in range(self.inventory_items[item]):
-                    self.create_dropped_item(item, self.rect.center)
-            self.inventory_items = {}
+    def die(self):
+        for item in list(self.inventory_items.keys()):
+            for i in range(self.inventory_items[item]):
+                self.create_dropped_item(item, self.rect.center)
+        self.inventory_items = {}
 
-            for i in range(self.xp):
-                self.create_dropped_item("xp", self.rect.center)
-            self.xp = 0
+        for i in range(self.xp):
+            self.create_dropped_item("xp", self.rect.center)
+        self.xp = 0
 
-            self.create_dropped_item("grave_player", self.rect.center)
+        self.create_dropped_item("grave_player", self.rect.center)
 
-            self.nametag.kill = True
-            self.kill()  # TODO - add death screen
+        self.nametag.kill = True
+        self.kill()  # TODO - add death screen
 
     def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
         """
