@@ -200,22 +200,22 @@ class UI:
         self.display_surface.blit(transparent, (x, y))
 
     def show_minimap(self):
-        x = 40
-        y = x
+        x = 128
+        y = 72
 
         # Background
         rect = pygame.Rect(x, y, self.display_surface.get_size()[0] - (2 * x), self.display_surface.get_size()[1] - (2 * y))
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
 
         # Show image
-        map_image = pygame.image.load('../graphics/map/map.png').convert_alpha()
+        map_image = pygame.image.load('../graphics/minimap/map.png').convert_alpha()
         map_rect = map_image.get_rect(center=rect.center)
         self.display_surface.blit(map_image, map_rect)
 
-        # Show player head
-        '''head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
-        head_rect = head_image.get_rect(center=(map_rect.topleft + rect.center))
-        self.display_surface.blit(head_image, head_rect)'''
+        # Show player head TODO: make the player head match coordinates of player in minimap
+        head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
+        head_rect = head_image.get_rect(center=rect.center) #(map_rect.topleft + rect.center)
+        self.display_surface.blit(head_image, head_rect)
 
 
 
