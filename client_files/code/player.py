@@ -10,9 +10,10 @@ from client_files.code.entity import Entity
 
 class Player(Entity):
     def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack,
-                 create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag,
-                 nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg,
-                 entity_id, magnetic_players) -> None:
+                 create_bullet, create_kettle, create_inventory, destroy_inventory, create_chat,
+                 destroy_chat, activate_zen, deactivate_zen, create_minimap, destroy_minimap, create_nametag,
+                 nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
+                 magnetic_players) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
         # sprite group of magnetic players
@@ -58,7 +59,8 @@ class Player(Entity):
         self.status = 'down'
 
         # Server
-        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon,
+                        'status': self.status}  # Changes made in this tick
         self.attacks: deque = deque()
 
         # Stats
@@ -105,6 +107,34 @@ class Player(Entity):
         self.inventory_cooldown: int = 100
         self.last_inventory: bool = True
 
+        # Chat
+        self.create_chat = create_chat
+        self.destroy_chat = destroy_chat
+        self.last_chat = True
+        self.chat_time = 0
+        self.chat_cooldown = 100
+        self.chat_active = False
+        self.can_change_chat = True
+
+        # Zen
+        self.activate_zen = activate_zen
+        self.deactivate_zen = deactivate_zen
+        self.last_zen = True
+        self.zen_time = 0
+        self.zen_cooldown = 100
+        self.zen_active = False
+        self.can_change_zen = True
+
+        # Minimap
+        self.create_minimap = create_minimap
+        self.destroy_minimap = destroy_minimap
+        self.last_minimap = True
+        self.minimap_time = 0
+        self.minimap_cooldown = 100
+        self.minimap_active = False
+        self.can_change_minimap = True
+
+
         # Items
         self.item_sprites = None
         self.inventory_items = {}
@@ -120,7 +150,8 @@ class Player(Entity):
         """
         path: str = '../graphics/player/'
 
-        self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [], 'left_idle': [], 'right_idle': []}
+        self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
+                           'left_idle': [], 'right_idle': []}
         for animation in self.animations.keys():
             self.animations[animation] = list(import_folder(path + animation).values())
 
@@ -169,7 +200,7 @@ class Player(Entity):
         # Move nametag right after moving
         self.nametag_update(self.nametag)
 
-        if keys[pygame.K_e]:
+        if keys[pygame.K_e] and not self.zen_active:
             if self.can_change_inventory and not self.last_inventory:
                 if not self.inventory_active:
                     self.create_inventory()
@@ -183,6 +214,48 @@ class Player(Entity):
         else:
             self.last_inventory = False
 
+        if keys[pygame.K_t]:
+            if self.can_change_chat and not self.last_chat:
+                if not self.chat_active:
+                    self.create_chat()
+                else:
+                    self.destroy_chat()
+
+                self.chat_active = not self.chat_active
+                self.can_change_chat = False
+                self.chat_time = pygame.time.get_ticks()
+            self.last_chat = True
+        else:
+            self.last_chat = False
+
+        if keys[pygame.K_m]:
+            if self.can_change_minimap and not self.last_minimap:
+                if not self.minimap_active:
+                    self.create_minimap()
+                else:
+                    self.destroy_minimap()
+
+                self.minimap_active = not self.minimap_active
+                self.can_change_minimap = False
+                self.minimap_time = pygame.time.get_ticks()
+            self.last_minimap = True
+        else:
+            self.last_minimap = False
+
+        if keys[pygame.K_z]:
+            if self.can_change_zen and not self.last_zen:
+                if not self.zen_active:
+                    self.activate_zen()
+                else:
+                    self.deactivate_zen()
+
+                self.zen_active = not self.zen_active
+                self.can_change_zen = False
+                self.zen_time = pygame.time.get_ticks()
+            self.last_zen = True
+        else:
+            self.last_zen = False
+
         if self.release_mouse[0] and not mouse[0]:
             self.release_mouse[0] = False
         if self.release_mouse[1] and not mouse[2]:
@@ -191,7 +264,8 @@ class Player(Entity):
         if mouse[0] and not self.attacking and not self.release_mouse[0]:
             if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
                 if self.weapon_index not in self.on_screen:
-                    self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
+                    self.attacks.append(
+                        Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
                     self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
@@ -361,6 +435,18 @@ class Player(Entity):
             if current_time - self.inventory_time >= self.inventory_cooldown:
                 self.can_change_inventory = True
 
+        if not self.can_change_chat:
+            if current_time - self.chat_time >= self.chat_cooldown:
+                self.can_change_chat = True
+
+        if not self.can_change_zen:
+            if current_time - self.zen_time >= self.zen_cooldown:
+                self.can_change_zen = True
+
+        if not self.can_change_minimap:
+            if current_time - self.minimap_time >= self.minimap_cooldown:
+                self.can_change_minimap = True
+
     def animate(self) -> None:
         """
         animate through images
@@ -384,7 +470,8 @@ class Player(Entity):
 
         # Clear the changes dict
         self.attacks: deque = deque()
-        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
+        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks),
+                                'status': self.status}
 
         # Get keyboard inputs
         self.input()
