@@ -106,7 +106,7 @@ class World:
         self.spawn_items(1000)
 
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
-        player.current_weapon = Weapon(player, (self.visible_sprites,), 2)
+        player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 2)
 
     def destroy_attack(self, player: Union[Player, OtherPlayer]):
         if player.current_weapon:
@@ -122,7 +122,7 @@ class World:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
                     self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
-                   '../graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
+                   '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
 
     def create_kettle(self, player: Union[Player, OtherPlayer], mouse=None):
         if isinstance(player, Player):
@@ -133,7 +133,8 @@ class World:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
                     self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
-                   '../graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
+                   '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
+                   'explode', self.create_explosion, True)
 
     def create_inventory(self):
         self.ui.create_inventory()
