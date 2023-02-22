@@ -208,14 +208,14 @@ class UI:
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
 
         # Show image
-        map_image = pygame.image.load('../graphics/minimap/map.png').convert_alpha()
+        map_image = pygame.image.load('../graphics/map/map.png').convert_alpha()
         map_rect = map_image.get_rect(center=rect.center)
         self.display_surface.blit(map_image, map_rect)
 
         # Show player head
-        head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
+        '''head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
         head_rect = head_image.get_rect(center=(map_rect.topleft + rect.center))
-        self.display_surface.blit(head_image, head_rect)
+        self.display_surface.blit(head_image, head_rect)'''
 
 
 
