@@ -38,6 +38,7 @@ class OtherPlayer(Entity):
 		self.weapon_index = 0
 		self.on_screen = (1, 2)  # Indices of weapons that stay on screen
 		self.weapon = list(weapon_data.keys())[self.weapon_index]
+		self.current_weapon = None
 
 		# updates queue
 		self.update_queue: deque = deque()
@@ -103,9 +104,9 @@ class OtherPlayer(Entity):
 						self.attack_time = pygame.time.get_ticks()
 					else:
 						if self.weapon_index == 1:
-							self.create_bullet(self, attack.direction)
+							self.create_bullet(self, self.current_weapon.rect.center, attack.direction)
 						elif self.weapon_index == 2:
-							self.create_kettle(self, attack.direction)
+							self.create_kettle(self, self.current_weapon.rect.center, attack.direction)
 
 							# switch to sword
 							self.destroy_attack(self)
