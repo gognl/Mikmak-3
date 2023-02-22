@@ -87,8 +87,43 @@ class Enemy(pygame.sprite.Sprite):
 			self.direction = self.direction.normalize()
 
 		self.hitbox.x += self.direction.x * speed
+		self.collision('horizontal')  # Check collisions in the horizontal axis
 		self.hitbox.y += self.direction.y * speed
+		self.collision('vertical')  # Check collisions in the vertical axis
 		self.rect.center = self.hitbox.center
+
+	def collision(self, direction: str) -> None:
+		"""
+		Apply collisions to the player, each axis separately
+		:param direction: A string representing the direction the player is going
+		:return: None
+		"""
+
+		if direction == 'horizontal':
+			for sprite in self.obstacle_sprites:
+				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+					if self.direction.x > 0:  # Player going right
+						self.hitbox.right = sprite.hitbox.left
+					elif self.direction.x < 0:  # Player going left
+						self.hitbox.left = sprite.hitbox.right
+					elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+						if sprite.direction.x > 0:  # Sprite going right
+							self.hitbox.left = sprite.hitbox.right
+						elif sprite.direction.x < 0:  # Sprite going left
+							self.hitbox.right = sprite.hitbox.left
+
+		if direction == 'vertical':
+			for sprite in self.obstacle_sprites:
+				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+					if self.direction.y > 0:  # Player going down
+						self.hitbox.bottom = sprite.hitbox.top
+					elif self.direction.y < 0:  # Player going up
+						self.hitbox.top = sprite.hitbox.bottom
+					elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+						if sprite.direction.y > 0:  # Sprite going down
+							self.hitbox.top = sprite.hitbox.bottom
+						elif sprite.direction.y < 0:  # Sprite going up
+							self.hitbox.bottom = sprite.hitbox.top
 
 	def update(self):
 		self.move(self.speed)

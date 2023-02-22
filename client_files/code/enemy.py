@@ -1,6 +1,7 @@
 from typing import List, Union
 import random
 
+from client_files.code.other_player import OtherPlayer
 from client_files.code.player import Player
 from client_files.code.settings import *
 from client_files.code.entity import Entity
@@ -11,6 +12,7 @@ class Enemy(Entity):
 	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		# general setup
 		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
+		self.cooldown = ENEMY_ATTACK_COOLDOWN
 		self.status = None
 		self.sprite_type = 'enemy'
 
@@ -50,21 +52,10 @@ class Enemy(Entity):
 			self.initialize_nametag()
 
 	def import_graphics(self, name):
-
-		if name == 'other_player':
-			path: str = '../graphics/player/'
-			self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
-							   'left_idle': [], 'right_idle': []}
-			for animation in self.animations.keys():
-				self.animations[animation] = list(import_folder(path + animation).values())
-
-			self.status = 'down_idle'
-
-		else:
-			self.animations = {'move': []}
-			path = f'../graphics/monsters/{name}/move/'
-			self.animations['move'] = list(import_folder(path).values())
-			self.status = 'move'
+		self.animations = {'move': []}
+		path = f'../graphics/monsters/{name}/move/'
+		self.animations['move'] = list(import_folder(path).values())
+		self.status = 'move'
 
 	def animate(self) -> None:
 		"""
@@ -81,7 +72,7 @@ class Enemy(Entity):
 		self.image = animation[int(self.frame_index)]
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 
-	def get_closest_player(self, players: List[Union[Player, 'Enemy']]) -> Union[Player, 'Enemy']:
+	def get_closest_player(self, players: List[Union[Player, 'OtherPlayer']]) -> Union[Player, 'OtherPlayer']:
 		enemy_pos = pygame.Vector2(self.rect.center)
 		return min(players, key=lambda p: enemy_pos.distance_squared_to(pygame.Vector2(p.rect.center)))
 
@@ -106,8 +97,15 @@ class Enemy(Entity):
 			self.status = 'idle'
 
 	def actions(self, player):
+		# demo attack
 		if self.status == 'attack':
-			pass  # TODO - attack
+			if self.cooldown == ENEMY_ATTACK_COOLDOWN:
+				player.health -= self.damage
+				self.cooldown = 0
+			else:
+				self.cooldown += 1
+				pass  # TODO - attack
+
 		elif self.status == 'move':
 			self.direction = self.get_player_distance_direction(player)[1]
 			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
@@ -115,8 +113,6 @@ class Enemy(Entity):
 			self.direction = pygame.math.Vector2()
 
 	def update(self):
-		if self.enemy_name == 'other_player':
-			return
 
 		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
 

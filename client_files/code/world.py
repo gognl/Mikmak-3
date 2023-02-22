@@ -2,6 +2,7 @@ import random
 import pygame
 from typing import Dict, Union, List
 from client_files.code.item import Item
+from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import *
 from client_files.code.tile import Tile
 from client_files.code.player import Player
@@ -19,11 +20,15 @@ class World:
         # Pygame window
         self.display_surface: pygame.Surface = pygame.display.get_surface()
 
+        # list of players using magnetic skill
+        self.magnetic_players = pygame.sprite.Group()
+
         # Visible sprites: sprites that show on screen
         # Obstacle sprites: sprite the player can collide with
         # Server sprites: sprites whose updates have to be sent to the server
         self.visible_sprites: GroupYSort = GroupYSort()
-        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
+        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # cows, players, and walls
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
@@ -32,9 +37,6 @@ class World:
 
         # User interface
         self.ui = UI()
-
-        # attack sprites
-        self.current_weapon = None
 
         # Calculate screen center
         self.half_width: int = self.display_surface.get_size()[0] // 2
@@ -52,7 +54,10 @@ class World:
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
 
         # other players
-        self.all_players: List[Union[Enemy, Player]] = []
+        self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
+
+        # all players
+        self.all_players: List[Union[Player, OtherPlayer]] = []
 
         # All layout csv files of the map
         self.layout: Dict[str, List[List[str]]] = {
@@ -76,11 +81,20 @@ class World:
         :return: None
         """
         # Create player with starting position
-        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites),
+
+        # Semi-random player starting position generator
+        random_x = random.randint(0, 1280 * 40 // 64 - 1)
+        random_y = random.randint(0, 720 * 40 // 64 - 1)
+        pos = (2048, 2048)
+        if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES:  # TODO - include barriers
+            pos = (random_x * 64, random_y * 64)
+        # TODO - add else if not spawnable
+
+        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
-                             0)  # TODO - make starting player position random (or a spawn)
+                             0, self.magnetic_players)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -91,24 +105,34 @@ class World:
         # Spawn items
         self.spawn_items(1000)
 
-    def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, (self.visible_sprites,), self.obstacle_sprites, 2)
+    def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
+        player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 2)
 
-    def destroy_attack(self):
-        if self.current_weapon:
-            self.current_weapon.kill()
-        self.current_weapon = None
+    def destroy_attack(self, player: Union[Player, OtherPlayer]):
+        if player.current_weapon:
+            player.current_weapon.kill()
+        player.current_weapon = None
 
-    def create_bullet(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
+    def create_bullet(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
                    '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
 
-    def create_kettle(self):
-        Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
-                   pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
+    def create_kettle(self, player: Union[Player, OtherPlayer], mouse=None):
+        if isinstance(player, Player):
+            mouse = pygame.mouse.get_pos()
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+        else:
+            direction = pygame.math.Vector2(mouse)
+        Projectile(player, player.current_weapon, direction, (self.visible_sprites, self.obstacle_sprites,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
                    'explode', self.create_explosion, True)
 
@@ -168,6 +192,10 @@ class World:
         Run one world frame
         :return: None
         """
+
+        # Update the items positions based on magnetic players
+        for item in self.item_sprites:
+            item.update_movement(self.magnetic_players)
 
         # Update the camera position
         self.update_camera()

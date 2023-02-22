@@ -1,6 +1,8 @@
 import random
+from collections import deque
 from typing import Dict, Sequence
 from client_files.code.settings import *
+from client_files.code.structures import Server
 from client_files.code.support import *
 from client_files.code.entity import Entity
 
@@ -9,8 +11,11 @@ class Player(Entity):
     def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack,
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_nametag,
                  nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg,
-                 entity_id) -> None:
+                 entity_id, magnetic_players) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
+
+        # sprite group of magnetic players
+        self.magnetic_players = magnetic_players
 
         # Load player sprite from files
         self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
@@ -43,6 +48,8 @@ class Player(Entity):
         self.can_switch_weapon = True
         self.weapon_switch_time = None
         self.switch_duration_cooldown = 400
+        # attack sprites
+        self.current_weapon = None
 
         # Animations
         self.animations: Dict[str, List[pygame.Surface]] = {}
@@ -51,6 +58,7 @@ class Player(Entity):
 
         # Server
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
+        self.attacks: deque = deque()
 
         # Stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}  # TODO - make energy actually do something
@@ -67,10 +75,25 @@ class Player(Entity):
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = None
-        self.shoot_cooldown = 200
+        self.shoot_cooldown = 400
 
         # Mouse press
         self.release_mouse = [False, False]
+
+        # Magnet skill
+        self.can_magnet = True
+        self.is_magnet = False
+        self.magnet_start = None
+        self.magnet_time = 10000
+        self.magnet_skill_cooldown = 50000
+
+        # Speed skill
+        self.can_speed = True
+        self.is_fast = False
+        self.speed_start = None
+        self.speed_time = 1000
+        self.speed_skill_cooldown = 8000
+        self.speed_skill_factor = 2
 
         # Inventory
         self.create_inventory = create_inventory
@@ -127,6 +150,24 @@ class Player(Entity):
         else:  # If no keys are pressed, the direction should reset to 0
             self.direction.x = 0
 
+        # Check if using speed skill
+        if self.can_speed and keys[pygame.K_1]:
+            self.can_speed = False
+            self.is_fast = True
+            self.speed *= self.speed_skill_factor
+            self.speed_start = pygame.time.get_ticks()
+
+        # Check if using magnet skill
+        if self.can_magnet and keys[pygame.K_2]:
+            self.can_magnet = False
+            self.add(self.magnetic_players)
+            self.is_magnet = True
+            print("here")
+            self.magnet_start = pygame.time.get_ticks()
+
+        # Move nametag right after moving
+        self.nametag_update(self.nametag)
+
         if keys[pygame.K_e]:
             if self.can_change_inventory and not self.last_inventory:
                 if not self.inventory_active:
@@ -149,14 +190,15 @@ class Player(Entity):
         if mouse[0] and not self.attacking and not self.release_mouse[0]:
             if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
                 if self.weapon_index not in self.on_screen:
-                    self.create_attack()
+                    self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
+                    self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
                     self.attack_time = pygame.time.get_ticks()
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
-                            self.create_bullet()
+                            self.create_bullet(self)
                             self.can_shoot = False
                             self.shoot_time = pygame.time.get_ticks()
                     elif self.weapon_index == 2:
@@ -164,7 +206,7 @@ class Player(Entity):
                         self.release_mouse[0] = True
                         self.attack_time = pygame.time.get_ticks()
 
-                        self.create_kettle()
+                        self.create_kettle(self)
                         self.inventory_items['kettle'] -= 1
                         if self.inventory_items['kettle'] == 0:
                             del self.inventory_items['kettle']
@@ -241,7 +283,7 @@ class Player(Entity):
         self.release_mouse[0] = True
 
         if self.weapon_index in self.on_screen:
-            self.destroy_attack()
+            self.destroy_attack(self)
 
         self.can_switch_weapon = False
         self.weapon_switch_time = pygame.time.get_ticks()
@@ -258,7 +300,9 @@ class Player(Entity):
         self.attacking = False
 
         if self.weapon_index in self.on_screen:
-            self.create_attack()
+            self.create_attack(self)
+
+        self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
 
         # if switched to kettle and have no kettle, reswitch
         if self.weapon_index == 2 and 'kettle' not in self.inventory_items:
@@ -282,11 +326,27 @@ class Player(Entity):
         """
         current_time: int = pygame.time.get_ticks()
 
+        # Speed skill timers
+        if not self.can_speed:
+            if current_time - self.speed_start >= self.speed_time and self.is_fast:
+                self.speed /= self.speed_skill_factor
+                self.is_fast = False
+            if current_time - self.speed_start >= self.speed_skill_cooldown:
+                self.can_speed = True
+
+        # Magnet skill timers
+        if not self.can_magnet:
+            if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
+                self.is_magnet = False
+                self.remove(self.magnetic_players)
+            if current_time - self.magnet_start >= self.magnet_skill_cooldown:
+                self.can_magnet = True
+
         if self.attacking:
             if current_time - self.attack_time >= self.attack_cooldown:
                 self.attacking = False
                 if self.weapon_index not in self.on_screen:
-                    self.destroy_attack()
+                    self.destroy_attack(self)
 
         if not self.can_switch_weapon:
             if current_time - self.weapon_switch_time >= self.switch_duration_cooldown:
@@ -322,7 +382,8 @@ class Player(Entity):
         """
 
         # Clear the changes dict
-        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+        self.attacks: deque = deque()
+        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
 
         # Get keyboard inputs
         self.input()
@@ -340,7 +401,7 @@ class Player(Entity):
         # Pick up items
         self.item_collision()
 
-        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
         if self.changes == previous_state:
             self.changes = None
 
