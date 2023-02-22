@@ -61,7 +61,7 @@ class Player(Entity):
         self.attacks: deque = deque()
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.xp = 0
@@ -226,8 +226,8 @@ class Player(Entity):
 
                     if item == "heal":
                         self.health += 20
-                        if self.health > 100:
-                            self.health = 100
+                        if self.health > self.stats['health']:
+                            self.health = self.stats['health']
                     elif item == "strength":
                         self.strength += 1
                     elif item == "kettle":
