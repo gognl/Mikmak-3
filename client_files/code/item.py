@@ -19,7 +19,7 @@ class Item(pygame.sprite.Sprite):
         self.ypos = self.rect.y
 
         # Pick up cooldown
-        self.spawn_time = pygame.time.get_ticks()
+        self.spawn_time = 0
         self.pick_up_cooldown = ITEM_PICK_UP_COOLDOWN
         self.can_pick_up = False
 
@@ -48,9 +48,10 @@ class Item(pygame.sprite.Sprite):
                 self.rect.y = int(self.ypos)
 
     def update(self):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.spawn_time > self.pick_up_cooldown:
+        if self.spawn_time > self.pick_up_cooldown:
             self.can_pick_up = True
 
-        if current_time - self.spawn_time > self.despawn_time:
+        if self.spawn_time > self.despawn_time:
             del self
+
+        self.spawn_time += 1

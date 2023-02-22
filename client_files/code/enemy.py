@@ -125,26 +125,30 @@ class Enemy(Entity):
 		if self.status == 'attack':
 			if self.can_attack:
 				self.can_attack = False
-				self.attack_time = pygame.time.get_ticks()
 				self.attack(player)
 
 		if self.status == 'move':
 			if self.can_move:
 				self.can_move = False
-				self.move_time = pygame.time.get_ticks()
 				self.direction = self.get_player_distance_direction(player)[1]
 				self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
 		else:
 			self.direction = pygame.math.Vector2()
 
 	def cooldowns(self):
-		current_time = pygame.time.get_ticks()
+		if not self.can_attack:
+			if self.attack_time >= self.attack_cooldown:
+				self.can_attack = True
+				self.attack_time = 0
+			else:
+				self.attack_time += 1
 
-		if current_time - self.attack_time >= self.attack_cooldown:
-			self.can_attack = True
-
-		if current_time - self.move_time >= self.move_cooldown:
-			self.can_move = True
+		if not self.can_move:
+			if self.move_time >= self.move_cooldown:
+				self.can_move = True
+				self.move_time = 0
+			else:
+				self.move_time += 1
 
 	def on_kill(self):
 		for i in range(min(2, len(self.death_items))):

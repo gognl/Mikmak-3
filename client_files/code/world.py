@@ -121,7 +121,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse[0] - player.rect.center[0], mouse[1] - player.rect.center[1])
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                                              self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
+                                                              self.projectile_sprites), self.obstacle_sprites, 3, 15, 120,
                    '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
@@ -132,7 +132,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                    self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
+                    self.projectile_sprites), self.obstacle_sprites, 3, 5, 45,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
                    'explode', self.create_explosion, True)
 

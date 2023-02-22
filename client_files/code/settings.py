@@ -14,7 +14,7 @@ COL_UNLOAD_TILE_DISTANCE: int = 40
 SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36]
 MAX_DIVERGENCE_SQUARED: int = 80 ** 2
 MAX_PETS_PER_PLAYER: int = 5
-ENEMY_ATTACK_COOLDOWN: int = 300
+ENEMY_ATTACK_COOLDOWN: int = 18
 
 weapon_data = {
     'sword': {'damage': 100, 'graphic': '../graphics/weapons/sword/full.png'},
@@ -60,8 +60,8 @@ TITLE_RANDOM_COW = ['green_cow', 'red_cow', 'pet_cow']
 INVENTORY_SIZE = (3, 5)
 INVENTORY_ITEMS = INVENTORY_SIZE[0] * INVENTORY_SIZE[1]
 INVENTORY_FONT_SIZE = 10
-ITEM_PICK_UP_COOLDOWN = 1000
-ITEM_DESPAWN_TIME = 600000
+ITEM_PICK_UP_COOLDOWN = 60
+ITEM_DESPAWN_TIME = 36000
 
 # Explosion
 EXPLOSION_SPEED = 1.3
@@ -77,7 +77,7 @@ enemy_data = {
     'white_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
     'yellow_cow': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
-                   'move_cooldown': 400, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow', 'spawn_pet'], 'xp': 30},
+                   'move_cooldown': 24, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow', 'spawn_pet'], 'xp': 30},
     'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 50, 'attack_radius': 0, 'notice_radius': 400,
                 'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_pet'], 'xp': 5}
 }

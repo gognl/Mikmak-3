@@ -46,8 +46,8 @@ class Player(Entity):
         self.on_screen = [1, 2]  # Indices of weapons that stay on screen
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
-        self.weapon_switch_time = None
-        self.switch_duration_cooldown = 400
+        self.weapon_switch_time = 0
+        self.switch_duration_cooldown = 24
         # attack sprites
         self.current_weapon = None
 
@@ -74,8 +74,8 @@ class Player(Entity):
 
         # Shooting cooldown
         self.can_shoot = True
-        self.shoot_time = None
-        self.shoot_cooldown = 400
+        self.shoot_time = 0
+        self.shoot_cooldown = 24
 
         # Mouse press
         self.release_mouse = [False, False]
@@ -101,7 +101,7 @@ class Player(Entity):
         self.inventory_active: bool = False
         self.can_change_inventory: bool = True
         self.inventory_time: int = 0
-        self.inventory_cooldown: int = 100
+        self.inventory_cooldown: int = 6
         self.last_inventory: bool = True
 
         # Items
@@ -176,7 +176,6 @@ class Player(Entity):
 
                 self.inventory_active = not self.inventory_active
                 self.can_change_inventory = False
-                self.inventory_time = pygame.time.get_ticks()
             self.last_inventory = True
         else:
             self.last_inventory = False
@@ -199,7 +198,6 @@ class Player(Entity):
                         if self.can_shoot:
                             self.create_bullet(self, self.current_weapon.rect.center)
                             self.can_shoot = False
-                            self.shoot_time = pygame.time.get_ticks()
                     elif self.weapon_index == 2:
                         self.attacking = True
                         self.release_mouse[0] = True
@@ -287,7 +285,6 @@ class Player(Entity):
             self.destroy_attack(self)
 
         self.can_switch_weapon = False
-        self.weapon_switch_time = pygame.time.get_ticks()
 
         if known_index is None:
             if self.weapon_index < len(list(weapon_data.keys())) - 1:
@@ -330,7 +327,7 @@ class Player(Entity):
         # Speed skill timers
         if not self.can_speed:
             if current_time - self.speed_start >= self.speed_time and self.is_fast:
-                self.speed /= self.speed_skill_factor
+                self.speed = int(self.speed / self.speed_skill_factor)
                 self.is_fast = False
             if current_time - self.speed_start >= self.speed_skill_cooldown:
                 self.can_speed = True
@@ -350,16 +347,25 @@ class Player(Entity):
                     self.destroy_attack(self)
 
         if not self.can_switch_weapon:
-            if current_time - self.weapon_switch_time >= self.switch_duration_cooldown:
+            if self.weapon_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_weapon = True
+                self.weapon_switch_time = 0
+            else:
+                self.weapon_switch_time += 1
 
         if not self.can_shoot:
-            if current_time - self.shoot_time >= self.shoot_cooldown:
+            if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
+                self.shoot_time = 0
+            else:
+                self.shoot_time += 1
 
         if not self.can_change_inventory:
-            if current_time - self.inventory_time >= self.inventory_cooldown:
+            if self.inventory_time >= self.inventory_cooldown:
                 self.can_change_inventory = True
+                self.inventory_time = 0
+            else:
+                self.inventory_time += 1
 
     def animate(self) -> None:
         """
