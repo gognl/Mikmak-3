@@ -2,14 +2,13 @@ import threading
 from collections import deque
 import socket
 from structures import *
-from db_utils import load_info, is_user_in_db, add_new_to_db
+from db_utils import load_info, is_user_in_db, add_new_to_db, get_current_id, update_id_table
 from SQLDataBase import SQLDataBase
 
 PORT = 12402
 PROTOCOL_LEN = 1
 DATA_MAX_LENGTH = 510
 id_socket_dict = {}
-Id = 0  # to change!!!!
 
 
 def login_main(new_players_q: deque[PlayerCentral], msgs_to_clients_q: deque[MsgToClient], db: SQLDataBase) -> None:
@@ -39,7 +38,9 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         username = data.split(" ")[0]
         password = data.split(" ")[1]
         if not is_user_in_db(db, username):
-            add_new_to_db(db, Id, username, password)
+            new_id = get_current_id(db) + 1
+            add_new_to_db(db, new_id, username, password)
+            update_id_table(db)
             list_user_info = load_info(db, username)
         else:
             list_user_info = load_info(db, username)

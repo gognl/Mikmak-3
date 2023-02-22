@@ -6,6 +6,7 @@ DB_USER = "root"
 DB_PASSWORD = "1234"
 DB_NAME = "test"
 TABLE_NAME = "data"
+COUNTER_NAME = "ID"
 MAX_SIZE = 255
 SALT = "WfLc6hyf"
 
