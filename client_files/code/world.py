@@ -92,7 +92,7 @@ class World:
         self.spawn_items(1000)
 
     def create_attack(self) -> None:
-        self.current_weapon = Weapon(self.player, (self.visible_sprites,), 2)
+        self.current_weapon = Weapon(self.player, (self.visible_sprites,), self.obstacle_sprites, 2)
 
     def destroy_attack(self):
         if self.current_weapon:
@@ -103,13 +103,14 @@ class World:
         Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
                    pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
                                             self.projectile_sprites), self.obstacle_sprites, 3, 15, 2000,
-                   '../graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
+                   '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
 
     def create_kettle(self):
         Projectile(self.player, self.camera, self.screen_center, self.current_weapon,
                    pygame.mouse.get_pos(), (self.visible_sprites, self.obstacle_sprites,
                                             self.projectile_sprites), self.obstacle_sprites, 3, 5, 750,
-                   '../graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
+                   '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
+                   'explode', self.create_explosion, True)
 
     def create_inventory(self):
         self.ui.create_inventory()

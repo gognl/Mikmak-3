@@ -29,6 +29,8 @@ class Explosion(pygame.sprite.Sprite):
             if position.distance_to(sprite.rect.center) <= self.radius:
                 if hasattr(sprite, "health"):
                     sprite.health -= self.damage
+                    if hasattr(sprite, "paused"):
+                        sprite.pause()
                 elif isinstance(sprite, Item):
                     sprite.kill()
 

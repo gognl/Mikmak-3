@@ -1,6 +1,5 @@
 import random
 from typing import Dict, Sequence
-
 from client_files.code.settings import *
 from client_files.code.support import *
 from client_files.code.entity import Entity
@@ -54,12 +53,12 @@ class Player(Entity):
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon, 'status': self.status}  # Changes made in this tick
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
+        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}  # TODO - make energy actually do something
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.xp = 0
         self.speed = self.stats['speed']
-        self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
+        self.strength = self.stats['attack']
         self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
 
         # Nametag

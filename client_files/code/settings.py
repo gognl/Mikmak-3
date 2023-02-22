@@ -16,9 +16,9 @@ MAX_DIVERGENCE_SQUARED: int = 100**2
 MAX_PETS_PER_PLAYER: int = 5
 
 weapon_data = {
-	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
-	'nerf': {'cooldown': 100, 'damage': 35, 'graphic': '../graphics/weapons/nerf/full.png'},
-	'kettle': {'cooldown': 100, 'damage': 25, 'graphic': '../graphics/weapons/kettle/full.png'}
+	'sword': {'damage': 100, 'graphic': '../graphics/weapons/sword/full.png'},
+	'nerf': {'damage': 20, 'graphic': '../graphics/weapons/nerf/full.png'},
+	'kettle': {'damage': 40, 'graphic': '../graphics/weapons/kettle/full.png'}
 }
 
 # UI
@@ -45,7 +45,7 @@ UI_BORDER_COLOR_ACTIVE = 'gold'
 
 # Openning screen
 TITLE_BG_COLOR = '#71ddee'
-TITLE_FONT = UI_FONT  # TODO - change
+TITLE_FONT = UI_FONT
 TITLE_FONT_SIZE = 24
 TITLE_TEXT_COLOR = '#EEEEEE'
 BOX_BG_COLOR = '#444444'
@@ -66,7 +66,6 @@ ITEM_DESPAWN_TIME = 600000
 EXPLOSION_SPEED = 1.3
 EXPLOSION_RADIUS = 150
 
-# TODO: make the red cow xplode
 enemy_data = {
 	'other_player': {'health': 100, 'xp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['grave_player'], 'xp': 0},
 	'red_cow': {'health': 100, 'xp': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 50, 'notice_radius': 300, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'], 'xp': 20},
