@@ -178,13 +178,13 @@ class GameManager(threading.Thread):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.players, 3, 15, 2000, './graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
+				   self.players, 3, 15, 120, './graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
 
 	def create_kettle(self, player: Player, mouse):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 3, 5, 750, './graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
+				   self.all_obstacles, 3, 5, 45, './graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
 
 	def create_explosion(self, pos, damage):
 		pass

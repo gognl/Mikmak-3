@@ -125,10 +125,10 @@ class World:
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
             player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
         else:
-            direction = pygame.math.Vector2(mouse[0] - player.rect.center[0], mouse[1] - player.rect.center[1])
+            direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
                                                               self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
-                   '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
+                   '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * player.strength)))
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
         if isinstance(player, Player):
