@@ -116,7 +116,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		else:
 			world.enemies[entity_id] = Enemy(enemy_name, entity_pos,
 											 (world.visible_sprites, world.server_sprites, world.all_obstacles),
-											 entity_id, world.all_obstacles, world.create_dropped_item)
+											 entity_id, world.all_obstacles, world.create_dropped_item, world.create_explosion,
+											 world.create_bullet)
 
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:
