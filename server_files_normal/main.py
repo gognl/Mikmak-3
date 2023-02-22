@@ -17,6 +17,9 @@ TODO:
 import socket
 from collections import deque
 from threading import Semaphore
+
+import pygame
+
 from server_files_normal.LoadBalancerManager import LoadBalancerManager
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager

@@ -5,6 +5,7 @@ from threading import Thread  # Multi-threading
 from queue import Queue, Empty  # Multi-threaded sorted queue
 from collections import deque  # Normal queue
 from struct import pack, unpack  # serialize
+from sys import exit
 
 from client_files.code.structures import *
 from client_files.code.settings import *
@@ -95,6 +96,10 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if entity_id == client_id:
 			world.player.update_pos(entity_pos)
 			world.player.status = entity_status
+			if entity_status == 'dead':
+				world.player.die()  # TODO display death screen
+				pygame.quit()
+				exit()
 		elif entity_id in world.other_players:
 			world.other_players[entity_id].update_queue.append(player_update)
 		else:

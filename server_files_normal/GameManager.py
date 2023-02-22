@@ -26,6 +26,7 @@ class GameManager(threading.Thread):
 		self.players: pygame.sprite.Group = pygame.sprite.Group()
 		self.enemies: pygame.sprite.Group = pygame.sprite.Group()
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
+		self.weapons: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.players_updates: List[Client.Output.PlayerUpdate] = []
 
@@ -65,7 +66,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (1024, 1024)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons)
 
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
@@ -88,16 +89,18 @@ class GameManager(threading.Thread):
 			client_manager = cmd[0]
 			client_cmd = cmd[1]
 
+			# TODO what if player died and then cmd arrived
 			player_update: Client.Input.PlayerUpdate = client_cmd.player_changes
 			player = client_manager.player
 
 			# Update the player
 			player.process_client_updates(player_update)
 
-			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
-			player.reset_attacks()
-			player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
-			self.players_updates.append(player_update)
+			# TODO move this to the main loop. check if changes were made since last msg
+			#changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
+			#player.reset_attacks()
+			#player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
+			#self.players_updates.append(player_update)
 
 			client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
@@ -128,12 +131,24 @@ class GameManager(threading.Thread):
 
 			for i in range(CLIENT_FPS // FPS):
 				self.players.update()
+				self.weapons.update()
 				self.projectiles.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
-				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(enemy_changes))
+				player_changes = []
+				for player in self.players.sprites():
+					current_player_state = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
+					if player.previous_state != current_player_state:
+						player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=current_player_state)
+						player_changes.append(player_update)
+					player.reset_attacks()
+					player.previous_state = current_player_state
+					if player.status == 'dead':
+						player.kill()
+
+				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_changes), tuple(enemy_changes))
 				self.broadcast_msg(state_update)
-				self.players_updates.clear()  # clear the list
+
 				enemy_changes = []
 
 			self.clock.tick(FPS)
@@ -163,10 +178,14 @@ class GameManager(threading.Thread):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.obstacle_sprites, 3, 15, 2000, './graphics/weapons/bullet.png')
+				   self.players, 3, 15, 2000, './graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
 
 	def create_kettle(self, player: Player, mouse):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.obstacle_sprites, 3, 5, 750, './graphics/weapons/kettle/full.png', 'explode', True)
+				   self.all_obstacles, 3, 5, 750, './graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
+
+	def create_explosion(self, pos, damage):
+		pass
+		#Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)

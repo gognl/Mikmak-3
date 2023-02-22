@@ -1,4 +1,5 @@
 from collections import deque
+from typing import Union
 
 from client_files.code.entity import Entity
 from client_files.code.settings import weapon_data
@@ -76,8 +77,14 @@ class OtherPlayer(Entity):
 		self.image = animation[int(self.frame_index)]
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 
-	def process_server_update(self, update: Server.Input.PlayerUpdate):
+	def process_server_update(self, update: Server.Input.PlayerUpdate) -> Union[str, None]:
 		self.status = update.status
+
+		if update.status == 'dead':
+			self.xp = 0
+			self.create_dropped_item("grave_player", self.rect.center)
+			self.kill()
+			return 'dead'
 
 		if not self.attacking:
 			for attack in update.attacks:
@@ -112,16 +119,11 @@ class OtherPlayer(Entity):
 
 		# inputs
 		while self.update_queue:
-			self.process_server_update(self.update_queue.popleft())
+			if self.process_server_update(self.update_queue.popleft()) == 'dead':
+				return
 
 		self.cooldowns()
 		self.animate()
-
-		# Death
-		if self.health <= 0:
-			self.xp = 0
-			self.create_dropped_item("grave_player", self.rect.center)
-			self.kill()  # TODO - add death screen
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
