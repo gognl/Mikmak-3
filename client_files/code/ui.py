@@ -32,6 +32,12 @@ class UI:
         # Inventory UI
         self.inventory_ui_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 48)
 
+        # Chat
+        self.chat_active: bool = False
+
+        # Minimap
+        self.minimap_active = False
+
         # Mouse
         self.release_mouse: bool = False
 
@@ -155,19 +161,63 @@ class UI:
         # Create weapon box
         self.weapon_overlay(player.weapon_index, not player.can_switch_weapon, player.inventory_items)
 
-        # after we add magic
-        # Create magic box
-        # self.selection_box(93, 630)
-
         # Inventory
         if self.inventory_active:
             self.show_inventory(player, player.inventory_items)
+
+        if self.chat_active:
+            self.show_chat()
+
+        if self.minimap_active:
+            self.show_minimap(player)
 
     def create_inventory(self):
         self.inventory_active = True
 
     def destroy_inventory(self):
         self.inventory_active = False
+
+    def create_chat(self):
+        self.chat_active = True
+
+    def destroy_chat(self):
+        self.chat_active = False
+
+    def create_minimap(self):
+        self.minimap_active = True
+
+    def destroy_minimap(self):
+        self.minimap_active = False
+
+    def show_chat(self):
+        x = 10
+        y = 95
+
+        # Background
+        transparent = pygame.Surface((CHAT_WIDTH, CHAT_HEIGHT))
+        transparent.set_alpha(128)
+        transparent.fill(UI_BG_COLOR)
+        self.display_surface.blit(transparent, (x, y))
+
+    def show_minimap(self, player):
+        x = 128
+        y = 72
+
+        # Background
+        rect = pygame.Rect(x, y, self.display_surface.get_size()[0] - (2 * x), self.display_surface.get_size()[1] - (2 * y))
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
+
+        # Show image
+        map_image = pygame.image.load('../graphics/minimap/map.png').convert_alpha()
+        map_rect = map_image.get_rect(center=rect.center)
+        self.display_surface.blit(map_image, map_rect)
+
+        # Show player head
+        head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
+        head_rect = head_image.get_rect(center=rect.center)
+        head_rect.x = x + player.rect.x/50 - head_rect.height/2
+        head_rect.y = y + player.rect.y/50 - head_rect.width/2
+        self.display_surface.blit(head_image, head_rect)
 
 
 class NameTag:

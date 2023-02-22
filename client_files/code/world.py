@@ -76,6 +76,9 @@ class World:
         # Load the map from settings.py
         self.create_map()
 
+        # Zen
+        self.zen_active = False
+
     def create_map(self) -> None:
         """
         Place movable tiles on the map
@@ -94,7 +97,8 @@ class World:
 
         self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 2, self.create_attack, self.destroy_attack, self.create_bullet,
-                             self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
+                             self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
+                             self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
                              0, self.magnetic_players)  # TODO - make starting player position random (or a spawn)
 
@@ -147,6 +151,24 @@ class World:
         self.ui.destroy_inventory()
         self.screen_center.x = self.half_width
         self.camera_distance_from_player = list(CAMERA_DISTANCE_FROM_PLAYER)
+
+    def create_chat(self):
+        self.ui.create_chat()
+
+    def destroy_chat(self):
+        self.ui.destroy_chat()
+
+    def activate_zen(self):
+        self.zen_active = True
+
+    def deactivate_zen(self):
+        self.zen_active = False
+
+    def create_minimap(self):
+        self.ui.create_minimap()
+
+    def destroy_minimap(self):
+        self.ui.destroy_minimap()
 
     def create_nametag(self, player, name):
         nametag = NameTag(player, name)
@@ -259,7 +281,8 @@ class World:
                 del nametag
             else:
                 nametag.display()
-        self.ui.display(self.player)
+        if not self.zen_active:
+            self.ui.display(self.player)
 
         # Get info about changes made in this tick (used for server synchronization)
         local_changes = [None, []]  # A list of changes made in this tick. player, enemies

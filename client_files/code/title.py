@@ -14,8 +14,8 @@ class Title:
         self.max_length = 14
 
         # Field values
-        self.username = ""
-        self.password = ""
+        self.username = r""
+        self.password = r""
         self.running = True
         self.quit = False
 
@@ -144,7 +144,7 @@ class Title:
             if event.type == pygame.QUIT:
                 self.quit = True
             elif event.type == pygame.KEYDOWN:
-                if event.key != pygame.K_RETURN and event.key != pygame.K_ESCAPE and event.key != pygame.K_TAB:
+                if event.key != pygame.K_RETURN and event.key != pygame.K_ESCAPE and event.key != pygame.K_TAB and event.key != pygame.K_BACKSLASH:
                     if self.username_selected:
                         if event.key == pygame.K_BACKSPACE:
                             self.username = self.username[:-1]
