@@ -30,7 +30,7 @@ class PlayerCentral:
 		self.id: ID = client_id
 
 class MsgToClient:
-	def __init__(self, dest_id: ID, msg):
+	def __init__(self, dest_id: ID, msg: bytes):
 		self.dest_id: ID = dest_id
 		self.msg = msg
 
