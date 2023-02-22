@@ -91,7 +91,7 @@ class World:
         # TODO - add else if not spawnable
 
         self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
-                             self.obstacle_sprites, 1, self.create_attack, self.destroy_attack, self.create_bullet,
+                             self.obstacle_sprites, 2, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
                              0, self.magnetic_players)  # TODO - make starting player position random (or a spawn)
@@ -106,7 +106,7 @@ class World:
         self.spawn_items(1000)
 
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
-        player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 2)
+        player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 3)
 
     def destroy_attack(self, player: Union[Player, OtherPlayer]):
         if player.current_weapon:
@@ -121,7 +121,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse[0] - player.rect.center[0], mouse[1] - player.rect.center[1])
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                                              self.projectile_sprites), self.obstacle_sprites, 3, 15, 120,
+                                                              self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
                    '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
@@ -132,7 +132,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                    self.projectile_sprites), self.obstacle_sprites, 3, 5, 45,
+                    self.projectile_sprites), self.obstacle_sprites, 4, 5, 45,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
                    'explode', self.create_explosion, True)
 

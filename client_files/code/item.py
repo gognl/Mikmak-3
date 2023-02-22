@@ -12,7 +12,7 @@ class Item(pygame.sprite.Sprite):
         # Sprite
         self.image = pygame.image.load(f'../graphics/items/{self.name}.png').convert_alpha()
         self.rect = self.image.get_rect(center=pos)
-        self.height = 4
+        self.height = 1
 
         # Exact position so magnet movement looks better
         self.xpos = self.rect.x

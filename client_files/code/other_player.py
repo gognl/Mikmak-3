@@ -17,7 +17,7 @@ class OtherPlayer(Entity):
 		self.import_graphics()
 		self.image = self.animations[self.status][self.frame_index]
 		self.rect = self.image.get_rect(topleft=pos)
-		self.height = 1
+		self.height = 2
 
 		# Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
 		self.hitbox = self.rect.inflate(-20, -26)

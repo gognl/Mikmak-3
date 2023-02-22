@@ -21,7 +21,7 @@ class Enemy(Entity):
 		self.import_graphics(enemy_name)
 		self.image = self.animations[self.status][self.frame_index]
 		self.rect = self.image.get_rect(topleft=pos)
-		self.height = 1
+		self.height = 2
 
 		self.hitbox = self.rect
 		self.obstacle_sprites = obstacle_sprites
