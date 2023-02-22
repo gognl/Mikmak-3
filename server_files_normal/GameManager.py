@@ -48,6 +48,8 @@ class GameManager(threading.Thread):
 		self.my_server_index = my_server_index
 
 		self.read_only_players = pygame.sprite.Group()
+		self.output_seqs = {}
+		self.input_seqs = {}
 		self.center: Point = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 		threading.Thread(target=self.receive_from_another_normal_server).start()
 
@@ -115,46 +117,63 @@ class GameManager(threading.Thread):
 
 				sock = self.sock_to_other_normals[i]
 				try:
-					size: int = unpack("<H", sock.recvfrom(2)[0])[0]
-					print(size)
-					data, addr = sock.recvfrom(size)
+					#size: int = unpack("<H", sock.recvfrom(2)[0])[0]
+					#print(size)
+					data, addr = sock.recvfrom(1024)
 				except socket.timeout:
 					continue
 				except ConnectionResetError:
 					print(i)
 					continue
 
-				print(addr)
-				if Server(addr[0], addr[1]) in NORMAL_SERVERS:
+				if Server(addr[0], addr[1]-self.my_server_index) in NORMAL_SERVERS:
 					if data[0] == 0:  # Player
-						player_update = Client.Output.PlayerUpdate(ser=data[1:])
-						self.handle_read_only_player_update(player_update)
+						player_update = Client.Output.PlayerUpdate(ser=data[3:])
+						current_seq: int = unpack("<H", data[1:3])[0]
+						seq = self.input_seqs.get(player_update.id, -1)
+						if current_seq > seq:
+							self.handle_read_only_player_update(player_update)
+							self.input_seqs[player_update.id] = current_seq
 
 					else:
-						enemy_update = Client.Output.EnemyUpdate(ser=data[1:])
-						self.enemy_changes.append(enemy_update)
+						enemy_update = Client.Output.EnemyUpdate(ser=data[3:])
+						current_seq: int = unpack("<H", data[1:3])[0]
+						seq = self.input_seqs.get(enemy_update.id, -1)
+						if current_seq > seq:
+							self.enemy_changes.append(enemy_update)
+							self.input_seqs[enemy_update.id] = current_seq
 
-	def send_entity_update_to_another_normal_server(self, server_index: int, entity_update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate, prefix: bytes):
+	def send_entity_update_to_another_normal_server(self, server_index: int, entity_update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate, prefix: bytes, seq: int):
 		msg = entity_update.serialize()
-		size: bytes = pack("<H", 1+len(msg))
-		self.sock_to_other_normals[server_index].sendto(size, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
-		self.sock_to_other_normals[server_index].sendto(prefix + msg, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
-		self.sock_to_other_normals[server_index].sendto(prefix + msg, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
+		size: bytes = pack("<H", 3+len(msg))
+		seq: bytes = pack("<H", seq)
+		#self.sock_to_other_normals[server_index].sendto(size, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
+		self.sock_to_other_normals[server_index].sendto(prefix + seq + msg, (NORMAL_SERVERS[server_index]+self.my_server_index).addr())
 
 	def send_overlapped_entities_details(self, entity_update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate):
 		pos = entity_update.pos
+		is_overlapped = False
 		prefix = b'\x00' if isinstance(entity_update, Client.Output.PlayerUpdate) else b'\x01'
+		seq = self.output_seqs.get(entity_update.id, 0)
+
 		if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T, self.center.y + OVERLAPPING_AREA_T):
-			self.send_entity_update_to_another_normal_server(0, entity_update, prefix)
+			self.send_entity_update_to_another_normal_server(0, entity_update, prefix, seq)
+			is_overlapped = True
 
 		if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH, self.center.y + OVERLAPPING_AREA_T):
-			self.send_entity_update_to_another_normal_server(1, entity_update, prefix)
+			self.send_entity_update_to_another_normal_server(1, entity_update, prefix, seq)
+			is_overlapped = True
 
 		if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T, self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
-			self.send_entity_update_to_another_normal_server(2, entity_update, prefix)
+			self.send_entity_update_to_another_normal_server(2, entity_update, prefix, seq)
+			is_overlapped = True
 
 		if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
-			self.send_entity_update_to_another_normal_server(3, entity_update, prefix)
+			self.send_entity_update_to_another_normal_server(3, entity_update, prefix, seq)
+			is_overlapped = True
+
+		if is_overlapped:
+			self.output_seqs[entity_update.id] = seq+1
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
 		for cmd in cmds:
