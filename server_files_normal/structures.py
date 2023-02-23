@@ -136,10 +136,13 @@ class Client:
             def _get_attr(self) -> dict:
                 return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
 
-class Server:
+class NormalServer:
     class Output:
-        class StateUpdateNoAck:
+        class StateUpdateNoAck(Serializable):
             def __init__(self, **kwargs):
+                self.player_changes: Tuple[Client.Output.PlayerUpdate] = None
+                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = None
+
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':

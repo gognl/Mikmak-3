@@ -117,7 +117,7 @@ class GameManager(threading.Thread):
 					continue
 
 				if Server(addr[0], addr[1]-self.my_server_index) in NORMAL_SERVERS:
-					state_update = Server.Output.StateUpdateNoAck(ser=data)
+					state_update = NormalServer.Output.StateUpdateNoAck(ser=data)
 					state_update = Client.Output.StateUpdateNoAck(state_update.player_changes, state_update.enemy_changes)
 					self.broadcast_msg(state_update)
 					for player_update in state_update.player_changes:
@@ -197,7 +197,7 @@ class GameManager(threading.Thread):
 			if tick_count % (FPS // OVERLAPPED_UPDATE_FREQUENCY) == 0:
 				for i in self.other_server_indices:
 
-					state_update: Client.Output.StateUpdateNoAck = Server.Output.StateUpdateNoAck(
+					state_update: NormalServer.Output.StateUpdateNoAck = NormalServer.Output.StateUpdateNoAck(
 						player_changes=tuple([self.output_overlapped_players_updates[i][key] for key in self.output_overlapped_players_updates[i]]),
 						enemy_changes=tuple([self.output_overlapped_enemies_updates[i][key] for key in self.output_overlapped_enemies_updates[i]]))
 					self.send_update_to_normal_server(i, state_update)
