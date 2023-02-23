@@ -136,6 +136,23 @@ class Client:
             def _get_attr(self) -> dict:
                 return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
 
+class Server:
+    class Output:
+        class StateUpdateNoAck:
+            def __init__(self, **kwargs):
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    return
+
+                self.player_changes: Tuple[Client.Output.PlayerUpdate] = kwargs.pop('player_changes')
+                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = kwargs.pop('enemy_changes')
+
+            def _get_attr(self) -> dict:
+                return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
+                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o'))}
+
+
 class Rect:
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
         self.x1: int = x1
