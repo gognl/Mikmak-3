@@ -63,9 +63,16 @@ class UI:
             x -= INVENTORY_WIDTH
         text_rect = text_surf.get_rect(bottomright=(x, y))
 
-        pygame.draw.rect(self.display_surface, UI_BG_COLOR, text_rect.inflate(20, 20))
+        star = pygame.image.load('../graphics/items/xp.png').convert_alpha()
+        star_rect = star.get_rect(center=text_rect.center)
+        star_rect.x -= 45
+
+        # bg, text, star, border
+        j = pygame.Rect.union(text_rect.inflate(20, 20), star_rect.inflate(10, 0))
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, j)
         self.display_surface.blit(text_surf, text_rect)
-        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, text_rect.inflate(20, 20), 3)
+        self.display_surface.blit(star, star_rect)
+        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, j, 3)
 
     def selection_box(self, left, top, has_switched):
         bg_rect = pygame.Rect(left, top, ITEM_BOX_SIZE, ITEM_BOX_SIZE)
@@ -205,7 +212,6 @@ class UI:
 
         # Background
         rect = pygame.Rect(x, y, self.display_surface.get_size()[0] - (2 * x), self.display_surface.get_size()[1] - (2 * y))
-        pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
 
         # Show image
         map_image = pygame.image.load('../graphics/minimap/map.png').convert_alpha()
