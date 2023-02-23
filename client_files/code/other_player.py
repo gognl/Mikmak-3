@@ -8,7 +8,7 @@ from client_files.code.support import *
 
 class OtherPlayer(Entity):
 	def __init__(self, pos, groups, entity_id, obstacle_sprites, create_attack, destroy_attack,
-                 create_bullet, create_kettle, create_dropped_item):
+				 create_bullet, create_kettle, create_dropped_item):
 		super().__init__(groups, entity_id)
 
 		self.status = None
@@ -44,13 +44,13 @@ class OtherPlayer(Entity):
 		self.update_queue: deque = deque()
 
 		# Stats
-		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
+		self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
 		self.health = self.stats['health']
 		self.energy = self.stats['energy']
 		self.xp = 0
 		self.speed = self.stats['speed']
-		self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
-		self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
+		self.strength = self.stats['attack']
+		self.resistance = 0
 
 		self.create_dropped_item = create_dropped_item
 
@@ -128,7 +128,8 @@ class OtherPlayer(Entity):
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
-		if self.attacking:
+
+		if self.attacking:  # TODO - change to be based on ticks, not time
 			if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:
 				self.attacking = False
 				self.destroy_attack(self)

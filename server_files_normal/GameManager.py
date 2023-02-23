@@ -1,7 +1,7 @@
 import threading
 from collections import deque
 from queue import Queue, Empty
-
+from typing import Union
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
 from server_files_normal.ClientManager import ClientManager
@@ -12,6 +12,7 @@ from server_files_normal.structures import *
 from server_files_normal.game.settings import *
 from random import randint
 import pygame
+
 
 class GameManager(threading.Thread):
 	def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore):
@@ -174,17 +175,23 @@ class GameManager(threading.Thread):
 
 		pygame.quit()
 
-	def create_bullet(self, player: Player, mouse):
+	def create_bullet(self, source: Union[Player, Enemy], pos, mouse):
 		direction = pygame.math.Vector2(mouse)
-		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
-		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.players, 3, 15, 120, './graphics/weapons/bullet.png', weapon_data['nerf']['damage'])
+		source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
 
-	def create_kettle(self, player: Player, mouse):
+		if not isinstance(source, Enemy):
+			damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
+		else:
+			damage = source.damage
+
+		Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
+				   self.players, 3, 15, 120, './graphics/weapons/bullet.png', damage)
+
+	def create_kettle(self, player: Player, pos, mouse):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
-		Projectile(player, player.current_weapon, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 3, 5, 45, './graphics/weapons/kettle/full.png', weapon_data['kettle']['damage'], 'explode', self.create_explosion, True)
+		Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
+				   self.all_obstacles, 3, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
 
 	def create_explosion(self, pos, damage):
 		pass

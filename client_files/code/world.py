@@ -119,16 +119,24 @@ class World:
             player.current_weapon.kill()
         player.current_weapon = None
 
-    def create_bullet(self, player: Union[Player, OtherPlayer], pos, mouse=None):
-        if isinstance(player, Player):
+    def create_bullet(self, source: Union[Player, OtherPlayer, Enemy], pos, mouse=None):
+        if isinstance(source, Player):
             mouse = pygame.mouse.get_pos()
-            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
-            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (source.rect.center - self.camera + self.screen_center)
+            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple(direction)))
+        elif isinstance(source, Enemy):
+            direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
         else:
             direction = pygame.math.Vector2(mouse)
-        Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                                              self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
-                   '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * player.strength)))
+
+        if not isinstance(source, Enemy):
+            damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
+        else:
+            damage = source.damage
+
+        Projectile(source, pos, direction, (self.visible_sprites, self.obstacle_sprites,
+                                            self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
+                   '../graphics/weapons/bullet.png', damage)
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
         if isinstance(player, Player):
@@ -139,7 +147,7 @@ class World:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
                     self.projectile_sprites), self.obstacle_sprites, 4, 5, 45,
-                   '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
+                   '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)),
                    'explode', self.create_explosion, True)
 
     def create_inventory(self):

@@ -63,13 +63,13 @@ class Player(Entity):
         self.attacks: deque = deque()
 
         # Stats
-        self.stats = {'health': 100000, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.xp = 0
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']
-        self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
+        self.resistance = 0
 
         # Nametag
         self.initialize_nametag()
@@ -132,7 +132,6 @@ class Player(Entity):
         self.minimap_cooldown = 100
         self.minimap_active = False
         self.can_change_minimap = True
-
 
         # Items
         self.item_sprites = None
@@ -414,7 +413,7 @@ class Player(Entity):
             if current_time - self.magnet_start >= self.magnet_skill_cooldown:
                 self.can_magnet = True
 
-        if self.attacking:
+        if self.attacking:  # TODO - make this based on ticks not time
             if current_time - self.attack_time >= self.attack_cooldown:
                 self.attacking = False
                 if self.weapon_index not in self.on_screen:

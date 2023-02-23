@@ -120,6 +120,7 @@ class Enemy(Entity):
 			self.kill()
 		elif self.enemy_name == "yellow_cow":
 			self.create_bullet(self, self.rect.center, pygame.math.Vector2(player.rect.center[0], player.rect.center[1]))
+
 	def actions(self, player):
 		if self.status == 'attack':
 			if self.can_attack:
