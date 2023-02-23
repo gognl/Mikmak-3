@@ -29,6 +29,10 @@ class Weapon(pygame.sprite.Sprite):
 		:return: None
 		"""
 
+		if self.player.status == 'dead':
+			self.kill()
+			return
+
 		self.direction = self.player.status.split('_')[0]
 
 		full_path: str = f'../graphics/weapons/{self.player.weapon}/{self.direction}.png'

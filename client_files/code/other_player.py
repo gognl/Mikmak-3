@@ -84,6 +84,8 @@ class OtherPlayer(Entity):
 		if update.status == 'dead':
 			self.xp = 0
 			self.create_dropped_item("grave_player", self.rect.center)
+			if self.current_weapon is not None:
+				self.current_weapon.kill()
 			self.kill()
 			return 'dead'
 

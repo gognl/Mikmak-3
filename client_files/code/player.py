@@ -511,6 +511,8 @@ class Player(Entity):
         self.create_dropped_item("grave_player", self.rect.center)
 
         self.nametag.kill = True
+        if self.current_weapon is not None:
+            self.current_weapon.kill()
         self.kill()  # TODO - add death screen
 
     def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
