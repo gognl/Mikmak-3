@@ -40,13 +40,12 @@ class GameManager(threading.Thread):
 
 		self.sock_to_other_normals: list[socket.socket] = [socket.socket(socket.AF_INET, socket.SOCK_DGRAM) for _ in range(4)]
 
-		for i in range(4):
-			if i != my_server_index:
-				self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_index].port+i))
-				self.sock_to_other_normals[i].settimeout(0.02)
-
 		self.my_server_index = my_server_index
-		self.other_server_indices = (i for i in range(4) if i != my_server_index)
+		self.other_server_indices = [i for i in range(4) if i != my_server_index]
+
+		for i in self.other_server_indices:
+			self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_index].port+i))
+			self.sock_to_other_normals[i].settimeout(0.02)
 
 		self.read_only_players = pygame.sprite.Group()
 		self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]
@@ -195,11 +194,15 @@ class GameManager(threading.Thread):
 				self.projectiles.update()
 
 			if tick_count % (FPS // OVERLAPPED_UPDATE_FREQUENCY) == 0:
-				for i in self.other_server_indices:
 
+				for i in self.other_server_indices:
 					state_update: NormalServer.Output.StateUpdateNoAck = NormalServer.Output.StateUpdateNoAck(
-						player_changes=tuple([self.output_overlapped_players_updates[i][key] for key in self.output_overlapped_players_updates[i]]),
-						enemy_changes=tuple([self.output_overlapped_enemies_updates[i][key] for key in self.output_overlapped_enemies_updates[i]]))
+						player_changes=tuple(self.output_overlapped_players_updates[i].values()),
+						enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()))
+
+					self.output_overlapped_players_updates[i] = {}
+					self.output_overlapped_enemies_updates[i] = {}
+
 					self.send_update_to_normal_server(i, state_update)
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
