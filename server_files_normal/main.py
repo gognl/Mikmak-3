@@ -74,7 +74,7 @@ def main():
 	login_sock, lb_manager = initialize_connection(login_addr, lb_addr)
 
 	server_sock: socket.socket = socket.socket()
-	server_sock.bind(('0.0.0.0', 34865))
+	server_sock.bind(('0.0.0.0', 34860))
 	server_sock.listen()
 
 	cmd_semaphore: Semaphore = Semaphore(0)
