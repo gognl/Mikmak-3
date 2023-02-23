@@ -25,16 +25,16 @@ class Player(pygame.sprite.Sprite):
 		# Shooting cooldown
 		self.can_shoot = True
 		self.shoot_time = None
-		self.shoot_cooldown = 300  # less than client cooldown, because of the possible latency
+		self.shoot_cooldown = 18  # less than client cooldown, because of the possible latency
 
 		# Switch cooldown
 		self.can_switch_weapon = True
 		self.weapon_switch_time = None
-		self.switch_duration_cooldown = 300  # less than client cooldown, because of the possible latency
+		self.switch_duration_cooldown = 18  # less than client cooldown, because of the possible latency
 
 		# violence
 		self.attacking: bool = False
-		self.attack_cooldown: int = 300  # less than client cooldown, because of the possible latency
+		self.attack_cooldown: int = 18  # less than client cooldown, because of the possible latency
 		self.attack_time: int = 0
 
 		# Projectiles
@@ -53,13 +53,13 @@ class Player(pygame.sprite.Sprite):
 		self.update_queue: deque = deque()
 
 		# Stats
-		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
+		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}
 		self.health = self.stats['health']
 		self.energy = self.stats['energy']
 		self.xp = 0
 		self.speed = self.stats['speed']
-		self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
-		self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
+		self.strength = self.stats['attack']
+		self.resistance = 0
 
 		self.weapons_group = weapons_group
 
@@ -84,7 +84,7 @@ class Player(pygame.sprite.Sprite):
 				else:
 					if self.weapon_index == 1:
 						if self.can_shoot:
-							self.create_bullet(self, attack.direction)
+							self.create_bullet(self, self.current_weapon.rect.center, attack.direction)
 							self.can_shoot = False
 							self.shoot_time = pygame.time.get_ticks()
 					elif self.weapon_index == 2:
@@ -109,18 +109,42 @@ class Player(pygame.sprite.Sprite):
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
 
-		if self.attacking:
-			if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:
+		# TODO - change this to match gabriel's changes after he fixes this to be based on ticks and not on time
+		# Speed skill timers
+		# if not self.can_speed:
+		# 	if current_time - self.speed_start >= self.speed_time and self.is_fast:
+		# 		self.speed = int(self.speed / self.speed_skill_factor)
+		# 		self.is_fast = False
+		# 	if current_time - self.speed_start >= self.speed_skill_cooldown:
+		# 		self.can_speed = True
+		#
+		# # Magnet skill timers
+		# if not self.can_magnet:
+		# 	if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
+		# 		self.is_magnet = False
+		# 		self.remove(self.magnetic_players)
+		# 	if current_time - self.magnet_start >= self.magnet_skill_cooldown:
+		# 		self.can_magnet = True
+
+		if self.attacking:  # TODO - make this based on ticks not time
+			if current_time - self.attack_time >= self.attack_cooldown:
 				self.attacking = False
-				self.destroy_attack()
+				if self.weapon_index not in self.on_screen:
+					self.destroy_attack()
 
 		if not self.can_switch_weapon:
-			if current_time - self.weapon_switch_time >= self.switch_duration_cooldown:
+			if self.weapon_switch_time >= self.switch_duration_cooldown:
 				self.can_switch_weapon = True
+				self.weapon_switch_time = 0
+			else:
+				self.weapon_switch_time += 1
 
 		if not self.can_shoot:
-			if current_time - self.shoot_time >= self.shoot_cooldown:
+			if self.shoot_time >= self.shoot_cooldown:
 				self.can_shoot = True
+				self.shoot_time = 0
+			else:
+				self.shoot_time += 1
 
 	def switch_weapon(self, weapon_id: int) -> None:
 		"""
@@ -154,6 +178,9 @@ class Player(pygame.sprite.Sprite):
 	def update_pos(self, pos):
 		self.rect.topleft = pos
 		self.hitbox = self.rect.inflate(-20, -26)
+
+	def deal_damage(self, damage):
+		self.health -= int(damage - (0.1 * self.resistance))
 
 	def reset_attacks(self):
 		self.attacks: deque = deque()

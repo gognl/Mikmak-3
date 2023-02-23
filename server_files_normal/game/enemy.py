@@ -134,3 +134,6 @@ class Enemy(pygame.sprite.Sprite):
 		player: Player = self.get_closest_player(players)
 		self.get_status(player)
 		self.actions(player)
+
+	def deal_damage(self, damage):
+		self.health -= int(damage - (0.1 * self.resistance))
