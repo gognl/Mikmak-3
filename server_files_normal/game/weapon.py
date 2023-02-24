@@ -1,8 +1,10 @@
 import pygame
 
+from server_files_normal.game.settings import weapon_data
+
 
 class Weapon(pygame.sprite.Sprite):
-	def __init__(self, player, groups, height):
+	def __init__(self, player, groups, height, obstacles):
 		super().__init__(groups)
 		self.player = player
 
@@ -12,6 +14,11 @@ class Weapon(pygame.sprite.Sprite):
 
 		# graphic
 		self.height: int = height
+
+		self.obstacle_sprites = obstacles
+		self.collidable = False
+		self.acted = False
+		self.damage = int(weapon_data[self.player.weapon]['damage'] + (0.1 * player.strength))
 
 		self.update()
 
@@ -26,6 +33,9 @@ class Weapon(pygame.sprite.Sprite):
 		full_path: str = f'./graphics/weapons/{self.player.weapon}/{self.direction}.png'
 		self.image = pygame.image.load(full_path)
 
+		if self.player.weapon_index == 0:  # Only sword has collidable damage
+			self.collidable = True
+
 		# position
 		if self.direction == 'up':
 			self.rect = self.image.get_rect(midbottom=self.player.rect.midtop + pygame.math.Vector2(-10, 3))
@@ -36,3 +46,17 @@ class Weapon(pygame.sprite.Sprite):
 		elif self.direction == 'right':
 			self.rect = self.image.get_rect(midleft=self.player.rect.midright + pygame.math.Vector2(-27, 16))
 
+		if self.collidable:
+			if not self.acted:
+				self.collision()
+
+	def collision(self) -> None:
+		"""
+		Check for collisions
+		:return: None
+		"""
+		for sprite in self.obstacle_sprites:
+			if sprite.hitbox.colliderect(self.rect) and sprite is not self and sprite is not self.player:  # Do not collide with own player
+				if hasattr(sprite, "health"):
+					sprite.deal_damage(self.damage)
+					self.acted = True

@@ -8,6 +8,7 @@ from server_files_normal.ClientManager import ClientManager
 from server_files_normal.game.barrier import Barrier
 from server_files_normal.game.enemy import Enemy
 from server_files_normal.game.player import Player
+from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.settings import *
 from random import randint
@@ -26,6 +27,7 @@ class GameManager(threading.Thread):
 
 		self.players: pygame.sprite.Group = pygame.sprite.Group()
 		self.enemies: pygame.sprite.Group = pygame.sprite.Group()
+		self.alive_entities: pygame.sprite.Group = pygame.sprite.Group()
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
 		self.weapons: pygame.sprite.Group = pygame.sprite.Group()
 
@@ -38,7 +40,7 @@ class GameManager(threading.Thread):
 		# TODO temporary
 		for i in range(20):
 			pos = (randint(2000, 3000), randint(2000, 3000))
-			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles), entity_id=i, obstacle_sprites=self.all_obstacles)
+			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=i, obstacle_sprites=self.all_obstacles)
 
 	def get_obstacle_sprites(self):
 		return self.obstacle_sprites
@@ -67,7 +69,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (1024, 1024)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack)
 
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
@@ -174,6 +176,9 @@ class GameManager(threading.Thread):
 				pygame.event.post(pygame.event.Event(cmd_received_event, {"cmds": cmds}))
 
 		pygame.quit()
+
+	def create_attack(self, player):
+		player.current_weapon = Weapon(player, (player.weapons_group,), 2, self.alive_entities)
 
 	def create_bullet(self, source: Union[Player, Enemy], pos, mouse):
 		direction = pygame.math.Vector2(mouse)
