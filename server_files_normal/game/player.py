@@ -8,7 +8,7 @@ from server_files_normal.structures import *
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -65,6 +65,8 @@ class Player(pygame.sprite.Sprite):
 
 		self.previous_state = {}
 
+		self.create_attack = create_attack
+
 		super().__init__(groups)
 
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
@@ -78,7 +80,7 @@ class Player(pygame.sprite.Sprite):
 			elif attack.attack_type == 1:  # attack
 				if self.weapon_index not in self.on_screen:
 					self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
-					self.create_attack()
+					self.create_attack(self)
 					self.attacking = True
 					self.attack_time = pygame.time.get_ticks()
 				else:
@@ -166,9 +168,6 @@ class Player(pygame.sprite.Sprite):
 			self.create_attack()
 
 		self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
-
-	def create_attack(self):
-		self.current_weapon = Weapon(self, (self.weapons_group,), 2)
 
 	def destroy_attack(self):
 		if self.current_weapon:

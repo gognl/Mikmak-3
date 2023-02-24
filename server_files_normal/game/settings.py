@@ -6,9 +6,9 @@ ROW_TILES: int = 450
 COL_TILES: int = 800
 
 weapon_data = {
-	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},
-	'nerf': {'cooldown': 100, 'damage': 35, 'graphic': '../graphics/weapons/nerf/full.png'},
-	'kettle': {'cooldown': 100, 'damage': 25, 'graphic': '../graphics/weapons/kettle/full.png'}
+    'sword': {'damage': 100, 'graphic': './graphics/weapons/sword/full.png'},
+    'nerf': {'damage': 20, 'graphic': './graphics/weapons/nerf/full.png'},
+    'kettle': {'damage': 40, 'graphic': './graphics/weapons/kettle/full.png'}
 }
 
 enemy_data = {
