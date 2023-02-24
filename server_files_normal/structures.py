@@ -171,3 +171,12 @@ class Point:
     def __init__(self, x: int, y : int):
         self.x: int = x
         self.y: int = y
+
+class Encryption:
+    @staticmethod
+    def encrypt(msg: bytes, key: bytes):
+        return msg
+
+    @staticmethod
+    def decrypt(msg: bytes, key: bytes):
+        return msg
