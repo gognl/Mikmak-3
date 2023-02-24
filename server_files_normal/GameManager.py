@@ -61,7 +61,7 @@ class GameManager(threading.Thread):
 				except socket.timeout:
 					continue
 
-			keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, p).to_bytes(128, 'little')
+			keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
 		DH_threads: list[threading.Thread] = []
 		for i in self.other_server_indices:
