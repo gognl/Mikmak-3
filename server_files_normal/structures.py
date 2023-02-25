@@ -136,6 +136,7 @@ class Client:
                 self.pos: Tuple[int, int] = None
                 self.attacks: Tuple[Client.Input.AttackUpdate] = None
                 self.status: str = None
+                self.item_actions: Tuple[Client.Input.ItemActionUpdate] = None
 
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
@@ -150,7 +151,11 @@ class Client:
                 self.status = changes['status']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Client.Input.AttackUpdate, 'o')), 'status': (str, 'str')}
+                return {'id': (int, 'u_2'),
+                        'pos': (tuple, (int, 'u_8')),
+                        'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
+                        'status': (str, 'str'),
+                        'item_actions': (tuple, (Client.Input.ItemActionUpdate, 'o'))}
 
         class AttackUpdate(Serializable):
             def __init__(self, **kwargs):
@@ -165,3 +170,17 @@ class Client:
 
             def _get_attr(self) -> dict:
                 return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
+
+        class ItemActionUpdate(Serializable):
+            def __init__(self, **kwargs):
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    return
+
+                self.item_name: str = None
+                self.action_type: str = None  # 'drop' or 'use'
+                self.item_id: int = None
+
+            def _get_attr(self) -> dict:
+                return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}

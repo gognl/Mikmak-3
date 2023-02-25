@@ -152,9 +152,14 @@ class Server:
 				self.pos = changes['pos']
 				self.attacks = changes['attacks']
 				self.status = changes['status']
+				self.item_actions = changes['item_actions']
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Server.Input.AttackUpdate, 'o')), 'status': (str, 'str')}
+				return {'id': (int, 'u_2'),
+						'pos': (tuple, (int, 'u_8')),
+						'attacks': (tuple, (Server.Input.AttackUpdate, 'o')),
+						'status': (str, 'str'),
+						'item_actions': (tuple, (Server.Output.ItemActionUpdate, 'o'))}
 
 		class AttackUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -170,6 +175,20 @@ class Server:
 			def _get_attr(self) -> dict:
 				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
 
+		class ItemActionUpdate(Serializable):
+			def __init__(self, **kwargs):
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+
+				self.item_name = kwargs.pop('item_name')
+				self.action_type = kwargs.pop('action_type')  # 'drop' or 'use'
+				self.item_id = kwargs.pop('item_id')
+
+			def _get_attr(self) -> dict:
+				return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}
+
 class EnemyUpdate:
 	def __init__(self, entity_id: int, pos: (int, int)):
 		self.entity_id = entity_id
@@ -180,3 +199,16 @@ class TickUpdate:
 		self.player_update:  Server.Output.PlayerUpdate = player_update
 		self.enemies_update: List[EnemyUpdate] = enemies_update
 		self.seq: int = Server.Output.StateUpdate.seq_count
+
+class InventorySlot:
+	def __init__(self, item_id):
+		self.count = 1
+		self.item_ids: List[int] = [item_id]  # free ids pool
+
+	def add_item(self, item_id):
+		self.count += 1
+		self.item_ids.append(item_id)
+
+	def remove_item(self) -> int:
+		self.count -= 1
+		return self.item_ids.pop()

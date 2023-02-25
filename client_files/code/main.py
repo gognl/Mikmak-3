@@ -128,7 +128,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 	for item_update in update_msg.state_update.item_changes:
 		# add it to the items dict if it's not already there
 		if item_update.id not in world.items:
-			world.items[item_update.id] = Item(item_update.name, (world.visible_sprites, world.item_sprites), (0, 0), world.item_despawn, world.item_pickup, world.item_drop, world.item_use)
+			world.items[item_update.id] = Item(item_update.id, item_update.name, (world.visible_sprites, world.item_sprites), (0, 0), world.item_despawn, world.item_pickup, world.item_drop, world.item_use)
 		# add to its update queue
 		world.items[item_update.id].update_queue.extend(item_update.actions)
 

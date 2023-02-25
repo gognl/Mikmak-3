@@ -6,11 +6,12 @@ from client_files.code.settings import *
 from client_files.code.structures import Server
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, name, groups, pos, item_despawn=None, item_pickup=None, item_drop=None, item_use=None):
+    def __init__(self, item_id, name, groups, pos, item_despawn=None, item_pickup=None, item_drop=None, item_use=None):
         super().__init__(groups)
 
         # Inventory
         self.name = re.sub("\(.*?\)", "", name)
+        self.item_id = item_id
 
         # Sprite
         self.image = pygame.image.load(f'../graphics/items/{self.name}.png').convert_alpha()

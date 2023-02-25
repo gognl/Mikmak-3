@@ -185,21 +185,8 @@ class World:
 
         return nametag
 
-    def create_dropped_item(self, name, pos, fixed_place=False):
-        count = 5
-        while count > 0:
-            random_x = pos[0] // 64
-            random_y = pos[1] // 64
-
-            if not fixed_place:
-                random_x += random.randrange(-1, 2)
-                random_y += random.randrange(-1, 2)
-
-            if int(self.layout['floor'][random_x][random_y]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
-                break
-            else:
-                count -= 1
+    def create_dropped_item(self, name, pos, item_id):
+        self.items[item_id] = Item(item_id, name, (self.visible_sprites, self.item_sprites), pos)
 
     def nametag_update(self, nametag):
         nametag.update(self.camera, self.screen_center)
@@ -368,14 +355,14 @@ class World:
             self.player.xp += 1
             item.kill()
         elif item.name == "grave_player" or item.name == "grave_pet":
-            self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = 1
+            self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = InventorySlot(item.item_id)
             item.kill()
         else:
             if item.name in self.player.inventory_items:
-                self.player.inventory_items[item.name] += 1
+                self.player.inventory_items[item.name].add_item(item.item_id)
                 item.kill()
             else:
-                self.player.inventory_items[item.name] = 1
+                self.player.inventory_items[item.name] = InventorySlot(item.item_id)
                 item.kill()
 
     def item_drop(self, item: Item, player_id: int, pos: (int, int)) -> None:
