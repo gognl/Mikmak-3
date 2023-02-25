@@ -34,6 +34,8 @@ class Item(pygame.sprite.Sprite):
 
         self.despawn_time = ITEM_DESPAWN_TIME
 
+        self.die = False
+
     def update_movement(self, magnetic_players):
         if len(magnetic_players) != 0:
             minvalue = 0

@@ -492,7 +492,7 @@ class Player(Entity):
         self.move(self.speed)
 
         # Pick up items
-        self.item_collision()
+        #  self.item_collision()
 
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
         if self.changes == previous_state:

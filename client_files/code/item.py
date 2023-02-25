@@ -6,7 +6,7 @@ from client_files.code.settings import *
 from client_files.code.structures import Server
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, name, groups, pos, item_despawn, item_pickup, item_drop, item_use):
+    def __init__(self, name, groups, pos, item_despawn=None, item_pickup=None, item_drop=None, item_use=None):
         super().__init__(groups)
 
         # Inventory
@@ -71,7 +71,6 @@ class Item(pygame.sprite.Sprite):
             self.item_use(self, action.player_id, action.pos)
 
     def update(self):
-
         while self.update_queue:
             self.process_server_update(self.update_queue.popleft())
 
