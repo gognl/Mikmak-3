@@ -192,6 +192,8 @@ class Player(pygame.sprite.Sprite):
 	def item_collision(self):
 		item: Item
 		for item in self.item_sprites:
+			if item.die:
+				continue
 			if self.rect.colliderect(item.rect):
 				if item.can_pick_up:
 					if item.name == "xp":

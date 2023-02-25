@@ -49,7 +49,7 @@ class GameManager(threading.Thread):
 			'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
 			'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
 		}
-		for item_id in range(1):
+		for item_id in range(20):
 			while True:
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
