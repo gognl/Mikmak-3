@@ -100,7 +100,7 @@ class Player(pygame.sprite.Sprite):
 			if item_action.action_type == 'use':
 				pass  # TODO add item using
 			elif item_action.action_type == 'drop' and self.inventory_items[item_action.item_name] > 0:
-				self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery))
+				self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
 				self.inventory_items[item_action.item_name] -= 1
 
 		self.update_pos(update.pos)
@@ -222,9 +222,9 @@ class Player(pygame.sprite.Sprite):
 							self.inventory_items[item.name] = 1
 							item.die = True
 
-	def create_dropped_item(self, item_name, pos):
-		pass
-		#  Item(name, (self.visible_sprites, self.item_sprites), pos)
+	def create_dropped_item(self, name, pos, item_id):
+		new_item = Item(name, (self.item_sprites,), pos, item_id)
+		new_item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='drop', pos=pos))
 
 	def reset_attacks(self):
 		self.attacks: deque = deque()

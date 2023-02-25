@@ -92,7 +92,7 @@ class UI:
         self.display_surface.blit(weapon_surf, weapon_rect)
 
         if weapon_index == 2:
-            item_amount = inventory_items['kettle']
+            item_amount = inventory_items['kettle'].count
             if item_amount > 1:
                 font = pygame.font.Font(UI_FONT, INVENTORY_FONT_SIZE)
                 item_text = font.render(f'{item_amount}', False, TEXT_COLOR)

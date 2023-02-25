@@ -57,7 +57,8 @@ class GameManager(threading.Thread):
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
-					Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+					item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+					item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
 					break
 
 	def get_obstacle_sprites(self):

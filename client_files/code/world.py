@@ -186,7 +186,7 @@ class World:
         return nametag
 
     def create_dropped_item(self, name, pos, item_id):
-        self.items[item_id] = Item(item_id, name, (self.visible_sprites, self.item_sprites), pos)
+        self.items[item_id] = Item(item_id, name, (self.visible_sprites, self.item_sprites), pos, self.item_despawn, self.item_pickup, self.item_drop, self.item_use)
 
     def nametag_update(self, nametag):
         nametag.update(self.camera, self.screen_center)
@@ -348,6 +348,7 @@ class World:
 
         # other players' inventories don't matter to this client
         if self.player.entity_id != player_id:
+            del self.items[item.item_id]
             item.kill()
             return
 
@@ -356,17 +357,23 @@ class World:
             item.kill()
         elif item.name == "grave_player" or item.name == "grave_pet":
             self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = InventorySlot(item.item_id)
+            del self.items[item.item_id]
             item.kill()
         else:
             if item.name in self.player.inventory_items:
                 self.player.inventory_items[item.name].add_item(item.item_id)
+                del self.items[item.item_id]
                 item.kill()
             else:
                 self.player.inventory_items[item.name] = InventorySlot(item.item_id)
+                del self.items[item.item_id]
                 item.kill()
 
     def item_drop(self, item: Item, player_id: int, pos: (int, int)) -> None:
         """Remove the item from the player's inventory and drop it on the floor"""
+        if player_id == self.player.entity_id:
+            return  # already dropped
+        self.create_dropped_item(item.name, pos, item.item_id)
 
     def item_use(self, item: Item, player_id: int, pos: (int, int)) -> None:
         """Remove the item from the player's inventory and use it"""

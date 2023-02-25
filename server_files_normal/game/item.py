@@ -12,7 +12,6 @@ class Item(pygame.sprite.Sprite):
 
         self.item_id = item_id
         self.actions: deque = deque()
-        self.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=pos))
 
         # Inventory
         self.str_name = name

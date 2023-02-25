@@ -143,13 +143,6 @@ class Client:
                 if s != b'':
                     return
 
-                self.id = kwargs.pop('id')
-
-                changes = kwargs.pop('changes')
-                self.pos = changes['pos']
-                self.attacks = changes['attacks']
-                self.status = changes['status']
-
             def _get_attr(self) -> dict:
                 return {'id': (int, 'u_2'),
                         'pos': (tuple, (int, 'u_8')),

@@ -497,7 +497,7 @@ class Player(Entity):
         self.move(self.speed)
 
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status,
-                        'item_actions': self.item_actions}
+                        'item_actions': tuple(self.item_actions)}
         if self.changes == previous_state:
             self.changes = None
 
