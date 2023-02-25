@@ -26,7 +26,8 @@ class Client:
 
             def _get_attr(self) -> dict:
                 return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
-                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o'))}
+                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o')),
+                        'item_changes': (tuple, (Client.Output.ItemUpdate, 'o'))}
 
         class PlayerUpdate(Serializable):
 
@@ -99,12 +100,12 @@ class Client:
                 if s != b'':
                     return
 
-                self.player = kwargs.pop('player')  # id of player
-                self.action = kwargs.pop('action')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move'
-                self.pos = kwargs.pop('pos')  # tuple of item position
+                self.player_id = kwargs.pop('player_id', 0)  # id of player
+                self.action_type = kwargs.pop('action_type', 'spawn')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move' or 'use'
+                self.pos = kwargs.pop('pos', (0, 0))  # tuple of item position
 
             def _get_attr(self) -> dict:
-                return {'player': (int, 'u_2'), 'action': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
+                return {'player_id': (int, 'u_2'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
 
     class Input:
         class ClientCMD(Serializable):

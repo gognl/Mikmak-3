@@ -7,6 +7,7 @@ from collections import deque  # Normal queue
 from struct import pack, unpack  # serialize
 from sys import exit
 
+from client_files.code.item import Item
 from client_files.code.structures import *
 from client_files.code.settings import *
 from client_files.code.world import World
@@ -123,6 +124,14 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 											 (world.visible_sprites, world.server_sprites, world.all_obstacles),
 											 entity_id, world.all_obstacles, world.create_dropped_item, world.create_explosion,
 											 world.create_bullet)
+
+	for item_update in update_msg.state_update.item_changes:
+		# add it to the items dict if it's not already there
+		if item_update.id not in world.items:
+			world.items[item_update.id] = Item(item_update.name, (world.visible_sprites, world.item_sprites), (0, 0), world.item_despawn, world.item_pickup, world.item_drop, world.item_use)
+		# add to its update queue
+		world.items[item_update.id].update_queue.extend(item_update.actions)
+
 
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:

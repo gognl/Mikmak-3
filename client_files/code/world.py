@@ -53,9 +53,10 @@ class World:
 
         # enemies dict
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
-
         # other players
         self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
+        # items
+        self.items: Dict[int, Item] = {}
 
         # all players
         self.all_players: List[Union[Player, OtherPlayer]] = []
@@ -109,7 +110,7 @@ class World:
         self.camera.y = self.player.rect.centery
 
         # Spawn items
-        self.spawn_items(1000)
+        #  self.spawn_items(1000)
 
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
         player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 3)
@@ -349,9 +350,20 @@ class World:
                 name = item_names[int(random.randint(0, len(item_names) - 1))]
 
                 if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                    Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
+                    Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32), self.item_despawn, self.item_pickup, self.item_drop, self.item_use)
                     break
 
+    def item_despawn(self, item: Item):
+        """Remove the item from the game"""
+
+    def item_pickup(self, item: Item, player_id: int) -> None:
+        """Add the item to the player's inventory and remove it from the floor"""
+
+    def item_drop(self, item: Item, player_id: int, pos: (int, int)) -> None:
+        """Remove the item from the player's inventory and drop it on the floor"""
+
+    def item_use(self, item: Item, player_id: int, pos: (int, int)) -> None:
+        """Remove the item from the player's inventory and use it"""
 
 class GroupYSort(pygame.sprite.Group):
     def __init__(self) -> None:

@@ -92,6 +92,7 @@ class GameManager(threading.Thread):
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
 		enemies_data: list = []
+		items_data: List = []
 
 		for player in self.players.sprites():
 			initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=0, direction=(0, 0))
@@ -102,7 +103,11 @@ class GameManager(threading.Thread):
 			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
 			enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
-		state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data), tuple(enemies_data), tuple())
+		for item in self.items.sprites():
+			item_actions = (Client.Output.ItemActionUpdate(pos=tuple(item.rect.center)),)
+			items_data.append(Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item_actions))
+
+		state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data), tuple(enemies_data), tuple(items_data))
 		client_manager.send_msg(state_update)
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):

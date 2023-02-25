@@ -34,7 +34,8 @@ class Server:
 
 			def _get_attr(self) -> dict:
 				return {'player_changes': (tuple, (Server.Input.PlayerUpdate, 'o')),
-						'enemy_changes': (tuple, (Server.Input.EnemyUpdate, 'o'))}
+						'enemy_changes': (tuple, (Server.Input.EnemyUpdate, 'o')),
+						'item_changes': (tuple, (Server.Input.ItemUpdate, 'o'))}
 
 		class PlayerUpdate(Serializable):
 			"""
@@ -108,12 +109,12 @@ class Server:
 				if s != b'':
 					return
 
-				self.player = kwargs.pop('player')  # id of player
-				self.action = kwargs.pop('action')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move'
+				self.player_id = kwargs.pop('player_id')  # id of player
+				self.action_type = kwargs.pop('action_type')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move' or 'use'
 				self.pos = kwargs.pop('pos')  # tuple of item position
 
 			def _get_attr(self) -> dict:
-				return {'player': (int, 'u_2'), 'action': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
+				return {'player_id': (int, 'u_2'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
 
 	class Output:
 		class StateUpdate(Serializable):
