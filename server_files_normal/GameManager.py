@@ -49,28 +49,28 @@ class GameManager(threading.Thread):
 			self.sock_to_other_normals[i].settimeout(0.02)
 
 		self.DH_keys: list[bytes] = [bytes(0) for _ in range(4)]
-		a = random.randrange(DH_p)
-
-		def DH_with_normal(server_index: int, keys_list: list[bytes]):
-			x = pow(DH_g, a, DH_p)
-			self.sock_to_other_normals[server_index].sendto(x.to_bytes(128, 'little'), (NORMAL_SERVERS[server_index]+my_server_index).addr())
-			y, addr = 0, ('0.0.0.0', 0)
-			while not Server(addr[0], addr[1]-my_server_index) == NORMAL_SERVERS[server_index]:
-				try:
-					y, addr = self.sock_to_other_normals[server_index].recvfrom(1024)
-				except socket.timeout:
-					continue
-
-			keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
-
-		DH_threads: list[threading.Thread] = []
-		for i in self.other_server_indices:
-			DH_threads.append(threading.Thread(target=DH_with_normal, args=(i, self.DH_keys)))
-
-		for thread in DH_threads:
-			thread.start()
-		for thread in DH_threads:
-			thread.join()
+		# a = random.randrange(DH_p)
+		#
+		# def DH_with_normal(server_index: int, keys_list: list[bytes]):
+		# 	x = pow(DH_g, a, DH_p)
+		# 	self.sock_to_other_normals[server_index].sendto(x.to_bytes(128, 'little'), (NORMAL_SERVERS[server_index]+my_server_index).addr())
+		# 	y, addr = 0, ('0.0.0.0', 0)
+		# 	while not Server(addr[0], addr[1]-my_server_index) == NORMAL_SERVERS[server_index]:
+		# 		try:
+		# 			y, addr = self.sock_to_other_normals[server_index].recvfrom(1024)
+		# 		except socket.timeout:
+		# 			continue
+		#
+		# 	keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+		#
+		# DH_threads: list[threading.Thread] = []
+		# for i in self.other_server_indices:
+		# 	DH_threads.append(threading.Thread(target=DH_with_normal, args=(i, self.DH_keys)))
+		#
+		# for thread in DH_threads:
+		# 	thread.start()
+		# for thread in DH_threads:
+		# 	thread.join()
 
 		self.read_only_players = pygame.sprite.Group()
 		self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]
@@ -143,8 +143,9 @@ class GameManager(threading.Thread):
 					data = Encryption.decrypt(data, self.DH_keys[i])
 
 					state_update = NormalServer.Output.StateUpdateNoAck(ser=data)
-					state_update = Client.Output.StateUpdateNoAck(state_update.player_changes, state_update.enemy_changes)
-					self.broadcast_msg(state_update)
+					self.players_updates.extend(state_update.player_changes)
+					self.enemy_changes.extend(state_update.enemy_changes)
+
 					for player_update in state_update.player_changes:
 						self.handle_read_only_player_update(player_update)
 
