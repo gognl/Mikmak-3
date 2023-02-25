@@ -359,6 +359,25 @@ class World:
     def item_pickup(self, item: Item, player_id: int) -> None:
         """Add the item to the player's inventory and remove it from the floor"""
 
+        # other players' inventories don't matter to this client
+        if self.player.entity_id != player_id:
+            item.kill()
+            return
+
+        if item.name == "xp":
+            self.player.xp += 1
+            item.kill()
+        elif item.name == "grave_player" or item.name == "grave_pet":
+            self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = 1
+            item.kill()
+        else:
+            if item.name in self.player.inventory_items:
+                self.player.inventory_items[item.name] += 1
+                item.kill()
+            else:
+                self.player.inventory_items[item.name] = 1
+                item.kill()
+
     def item_drop(self, item: Item, player_id: int, pos: (int, int)) -> None:
         """Remove the item from the player's inventory and drop it on the floor"""
 

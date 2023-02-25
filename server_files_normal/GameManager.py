@@ -49,7 +49,7 @@ class GameManager(threading.Thread):
 			'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
 			'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
 		}
-		for item_id in range(20):
+		for item_id in range(1):
 			while True:
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
@@ -87,7 +87,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (1024, 1024)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items)
 
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
@@ -168,12 +168,15 @@ class GameManager(threading.Thread):
 						player.kill()
 
 				item_changes = []
+				item: Item
 				for item in self.items.sprites():
 					if not item.actions:
 						continue  # don't send if no new actions
 					item_update = Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item.actions)
 					item_changes.append(item_update)
 					item.reset_actions()
+					if item.die:
+						item.kill()
 
 				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_changes), tuple(enemy_changes), tuple(item_changes))
 				self.broadcast_msg(state_update)

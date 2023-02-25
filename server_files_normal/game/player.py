@@ -5,10 +5,11 @@ from server_files_normal import ClientManager
 from server_files_normal.game.settings import *
 from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
+from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -38,6 +39,7 @@ class Player(pygame.sprite.Sprite):
 		self.attack_time: int = 0
 
 		# Projectiles
+		self.create_attack = create_attack
 		self.create_bullet = create_bullet
 		self.create_kettle = create_kettle
 
@@ -65,7 +67,8 @@ class Player(pygame.sprite.Sprite):
 
 		self.previous_state = {}
 
-		self.create_attack = create_attack
+		self.item_sprites = item_sprites
+		self.inventory_items = {}
 
 		super().__init__(groups)
 
@@ -96,10 +99,9 @@ class Player(pygame.sprite.Sprite):
 		self.update_pos(update.pos)
 
 	def update(self):
+
 		if self.status == 'dead':
 			return
-
-		self.cooldowns()
 
 		# Death
 		if self.health <= 0:
@@ -107,6 +109,12 @@ class Player(pygame.sprite.Sprite):
 			if self.current_weapon is not None:
 				self.current_weapon.kill()
 			self.status = 'dead'
+			return
+
+		self.cooldowns()
+
+		# Pick up items
+		self.item_collision()
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
@@ -180,6 +188,30 @@ class Player(pygame.sprite.Sprite):
 
 	def deal_damage(self, damage):
 		self.health -= int(damage - (0.1 * self.resistance))
+
+	def item_collision(self):
+		item: Item
+		for item in self.item_sprites:
+			if self.rect.colliderect(item.rect):
+				if item.can_pick_up:
+					if item.name == "xp":
+						item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+						self.xp += 1
+						item.die = True
+					elif item.name == "grave_player" or item.name == "grave_pet":
+						if len(self.inventory_items) < INVENTORY_ITEMS:
+							item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+							self.inventory_items[item.name + f'({len(self.inventory_items)})'] = 1
+							item.die = True
+					else:
+						if item.name in self.inventory_items:
+							item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+							self.inventory_items[item.name] += 1
+							item.die = True
+						elif len(self.inventory_items) < INVENTORY_ITEMS:
+							item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+							self.inventory_items[item.name] = 1
+							item.die = True
 
 	def reset_attacks(self):
 		self.attacks: deque = deque()

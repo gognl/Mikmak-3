@@ -25,4 +25,10 @@ ITEM_PICK_UP_COOLDOWN = 60
 ITEM_DESPAWN_TIME = 36000
 item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
               'spawn_red', 'spawn_yellow', 'spawn_pet', 'xp']  # TODO - keep only items that need to be naturally spawned
+
+# Inventory
+INVENTORY_SIZE = (3, 5)
+INVENTORY_ITEMS = INVENTORY_SIZE[0] * INVENTORY_SIZE[1]
+
 SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36, 66, 67, 68, 69, 70]
+
