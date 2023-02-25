@@ -1,7 +1,9 @@
 import threading
 from collections import deque
 from queue import Queue, Empty
-from typing import Union
+from typing import Union, Dict
+
+from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
 from server_files_normal.ClientManager import ClientManager
@@ -30,8 +32,7 @@ class GameManager(threading.Thread):
 		self.alive_entities: pygame.sprite.Group = pygame.sprite.Group()
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
 		self.weapons: pygame.sprite.Group = pygame.sprite.Group()
-
-		self.players_updates: List[Client.Output.PlayerUpdate] = []
+		self.items: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
@@ -41,6 +42,23 @@ class GameManager(threading.Thread):
 		for i in range(20):
 			pos = (randint(2000, 3000), randint(2000, 3000))
 			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=i, obstacle_sprites=self.all_obstacles)
+
+		# TODO temporary, item spawning
+		self.layout: Dict[str, List[List[str]]] = {
+			'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
+			'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
+			'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
+		}
+		for item_id in range(20):
+			while True:
+				random_x = randint(20, 30)
+				random_y = randint(20, 30)
+				name = item_names[int(randint(0, len(item_names) - 1))]
+
+				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
+						self.layout['objects'][random_y][random_x]) == -1:
+					Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+					break
 
 	def get_obstacle_sprites(self):
 		return self.obstacle_sprites
@@ -84,7 +102,7 @@ class GameManager(threading.Thread):
 			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
 			enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
-		state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data), tuple(enemies_data))
+		state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data), tuple(enemies_data), tuple())
 		client_manager.send_msg(state_update)
 
 	def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
@@ -98,12 +116,6 @@ class GameManager(threading.Thread):
 
 			# Update the player
 			player.process_client_updates(player_update)
-
-			# TODO move this to the main loop. check if changes were made since last msg
-			#changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
-			#player.reset_attacks()
-			#player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
-			#self.players_updates.append(player_update)
 
 			client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
@@ -136,6 +148,7 @@ class GameManager(threading.Thread):
 				self.players.update()
 				self.weapons.update()
 				self.projectiles.update()
+				self.items.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				player_changes = []
@@ -149,7 +162,15 @@ class GameManager(threading.Thread):
 					if player.status == 'dead':
 						player.kill()
 
-				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_changes), tuple(enemy_changes))
+				item_changes = []
+				for item in self.items.sprites():
+					if not item.actions:
+						continue  # don't send if no new actions
+					item_update = Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item.actions)
+					item_changes.append(item_update)
+					item.reset_actions()
+
+				state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_changes), tuple(enemy_changes), tuple(item_changes))
 				self.broadcast_msg(state_update)
 
 				enemy_changes = []

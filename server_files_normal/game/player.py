@@ -165,7 +165,7 @@ class Player(pygame.sprite.Sprite):
 		self.attacking = False
 
 		if self.weapon_index in self.on_screen:
-			self.create_attack()
+			self.create_attack(self)
 
 		self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
 

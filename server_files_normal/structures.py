@@ -18,10 +18,11 @@ class Client:
         class StateUpdateNoAck(Serializable):
             """ A class that describes the message to the client, which contains the current state of relevant game changes"""
 
-            def __init__(self, player_changes: Tuple['Client.Output.PlayerUpdate'], enemy_changes: Tuple['Client.Output.EnemyUpdate']):
+            def __init__(self, player_changes: Tuple['Client.Output.PlayerUpdate'], enemy_changes: Tuple['Client.Output.EnemyUpdate'], item_changes: Tuple['Client.Output.ItemUpdate']):
                 super().__init__(ser=b'')
                 self.player_changes: Tuple[Client.Output.PlayerUpdate] = player_changes
                 self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = enemy_changes
+                self.item_changes: Tuple[Client.Output.ItemUpdate] = item_changes
 
             def _get_attr(self) -> dict:
                 return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
@@ -75,14 +76,35 @@ class Client:
             def _get_attr(self) -> dict:
                 return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8'))}
 
-        class ServerSwitch(Serializable):
-            """A class of a message to the client which included data about switching to a different server (and region)"""
+        class ItemUpdate(Serializable):
 
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
                     return
+
+                self.id = kwargs.pop('id')
+                self.name = kwargs.pop('name')
+                self.actions = kwargs.pop('actions')
+
+            def _get_attr(self) -> dict:
+                return {'id': (int, 'u_3'), 'name': (str, 'str'), 'actions': (tuple, (Client.Output.ItemActionUpdate, 'o'))}
+
+        class ItemActionUpdate(Serializable):
+
+            def __init__(self, **kwargs):
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    return
+
+                self.player = kwargs.pop('player')  # id of player
+                self.action = kwargs.pop('action')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move'
+                self.pos = kwargs.pop('pos')  # tuple of item position
+
+            def _get_attr(self) -> dict:
+                return {'player': (int, 'u_2'), 'action': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
 
     class Input:
         class ClientCMD(Serializable):

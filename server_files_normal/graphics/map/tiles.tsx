@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.9" tiledversion="1.9.2" name="tiles" tilewidth="64" tileheight="64" tilecount="39" columns="0">
+<tileset version="1.9" tiledversion="1.9.2" name="tiles" tilewidth="64" tileheight="64" tilecount="44" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="8">
   <image width="64" height="64" source="../tiles/8.png"/>
  </tile>
- <tile id="9">
+ <tile id="9" probability="0.4">
   <image width="64" height="64" source="../tiles/9.png"/>
  </tile>
- <tile id="10">
+ <tile id="10" probability="0.5">
   <image width="64" height="64" source="../tiles/10.png"/>
  </tile>
  <tile id="11">
@@ -37,16 +37,16 @@
  <tile id="24">
   <image width="64" height="64" source="../tiles/24.png"/>
  </tile>
- <tile id="14">
+ <tile id="14" probability="0.03">
   <image width="64" height="64" source="../objects/14.png"/>
  </tile>
  <tile id="36">
   <image width="64" height="64" source="../tiles/36.png"/>
  </tile>
- <tile id="15">
+ <tile id="15" probability="0.02">
   <image width="64" height="64" source="../Objects/15.png"/>
  </tile>
- <tile id="20">
+ <tile id="20" probability="0.01">
   <image width="64" height="64" source="../Objects/20.png"/>
  </tile>
  <tile id="31">
@@ -67,7 +67,7 @@
  <tile id="34">
   <image width="64" height="64" source="../objects/34.png"/>
  </tile>
- <tile id="35">
+ <tile id="35" probability="0.01">
   <image width="64" height="64" source="../objects/35.png"/>
  </tile>
  <tile id="50">
@@ -115,7 +115,22 @@
  <tile id="64">
   <image width="64" height="64" source="../objects/64.png"/>
  </tile>
- <tile id="65">
+ <tile id="65" probability="0.4">
   <image width="64" height="64" source="../objects/65.png"/>
+ </tile>
+ <tile id="66" probability="0.4">
+  <image width="64" height="64" source="../tiles/66.png"/>
+ </tile>
+ <tile id="67" probability="0.1">
+  <image width="64" height="64" source="../tiles/67.png"/>
+ </tile>
+ <tile id="68">
+  <image width="64" height="64" source="../tiles/68.png"/>
+ </tile>
+ <tile id="69" probability="0.05">
+  <image width="64" height="64" source="../tiles/69.png"/>
+ </tile>
+ <tile id="70">
+  <image width="64" height="64" source="../tiles/70.png"/>
  </tile>
 </tileset>

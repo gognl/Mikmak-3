@@ -30,6 +30,7 @@ class Server:
 					return
 				self.player_changes: Tuple[Server.Input.PlayerUpdate] = None
 				self.enemy_changes: Tuple[Server.Input.EnemyUpdate] = None
+				self.item_changes: Tuple[Server.Input.ItemUpdate] = None
 
 			def _get_attr(self) -> dict:
 				return {'player_changes': (tuple, (Server.Input.PlayerUpdate, 'o')),
@@ -82,6 +83,37 @@ class Server:
 
 			def _get_attr(self) -> dict:
 				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8'))}
+
+		class ItemUpdate(Serializable):
+
+			def __init__(self, **kwargs):
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+
+				self.id = kwargs.pop('id')
+				self.name = kwargs.pop('name')
+				self.actions = kwargs.pop('actions')
+
+			def _get_attr(self) -> dict:
+				return {'id': (int, 'u_3'), 'name': (str, 'str'),
+						'actions': (tuple, (Server.Input.ItemActionUpdate, 'o'))}
+
+		class ItemActionUpdate(Serializable):
+
+			def __init__(self, **kwargs):
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+
+				self.player = kwargs.pop('player')  # id of player
+				self.action = kwargs.pop('action')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move'
+				self.pos = kwargs.pop('pos')  # tuple of item position
+
+			def _get_attr(self) -> dict:
+				return {'player': (int, 'u_2'), 'action': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
 
 	class Output:
 		class StateUpdate(Serializable):
