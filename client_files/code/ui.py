@@ -140,9 +140,9 @@ class UI:
                 number = y * INVENTORY_SIZE[0] + x
                 if len(inventory_items) > number:
                     item_name = list(inventory_items)[number]
-                    item_amount = inventory_items[item_name]
+                    item_amount = inventory_items[item_name].count
 
-                    item = Item(item_name, (), rect.center)
+                    item = Item(-1, item_name, (), rect.center)
                     self.display_surface.blit(item.image, item.rect)
 
                     if item_amount > 1:
