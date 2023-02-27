@@ -12,23 +12,24 @@ DH_p = 1295808829284325291015378421472697342694613924294152680451513414095719153
 DH_g = 119475692254216920066132241696136552167987712858139173729861721592048057547464063002529177743099212305134089294733874076960807769722388944847002937915383340517574084979135586810183464775095834581566522721036079400681459953414957269562943460288437613755140572753576980521074966372619062067471488360595813421462
 
 class Server:
-    def __init__(self, ip, port):
-        self.ip: str = ip
-        self.port: int = port
+	def __init__(self, ip, port):
+		self.ip: str = ip
+		self.port: int = port
 
-    def addr(self):
-        return self.ip, self.port
+	def addr(self):
+		return self.ip, self.port
 
-    def __eq__(self, other):
-        assert isinstance(other, Server)
-        return self.ip == other.ip and self.port == other.port
+	def __eq__(self, other):
+		assert isinstance(other, Server)
+		return self.ip == other.ip and self.port == other.port
 
-    def __add__(self, other):
-        assert isinstance(other, int)
-        return Server(self.ip, self.port+other)
+	def __add__(self, other):
+		assert isinstance(other, int)
+		return Server(self.ip, self.port + other)
 
 # TODO: get this list in the starting of the server
 NORMAL_SERVERS = [Server('192.168.174.189', 14760), Server('192.168.172.117', 14760), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
+CENTRAL_SERVER = Server('192.168.171.117', 12304)
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},

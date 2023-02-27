@@ -47,7 +47,7 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 
 
 def accept_new_clients(server_sock, client_managers, game_manager: GameManager, cmd_semaphore: Semaphore):
-	client_id: int = 25
+	client_id: int = 26
 	while True:
 		client_sock, client_addr = server_sock.accept()
 
@@ -79,7 +79,7 @@ def main():
 
 	cmd_semaphore: Semaphore = Semaphore(0)
 	client_managers: deque[ClientManager] = deque([])
-	game_manager = GameManager(client_managers, cmd_semaphore, 0)
+	game_manager = GameManager(client_managers, cmd_semaphore, 1)
 	game_manager.start()
 
 	accept_new_clients(server_sock, client_managers, game_manager, cmd_semaphore)
