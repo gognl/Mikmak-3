@@ -48,8 +48,7 @@ class GameManager(threading.Thread):
 			self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_index].port+i))
 			self.sock_to_other_normals[i].settimeout(0.02)
 
-		self.sock_to_login.connect(('0.0.0.0', CENTRAL_SERVER.port))
-		self.sock_to_login.settimeout(0.02)
+		self.sock_to_login.connect(CENTRAL_SERVER.addr())
 
 		self.DH_keys: list[bytes] = [bytes(0) for _ in range(4)]
 		self.DH_login_key:bytes = bytes(0)
@@ -66,23 +65,19 @@ class GameManager(threading.Thread):
 
 		 	keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
-		def DH_with_login(key: bytes):
+		def DH_with_login():
 			x = pow(DH_g, a, DH_p)
-			self.sock_to_login.send(x.to_bytes(128, 'little'), CENTRAL_SERVER.addr())
+			self.sock_to_login.send(x.to_bytes(128, 'little'))
 			y, addr = 0, ('0.0.0.0', 0)
-			while not Server(addr[0], addr[1] - my_server_index) == CENTRAL_SERVER:
-				try:
-					y, addr = self.sock_to_login.recv(1024)
-				except socket.timeout:
-					continue
-			key = pow(int.from_bytes(y, 'little', a, DH_p)).to_bytes(128, 'little')
+			y = self.sock_to_login.recv(1024)
+			self.DH_login_key = pow(int.from_bytes(y, 'little', a, DH_p)).to_bytes(128, 'little')
 
 
 		DH_threads: list[threading.Thread] = []
 		for i in self.other_server_indices:
 			DH_threads.append(threading.Thread(target=DH_with_normal, args=(i, self.DH_keys)))
 
-		DH_threads.append(threading.Thread(target=DH_with_login, args=(self.DH_login_key)))
+		DH_threads.append(threading.Thread(target=DH_with_login))
 
 		# for thread in DH_threads:
 		# 	thread.start()

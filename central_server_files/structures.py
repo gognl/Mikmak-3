@@ -1,4 +1,6 @@
-ID = int
+from central_server_files.serializable import Serializable
+
+ID = bytes
 
 
 class Point:
@@ -29,20 +31,40 @@ class PlayerCentral:
 		self.pos: Point = pos
 		self.id: ID = client_id
 
-class MsgToClient:
-	def __init__(self, dest_id: ID, msg: bytes):
-		self.dest_id: ID = dest_id
-		self.msg = msg
-
 class Server:
 	def __init__(self, ip, port):
 		self.ip: str = ip
 		self.port: int = port
-		self.key: bytes = bytes(0)
 
 	def addr(self):
 		return self.ip, self.port
 
+	def __eq__(self, other):
+		assert isinstance(other, Server)
+		return self.ip == other.ip and self.port == other.port
+
+class ServerSer(Serializable, Server):
+	def __init__(self, ser: bytes, **kwargs):
+		Serializable.__init__(self, ser)
+		ser = kwargs.get("ser", b'')
+		if ser != b'':
+			return
+
+		Server.__init__(self, kwargs['ip'], kwargs['port'])
+class LB_to_login_msgs:
+	def __init__(self, client_id: ID, server: Server):
+		self.client_id: ID = client_id
+		self.server = server
+
+class LoginResponseToClient(Serializable):
+	def __init__(self, **kwargs):
+		ser = kwargs.get('ser', b'')
+		super().__init__(ser)
+		if ser != b'':
+			return
+
+		self.encrypted_client_id: bytes = kwargs['encrypted_id']
+		self.server: ServerSer = kwargs['server']
 class Rect:
 	def __init__(self, x1: int, y1: int, x2: int, y2: int):
 		self.x1: int = x1
