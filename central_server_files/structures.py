@@ -44,11 +44,13 @@ class Server:
 		return self.ip == other.ip and self.port == other.port
 
 class ServerSer(Serializable, Server):
-	def __init__(self, ser: bytes, **kwargs):
-		Serializable.__init__(self, ser)
+	def __init__(self, **kwargs):
 		ser = kwargs.get("ser", b'')
+		Serializable.__init__(self, ser)
 		if ser != b'':
 			return
+		Server.__init__(self, kwargs['ip'], kwargs['port'])
+
 
 		Server.__init__(self, kwargs['ip'], kwargs['port'])
 class LB_to_login_msgs:
