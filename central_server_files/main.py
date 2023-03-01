@@ -11,21 +11,21 @@ CONN_NORMALS_PORT = CENTRAL_SERVER.port
 def main():
 	new_players_q: deque[PlayerCentral] = deque()
 	LB_to_login_q: deque[LB_to_login_msgs] = deque()
-	sock_to_normals: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	login_sock_to_normals: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-	sock_to_normals.bind(('0.0.0.0', CONN_NORMALS_PORT))
-	sock_to_normals.listen()
+	login_sock_to_normals.bind(('0.0.0.0', CONN_NORMALS_PORT))
+	login_sock_to_normals.listen()
 
 	threads: list[threading.Thread] = []
 
-	Initialized_connection_login_Thread = threading.Thread(target=login.initialize_conn_with_normal, args=(sock_to_normals,))
+	Initialized_connection_login_Thread = threading.Thread(target=login.initialize_conn_with_normal, args=(login_sock_to_normals,))
 	Initialized_connection_login_Thread.start()
 	Initialized_connection_login_Thread.join()
 
 	LB_Thread = threading.Thread(target=LB.LB_main, args=(new_players_q, LB_to_login_q))
 	threads.append(LB_Thread)
 
-	login_Thread = threading.Thread(target=login.login_main, args=(new_players_q, LB_to_login_q))
+	login_Thread = threading.Thread(target=login.login_main, args=(login_sock_to_normals, new_players_q, LB_to_login_q))
 	threads.append(login_Thread)
 
 	for thread in threads:

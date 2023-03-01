@@ -2,7 +2,6 @@ from central_server_files.serializable import Serializable
 
 ID = bytes
 
-
 class Point:
 	def __init__(self, x: int, y: int):
 		self.x: int = x
@@ -24,7 +23,6 @@ class Point:
 	def dist2(self, other):
 		assert isinstance(other, Point)
 		return (self.x - other.x) ** 2 + (self.y - other.y) ** 2
-
 
 class PlayerCentral:
 	def __init__(self, pos: Point, client_id: ID):
@@ -51,6 +49,7 @@ class ServerSer(Serializable, Server):
 			return
 
 		Server.__init__(self, kwargs['ip'], kwargs['port'])
+
 class LB_to_login_msgs:
 	def __init__(self, client_id: ID, server: Server):
 		self.client_id: ID = client_id
@@ -65,6 +64,26 @@ class LoginResponseToClient(Serializable):
 
 		self.encrypted_client_id: bytes = kwargs['encrypted_id']
 		self.server: ServerSer = kwargs['server']
+
+class InfoData(Serializable):
+	def __init__(self, **kwargs):
+		ser = kwargs.get('ser', b'')
+		super().__init__(ser)
+		if ser != b'':
+			return
+
+		self.info: tuple = kwargs['info']
+
+class InfoMsgToNormal(Serializable):
+	def __init__(self, **kwargs):
+		ser = kwargs.get('ser', b'')
+		super().__init__(ser)
+		if ser != b'':
+			return
+
+		self.encrypted_client_id: bytes = kwargs['encrypted_id']
+		self.encrypted_info_list: bytes = kwargs['info']
+
 class Rect:
 	def __init__(self, x1: int, y1: int, x2: int, y2: int):
 		self.x1: int = x1

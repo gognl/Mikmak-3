@@ -31,6 +31,14 @@ def load_info(db: SQLDataBase, username: str) -> list:
 
 	return db.exec(statement).fetchall()
 
+def load_info(db: SQLDataBase, ID: int) -> list:
+	"""Return a list with all the info of the given id. Return format: [(val0, val1, val2,...,valn)]."""
+	statement = (
+		select(db.users_table).where(db.users_table.c.id == ID)
+	)
+
+	return db.exec(statement).fetchall()
+
 def delete_user_info(db: SQLDataBase, username: str) -> None:
 	"""Delete user info of the give id."""
 	statement = (
