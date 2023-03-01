@@ -1,9 +1,12 @@
+from cryptography.fernet import Fernet
+from Constant import SALT
+import hashlib
 def encrypt(msg: bytes, key: bytes) -> bytes:
-    pass
+    return Fernet(key).encrypt(msg)
 
 def decrypt(msg: bytes, key: bytes) -> bytes:
-    pass
+    return Fernet(key).decrypt(msg)
 
 def hash_and_salt(password: str) -> str:
-    return password
-
+    hasher = hashlib.sha256((SALT+password).encode())
+    return hasher.hexdigest()
