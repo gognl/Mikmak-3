@@ -53,9 +53,10 @@ class World:
 
         # enemies dict
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
-
         # other players
         self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
+        # items
+        self.items: Dict[int, Item] = {}
 
         # all players
         self.all_players: List[Union[Player, OtherPlayer]] = []
@@ -108,8 +109,6 @@ class World:
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
-        # Spawn items
-        self.spawn_items(1000)
 
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
         player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 3)
@@ -184,21 +183,8 @@ class World:
 
         return nametag
 
-    def create_dropped_item(self, name, pos, fixed_place=False):
-        count = 5
-        while count > 0:
-            random_x = pos[0] // 64
-            random_y = pos[1] // 64
-
-            if not fixed_place:
-                random_x += random.randrange(-1, 2)
-                random_y += random.randrange(-1, 2)
-
-            if int(self.layout['floor'][random_x][random_y]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
-                break
-            else:
-                count -= 1
+    def create_dropped_item(self, name, pos, item_id):
+        self.items[item_id] = Item(item_id, name, (self.visible_sprites, self.item_sprites), pos, self.item_despawn, self.item_pickup, self.item_drop, self.item_use)
 
     def nametag_update(self, nametag):
         nametag.update(self.camera, self.screen_center)
@@ -341,17 +327,43 @@ class World:
                           self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
                     break
 
-    def spawn_items(self, amount: int) -> None:
-        for item in range(amount):
-            while True:
-                random_x = random.randint(20, 30)
-                random_y = random.randint(20, 30)
-                name = item_names[int(random.randint(0, len(item_names) - 1))]
+    def item_despawn(self, item: Item):
+        """Remove the item from the game"""
 
-                if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                    Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
-                    break
+    def item_pickup(self, item: Item, player_id: int) -> None:
+        """Add the item to the player's inventory and remove it from the floor"""
 
+        # other players' inventories don't matter to this client
+        if self.player.entity_id != player_id:
+            del self.items[item.item_id]
+            item.kill()
+            return
+
+        if item.name == "xp":
+            self.player.xp += 1
+            item.kill()
+        elif item.name == "grave_player" or item.name == "grave_pet":
+            self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = InventorySlot(item.item_id)
+            del self.items[item.item_id]
+            item.kill()
+        else:
+            if item.name in self.player.inventory_items:
+                self.player.inventory_items[item.name].add_item(item.item_id)
+                del self.items[item.item_id]
+                item.kill()
+            else:
+                self.player.inventory_items[item.name] = InventorySlot(item.item_id)
+                del self.items[item.item_id]
+                item.kill()
+
+    def item_drop(self, item: Item, player_id: int, pos: (int, int)) -> None:
+        """Remove the item from the player's inventory and drop it on the floor"""
+        if player_id == self.player.entity_id:
+            return  # already dropped
+        self.create_dropped_item(item.name, pos, item.item_id)
+
+    def item_use(self, item: Item, player_id: int, pos: (int, int)) -> None:
+        """Remove the item from the player's inventory and use it"""
 
 class GroupYSort(pygame.sprite.Group):
     def __init__(self) -> None:

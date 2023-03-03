@@ -92,8 +92,8 @@ class Projectile(pygame.sprite.Sprite):
 					if self.action == 'explode':
 						self.explode()
 					else:
-						if hasattr(sprite, "health"):
-							sprite.deal_damage(self.damage)
+						#  if hasattr(sprite, "health"):
+						#  	sprite.deal_damage(self.damage)
 						self.kill()
 
 	def explode(self) -> None:

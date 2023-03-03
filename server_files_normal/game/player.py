@@ -5,10 +5,11 @@ from server_files_normal import ClientManager
 from server_files_normal.game.settings import *
 from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
+from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -38,6 +39,7 @@ class Player(pygame.sprite.Sprite):
 		self.attack_time: int = 0
 
 		# Projectiles
+		self.create_attack = create_attack
 		self.create_bullet = create_bullet
 		self.create_kettle = create_kettle
 
@@ -65,7 +67,16 @@ class Player(pygame.sprite.Sprite):
 
 		self.previous_state = {}
 
-		self.create_attack = create_attack
+		self.item_sprites = item_sprites
+		self.inventory_items = {}
+
+		self.pets_count = 0
+
+		self.get_free_item_id = get_free_item_id
+
+		self.dead = False
+
+		self.spawn_enemy_from_egg = spawn_enemy_from_egg
 
 		super().__init__(groups)
 
@@ -93,20 +104,90 @@ class Player(pygame.sprite.Sprite):
 						self.create_kettle(self, attack.direction)
 						self.switch_weapon(0)
 
+		for item_action in update.item_actions:
+			if item_action.action_type == 'use':
+				item_name = item_action.item_name
+				used = True
+				if item_name == "heal":
+					self.health += 20
+					if self.health > self.stats['health']:
+						self.health = self.stats['health']
+				elif item_name == "strength":
+					self.strength += 1
+				elif item_name == "kettle":
+					if self.can_switch_weapon and not self.attacking and self.weapon_index != 2:
+						self.switch_weapon(2)
+					used = False
+				elif item_name == "shield":
+					self.resistance += 1
+				elif item_name == "spawn_white":
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
+				elif item_name == "spawn_green":
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
+				elif item_name == "spawn_red":
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+				elif item_name == "spawn_yellow":
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
+				elif item_name == "spawn_pet":
+					if self.pets_count < MAX_PETS_PER_PLAYER:
+						pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
+						#  TODO add pets
+						self.pets_count += 1
+					else:
+						used = False
+
+				if used:
+					# remove the item from the player's inventory
+					self.inventory_items[item_action.item_name] -= 1
+					if self.inventory_items[item_action.item_name] == 0:
+						del self.inventory_items[item_action.item_name]
+			elif item_action.action_type == 'drop' and self.inventory_items[item_action.item_name] > 0:
+				# TODO check that the item_id is actually in the player's inventory items pool
+				self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
+				self.inventory_items[item_action.item_name] -= 1
+				if self.inventory_items[item_action.item_name] == 0:
+					del self.inventory_items[item_action.item_name]
+
 		self.update_pos(update.pos)
 
+	def die(self):
+		self.dead = True
+
+		# kill weapon
+		if self.current_weapon is not None:
+			self.current_weapon.kill()
+
+		# drop inventory items
+		for item in list(self.inventory_items.keys()):
+			for i in range(self.inventory_items[item]):
+				self.create_dropped_item(item, self.rect.center, self.get_free_item_id())
+		self.inventory_items = {}
+
+		# drop xp
+		for i in range(self.xp):
+			self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
+
+		# drop grave
+		self.create_dropped_item("grave_player", self.rect.center, self.get_free_item_id())
+
+		# reset stats
+		self.xp = 0
+		self.health = 0
+
 	def update(self):
-		if self.status == 'dead':
+
+		if self.dead:
+			return
+
+		# Death
+		if self.health <= 0:
+			self.die()
 			return
 
 		self.cooldowns()
 
-		# Death
-		if self.health <= 0:
-			self.xp = 0
-			if self.current_weapon is not None:
-				self.current_weapon.kill()
-			self.status = 'dead'
+		# Pick up items
+		self.item_collision()
 
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
@@ -165,7 +246,7 @@ class Player(pygame.sprite.Sprite):
 		self.attacking = False
 
 		if self.weapon_index in self.on_screen:
-			self.create_attack()
+			self.create_attack(self)
 
 		self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
 
@@ -180,6 +261,36 @@ class Player(pygame.sprite.Sprite):
 
 	def deal_damage(self, damage):
 		self.health -= int(damage - (0.1 * self.resistance))
+
+	def item_collision(self):
+		item: Item
+		for item in self.item_sprites:
+			if item.die:
+				continue
+			if self.rect.colliderect(item.rect):
+				if item.can_pick_up:
+					if item.name == "xp":
+						item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+						self.xp += 1
+						item.die = True
+					elif item.name == "grave_player" or item.name == "grave_pet":
+						if len(self.inventory_items) < INVENTORY_ITEMS:
+							item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+							self.inventory_items[item.name + f'({len(self.inventory_items)})'] = 1
+							item.die = True
+					else:
+						if item.name in self.inventory_items:
+							item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+							self.inventory_items[item.name] += 1
+							item.die = True
+						elif len(self.inventory_items) < INVENTORY_ITEMS:
+							item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+							self.inventory_items[item.name] = 1
+							item.die = True
+
+	def create_dropped_item(self, name, pos, item_id):
+		new_item = Item(name, (self.item_sprites,), pos, item_id)
+		new_item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='drop', pos=pos))
 
 	def reset_attacks(self):
 		self.attacks: deque = deque()
