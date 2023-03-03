@@ -83,8 +83,8 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 
 def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msgs], sock_to_normals: socket.socket) -> None:
 	msg = LB_to_login_q.pop()
-	wanted_id = int(msg.client_id.decode())
-	info_to_normals = InfoData(info=load_info(db, wanted_id)[0])
+	wanted_id = int(msg.client_id.decode()) #maybe decrypt instead of decode
+	info_to_normals = InfoData(info=load_info(db, wanted_id)[0])     #Tuple of the info
 	sock_to_normals.send(InfoMsgToNormal(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), info=info_to_normals.serialize()).serialize())
 	client_sock: socket.socket = id_socket_dict.get(msg.client_id)
 	client_sock.send(LoginResponseToClient(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server)).serialize())
