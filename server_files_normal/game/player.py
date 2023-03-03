@@ -131,6 +131,7 @@ class Player(pygame.sprite.Sprite):
 				elif item_name == "spawn_pet":
 					if self.pets_count < MAX_PETS_PER_PLAYER:
 						pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
+						#  TODO add pets
 						self.pets_count += 1
 					else:
 						used = False
