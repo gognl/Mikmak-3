@@ -502,16 +502,6 @@ class Player(Entity):
             self.changes = None
 
     def die(self):
-        for item in list(self.inventory_items.keys()):
-            for i in range(self.inventory_items[item].count):
-                self.create_dropped_item(item, self.rect.center)
-        self.inventory_items = {}
-
-        for i in range(self.xp):
-            self.create_dropped_item("xp", self.rect.center)
-        self.xp = 0
-
-        #self.create_dropped_item("grave_player", self.rect.center)  # TODO move this to the server
 
         self.nametag.kill = True
         if self.current_weapon is not None:

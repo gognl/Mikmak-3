@@ -9,7 +9,7 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -71,6 +71,10 @@ class Player(pygame.sprite.Sprite):
 		self.inventory_items = {}
 
 		self.pets_count = 0
+
+		self.get_free_item_id = get_free_item_id
+
+		self.dead = False
 
 		super().__init__(groups)
 
@@ -143,18 +147,38 @@ class Player(pygame.sprite.Sprite):
 
 		self.update_pos(update.pos)
 
+	def die(self):
+		self.dead = True
+
+		# kill weapon
+		if self.current_weapon is not None:
+			self.current_weapon.kill()
+
+		# drop inventory items
+		for item in list(self.inventory_items.keys()):
+			for i in range(self.inventory_items[item]):
+				self.create_dropped_item(item, self.rect.center, self.get_free_item_id())
+		self.inventory_items = {}
+
+		# drop xp
+		for i in range(self.xp):
+			self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
+
+		# drop grave
+		self.create_dropped_item("grave_player", self.rect.center, self.get_free_item_id())
+
+		# reset stats
+		self.xp = 0
+		self.health = 0
+
 	def update(self):
 
-		if self.status == 'dead':
+		if self.dead:
 			return
 
 		# Death
 		if self.health <= 0:
-			self.xp = 0
-			if self.current_weapon is not None:
-				self.current_weapon.kill()
-			self.status = 'dead'
-			self.health = 0
+			self.die()
 			return
 
 		self.cooldowns()

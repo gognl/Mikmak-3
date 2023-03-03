@@ -109,8 +109,6 @@ class World:
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
-        # Spawn items
-        #  self.spawn_items(1000)
 
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
         player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 3)
@@ -327,17 +325,6 @@ class World:
                 if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
                     Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
                           self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
-                    break
-
-    def spawn_items(self, amount: int) -> None:
-        for item in range(amount):
-            while True:
-                random_x = random.randint(20, 30)
-                random_y = random.randint(20, 30)
-                name = item_names[int(random.randint(0, len(item_names) - 1))]
-
-                if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                    Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32), self.item_despawn, self.item_pickup, self.item_drop, self.item_use)
                     break
 
     def item_despawn(self, item: Item):

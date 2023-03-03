@@ -49,7 +49,8 @@ class GameManager(threading.Thread):
 			'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
 			'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
 		}
-		for item_id in range(20):
+
+		for item_id in range(30):
 			while True:
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
@@ -57,9 +58,14 @@ class GameManager(threading.Thread):
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
-					item = Item('heal', (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+					item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
 					item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
 					break
+		self.next_item_id = 30
+
+	def get_free_item_id(self):
+		self.next_item_id += 1
+		return self.next_item_id
 
 	def get_obstacle_sprites(self):
 		return self.obstacle_sprites
@@ -88,7 +94,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (1024, 1024)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id)
 
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
@@ -159,8 +165,8 @@ class GameManager(threading.Thread):
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				player_changes = []
 				for player in self.players.sprites():
-					#if player.health <= 0:
-					#	player.status = 'dead'
+					if player.dead:
+						player.status = 'dead'
 					current_player_state = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks,
 											'status': player.status, 'health': player.health, 'strength': player.strength}
 					if player.previous_state != current_player_state:
