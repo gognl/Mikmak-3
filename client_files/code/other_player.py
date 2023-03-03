@@ -44,7 +44,7 @@ class OtherPlayer(Entity):
 		self.update_queue: deque = deque()
 
 		# Stats
-		self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
+		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}  # TODO - make energy actually do something
 		self.health = self.stats['health']
 		self.energy = self.stats['energy']
 		self.xp = 0
@@ -83,7 +83,7 @@ class OtherPlayer(Entity):
 
 		if update.status == 'dead':
 			self.xp = 0
-			self.create_dropped_item("grave_player", self.rect.center)
+			#  self.create_dropped_item("grave_player", self.rect.center)  # TODO move this to the server
 			if self.current_weapon is not None:
 				self.current_weapon.kill()
 			self.kill()

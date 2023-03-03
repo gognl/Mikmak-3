@@ -47,6 +47,8 @@ class Server:
 				self.pos: Tuple[int, int] = None
 				self.attacks: Tuple[Server.Input.AttackUpdate] = None
 				self.status: str = None
+				self.health: int = None
+				self.strength: int = None
 
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
@@ -55,7 +57,7 @@ class Server:
 
 			def _get_attr(self) -> dict:
 				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Server.Output.AttackUpdate, 'o')),
-						'status': (str, 'str')}
+						'status': (str, 'str'), 'health': (int, 'u_1'), 'strength': (int, 'u_1')}
 
 		class AttackUpdate(Serializable):
 			def __init__(self, **kwargs):

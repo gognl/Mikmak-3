@@ -511,7 +511,7 @@ class Player(Entity):
             self.create_dropped_item("xp", self.rect.center)
         self.xp = 0
 
-        self.create_dropped_item("grave_player", self.rect.center)
+        #self.create_dropped_item("grave_player", self.rect.center)  # TODO move this to the server
 
         self.nametag.kill = True
         if self.current_weapon is not None:

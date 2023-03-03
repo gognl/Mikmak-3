@@ -70,6 +70,8 @@ class Player(pygame.sprite.Sprite):
 		self.item_sprites = item_sprites
 		self.inventory_items = {}
 
+		self.pets_count = 0
+
 		super().__init__(groups)
 
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
@@ -98,10 +100,46 @@ class Player(pygame.sprite.Sprite):
 
 		for item_action in update.item_actions:
 			if item_action.action_type == 'use':
-				pass  # TODO add item using
+				item_name = item_action.item_name
+				used = True
+				if item_name == "heal":
+					self.health += 20
+					if self.health > self.stats['health']:
+						self.health = self.stats['health']
+				elif item_name == "strength":
+					self.strength += 1
+				elif item_name == "kettle":
+					if self.can_switch_weapon and not self.attacking and self.weapon_index != 2:
+						self.switch_weapon(2)
+					used = False
+				elif item_name == "shield":
+					self.resistance += 1
+				elif item_name == "spawn_white":
+					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
+				elif item_name == "spawn_green":
+					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
+				elif item_name == "spawn_red":
+					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+				elif item_name == "spawn_yellow":
+					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
+				elif item_name == "spawn_pet":
+					if self.pets_count < MAX_PETS_PER_PLAYER:
+						pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
+						self.pets_count += 1
+					else:
+						used = False
+
+				if used:
+					# remove the item from the player's inventory
+					self.inventory_items[item_action.item_name] -= 1
+					if self.inventory_items[item_action.item_name] == 0:
+						del self.inventory_items[item_action.item_name]
 			elif item_action.action_type == 'drop' and self.inventory_items[item_action.item_name] > 0:
+				# TODO check that the item_id is actually in the player's inventory items pool
 				self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
 				self.inventory_items[item_action.item_name] -= 1
+				if self.inventory_items[item_action.item_name] == 0:
+					del self.inventory_items[item_action.item_name]
 
 		self.update_pos(update.pos)
 
@@ -116,6 +154,7 @@ class Player(pygame.sprite.Sprite):
 			if self.current_weapon is not None:
 				self.current_weapon.kill()
 			self.status = 'dead'
+			self.health = 0
 			return
 
 		self.cooldowns()

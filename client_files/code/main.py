@@ -97,6 +97,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		if entity_id == client_id:
 			world.player.update_pos(entity_pos)
 			world.player.status = entity_status
+			world.player.health = player_update.health
+			world.player.strength = player_update.strength
 			if entity_status == 'dead':
 				world.player.die()  # TODO display death screen
 				pygame.quit()

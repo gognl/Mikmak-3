@@ -57,7 +57,7 @@ class GameManager(threading.Thread):
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
-					item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+					item = Item('heal', (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
 					item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
 					break
 
@@ -97,7 +97,7 @@ class GameManager(threading.Thread):
 
 		for player in self.players.sprites():
 			initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=0, direction=(0, 0))
-			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,), 'status': player.status}
+			changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,), 'status': player.status, 'health': player.health, 'strength': player.strength}
 			player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
 		for enemy in self.enemies.sprites():
@@ -151,15 +151,18 @@ class GameManager(threading.Thread):
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 			for i in range(CLIENT_FPS // FPS):
-				self.players.update()
-				self.weapons.update()
 				self.projectiles.update()
+				self.weapons.update()
+				self.players.update()
 				self.items.update()
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				player_changes = []
 				for player in self.players.sprites():
-					current_player_state = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
+					#if player.health <= 0:
+					#	player.status = 'dead'
+					current_player_state = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks,
+											'status': player.status, 'health': player.health, 'strength': player.strength}
 					if player.previous_state != current_player_state:
 						player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=current_player_state)
 						player_changes.append(player_update)
