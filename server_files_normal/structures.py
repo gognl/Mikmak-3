@@ -44,12 +44,11 @@ class Client:
                 self.attacks = changes['attacks']
                 self.status = changes['status']
                 self.health = changes['health']
-                self.strength = changes['strength']
 
             def _get_attr(self) -> dict:
                 return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')),
                         'attacks': (tuple, (Client.Output.AttackUpdate, 'o')), 'status': (str, 'str'),
-                        'health': (int, 'u_1'), 'strength': (int, 'u_1')}
+                        'health': (int, 'u_1')}
 
         class AttackUpdate(Serializable):
             def __init__(self, **kwargs):

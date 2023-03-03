@@ -170,7 +170,7 @@ class GameManager(threading.Thread):
 					if player.dead:
 						player.status = 'dead'
 					current_player_state = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks,
-											'status': player.status, 'health': player.health, 'strength': player.strength}
+											'status': player.status, 'health': player.health}
 					if player.previous_state != current_player_state:
 						player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=current_player_state)
 						player_changes.append(player_update)
