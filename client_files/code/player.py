@@ -309,13 +309,13 @@ class Player(Entity):
                     elif item == "shield":
                         self.resistance += 1
                     elif item == "spawn_white":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
                     elif item == "spawn_green":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
                     elif item == "spawn_red":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
                     elif item == "spawn_yellow":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
                     elif item == "spawn_pet":
                         if self.pets < MAX_PETS_PER_PLAYER:
                             self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)

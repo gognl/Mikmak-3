@@ -9,7 +9,7 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -76,6 +76,8 @@ class Player(pygame.sprite.Sprite):
 
 		self.dead = False
 
+		self.spawn_enemy_from_egg = spawn_enemy_from_egg
+
 		super().__init__(groups)
 
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
@@ -119,13 +121,13 @@ class Player(pygame.sprite.Sprite):
 				elif item_name == "shield":
 					self.resistance += 1
 				elif item_name == "spawn_white":
-					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
 				elif item_name == "spawn_green":
-					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
 				elif item_name == "spawn_red":
-					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
 				elif item_name == "spawn_yellow":
-					pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
+					self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
 				elif item_name == "spawn_pet":
 					if self.pets_count < MAX_PETS_PER_PLAYER:
 						pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)

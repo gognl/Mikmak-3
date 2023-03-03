@@ -16,7 +16,7 @@ TODO:
 
 import socket
 from collections import deque
-from threading import Semaphore
+from threading import Semaphore, Lock
 
 import pygame
 
@@ -48,9 +48,17 @@ def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socke
 	return login_sock, lb_manager
 
 
+free_entity_id: int = 0
+entity_id_lock: Lock = Lock()
+def generate_entity_id():
+	with entity_id_lock:
+		global free_entity_id
+		free_entity_id += 1  # maybe change this to make it less predictable
+		return free_entity_id
+
 def accept_new_clients(server_sock, client_managers, game_manager: GameManager, cmd_semaphore: Semaphore):
-	client_id: int = 25
 	while True:
+		client_id: int = generate_entity_id()
 		client_sock, client_addr = server_sock.accept()
 
 		# TODO change this later, maybe to a ConnectionInitialization structure
@@ -62,8 +70,6 @@ def accept_new_clients(server_sock, client_managers, game_manager: GameManager, 
 		new_client_manager.start()
 		player.client_manager = new_client_manager  # Add the client manager to the player's attributes
 		game_manager.send_initial_info(new_client_manager)
-
-		client_id += 1  # also maybe change this to something less predictable
 
 
 def main():
@@ -82,7 +88,7 @@ def main():
 
 	cmd_semaphore: Semaphore = Semaphore(0)
 	client_managers: deque[ClientManager] = deque([])
-	game_manager = GameManager(client_managers, cmd_semaphore)
+	game_manager = GameManager(client_managers, cmd_semaphore, generate_entity_id)
 	game_manager.start()
 
 	accept_new_clients(server_sock, client_managers, game_manager, cmd_semaphore)

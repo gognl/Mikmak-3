@@ -13,16 +13,18 @@ from server_files_normal.game.player import Player
 from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.settings import *
-from random import randint
+from random import randint, randrange
 import pygame
 
 
 class GameManager(threading.Thread):
-	def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore):
+	def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, generate_entity_id):
 		super().__init__()
 		self.client_managers: deque[ClientManager] = client_managers
 		self.cmd_queue: Queue[Tuple[ClientManager, Client.Input.ClientCMD]] = Queue()
 		threading.Thread(target=self.add_messages_to_queue, args=(cmd_semaphore, )).start()
+
+		self.generate_entity_id = generate_entity_id
 
 		pygame.init()
 		self.clock = pygame.time.Clock()
@@ -41,7 +43,7 @@ class GameManager(threading.Thread):
 		# TODO temporary
 		for i in range(20):
 			pos = (randint(2000, 3000), randint(2000, 3000))
-			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=i, obstacle_sprites=self.all_obstacles)
+			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=generate_entity_id(), obstacle_sprites=self.all_obstacles)
 
 		# TODO temporary, item spawning
 		self.layout: Dict[str, List[List[str]]] = {
@@ -94,7 +96,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (1024, 1024)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg)
 
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
@@ -240,3 +242,22 @@ class GameManager(threading.Thread):
 	def create_explosion(self, pos, damage):
 		pass
 		#Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
+
+	def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
+		while True:
+			random_x = pos[0] // 64 + (randint(2, 4) * randrange(-1, 2))
+			random_y = pos[1] // 64 + (randint(2, 4) * randrange(-1, 2))
+
+			if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
+					self.layout['objects'][random_y][random_x]) == -1:
+				if is_pet:
+					'''Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
+						self.obstacle_sprites, player, self.create_dropped_item, self.create_explosion,
+						self.create_bullet, safe=[player], nametag=True, name="random",
+						create_nametag=self.create_nametag,
+						nametag_update=self.nametag_update)'''
+				else:
+					Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
+						  groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=self.generate_entity_id(),
+						  obstacle_sprites=self.all_obstacles)
+				break
