@@ -47,6 +47,8 @@ class ServerSer(Serializable, Server):
 		Serializable.__init__(self, ser)
 		if ser != b'':
 			return
+		Server.__init__(self, kwargs['ip'], kwargs['port'])
+
 
 		Server.__init__(self, kwargs['ip'], kwargs['port'])
 
