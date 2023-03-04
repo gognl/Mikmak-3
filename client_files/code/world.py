@@ -329,6 +329,7 @@ class World:
 
     def item_despawn(self, item: Item):
         """Remove the item from the game"""
+        item.kill()
 
     def item_pickup(self, item: Item, player_id: int) -> None:
         """Add the item to the player's inventory and remove it from the floor"""

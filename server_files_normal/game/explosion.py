@@ -2,6 +2,7 @@ import pygame
 
 from server_files_normal.game.item import Item
 from server_files_normal.game.settings import *
+from server_files_normal.structures import Client
 
 
 class Explosion(pygame.sprite.Sprite):
@@ -28,5 +29,5 @@ class Explosion(pygame.sprite.Sprite):
                 if hasattr(sprite, "health"):
                     sprite.deal_damage(self.damage)
                 elif isinstance(sprite, Item):
-                    # TODO change this
-                    sprite.kill()
+                    sprite.actions.append(Client.Output.ItemActionUpdate(action_type='despawn'))
+                    sprite.die = True
