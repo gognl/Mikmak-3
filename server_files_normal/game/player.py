@@ -141,11 +141,17 @@ class Player(pygame.sprite.Sprite):
 					self.inventory_items[item_action.item_name] -= 1
 					if self.inventory_items[item_action.item_name] == 0:
 						del self.inventory_items[item_action.item_name]
+
 			elif item_action.action_type == 'drop' and self.inventory_items[item_action.item_name] > 0:
 				# TODO check that the item_id is actually in the player's inventory items pool
 				self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
 				self.inventory_items[item_action.item_name] -= 1
 				if self.inventory_items[item_action.item_name] == 0:
+					del self.inventory_items[item_action.item_name]
+
+				if self.inventory_items[item_action.item_name] == 0:
+					if item_action.item_name == "kettle" and self.weapon_index == 2:
+						self.switch_weapon(0)
 					del self.inventory_items[item_action.item_name]
 
 		self.update_pos(update.pos)
@@ -247,6 +253,10 @@ class Player(pygame.sprite.Sprite):
 
 		if self.weapon_index in self.on_screen:
 			self.create_attack(self)
+
+		# if switched to kettle and have no kettle, reswitch
+		if self.weapon_index == 2 and 'kettle' not in self.inventory_items:
+			self.switch_weapon(0)
 
 		self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
 
