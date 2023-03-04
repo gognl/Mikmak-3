@@ -194,7 +194,7 @@ class GameManager(threading.Thread):
 				item: Item
 				for item in self.items.sprites():
 
-					if tuple(item.rect.center) != item.previous_pos:
+					if tuple(item.rect.center) != item.previous_pos and item.previous_pos != ():
 						item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
 
 					if not item.actions:
