@@ -60,7 +60,7 @@ class GameManager(threading.Thread):
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
-					item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+					item = Item('kettle', (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
 					item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
 					break
 		self.next_item_id = 30
@@ -237,7 +237,7 @@ class GameManager(threading.Thread):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 3, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
+				   self.all_obstacles, 4, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
 
 	def create_explosion(self, pos, damage):
 		pass

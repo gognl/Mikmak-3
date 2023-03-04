@@ -278,8 +278,8 @@ class Player(Entity):
                         self.attack_time = pygame.time.get_ticks()
 
                         self.create_kettle(self, self.current_weapon.rect.center)
-                        self.inventory_items['kettle'] -= 1
-                        if self.inventory_items['kettle'] == 0:
+                        self.inventory_items['kettle'].count -= 1
+                        if self.inventory_items['kettle'].count == 0:
                             del self.inventory_items['kettle']
 
                         if 'kettle' not in self.inventory_items:

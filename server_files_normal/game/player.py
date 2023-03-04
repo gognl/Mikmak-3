@@ -101,8 +101,17 @@ class Player(pygame.sprite.Sprite):
 							self.can_shoot = False
 							self.shoot_time = pygame.time.get_ticks()
 					elif self.weapon_index == 2:
-						self.create_kettle(self, attack.direction)
-						self.switch_weapon(0)
+						self.attacking = True
+						self.attack_time = pygame.time.get_ticks()
+
+						self.create_kettle(self, self.current_weapon.rect.center, attack.direction)
+
+						self.inventory_items['kettle'] -= 1
+						if self.inventory_items['kettle'] == 0:
+							del self.inventory_items['kettle']
+
+						if 'kettle' not in self.inventory_items:
+							self.switch_weapon(0)
 
 		for item_action in update.item_actions:
 			if item_action.action_type == 'use':
