@@ -123,9 +123,10 @@ class Enemy(Entity):
 
 	def actions(self, player):
 		if self.status == 'attack':
-			if self.can_attack:
-				self.can_attack = False
-				self.attack(player)
+			# if self.can_attack:
+			# 	self.can_attack = False
+			# 	self.attack(player)
+			pass  # moved to server
 
 		elif self.status == 'move':
 			if self.can_move:
