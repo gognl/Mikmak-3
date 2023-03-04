@@ -96,7 +96,7 @@ class World:
                 pos = (random_x * 64, random_y * 64)
                 break
 
-        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
+        self.player = Player("gognl", (900, 900), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 2, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
@@ -329,6 +329,7 @@ class World:
 
     def item_despawn(self, item: Item):
         """Remove the item from the game"""
+        item.kill()
 
     def item_pickup(self, item: Item, player_id: int) -> None:
         """Add the item to the player's inventory and remove it from the floor"""

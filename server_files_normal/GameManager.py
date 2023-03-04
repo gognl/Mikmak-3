@@ -3,6 +3,7 @@ from collections import deque
 from queue import Queue, Empty
 from typing import Union, Dict
 
+from server_files_normal.game.explosion import Explosion
 from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
@@ -95,7 +96,7 @@ class GameManager(threading.Thread):
 			client_manager.send_msg(msg)
 
 	def add_player(self, entity_id: int):
-		pos: (int, int) = (1024, 1024)
+		pos: (int, int) = (900, 900)
 		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg)
 
 	def send_initial_info(self, client_manager: ClientManager):
@@ -237,11 +238,10 @@ class GameManager(threading.Thread):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 3, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
+				   self.all_obstacles, 4, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
 
 	def create_explosion(self, pos, damage):
-		pass
-		#Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
+		Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites()+self.items.sprites()))
 
 	def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
 		while True:

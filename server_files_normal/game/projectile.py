@@ -28,7 +28,7 @@ class Projectile(pygame.sprite.Sprite):
 		self.speed: int = speed
 
 		# Kill time
-		self.spawn_time: int = pygame.time.get_ticks()
+		self.spawn_time: int = 0
 		self.despawn_time: int = despawn_time
 
 		self.action: str = action
@@ -50,12 +50,14 @@ class Projectile(pygame.sprite.Sprite):
 		self.move()
 
 		# Check if despawn
-		current_time: int = pygame.time.get_ticks()
-		if current_time - self.spawn_time >= self.despawn_time:
+		if self.spawn_time >= self.despawn_time:
 			if self.action == 'explode':
 				self.explode()
 			else:
 				self.kill()
+			self.spawn_time = 0
+		else:
+			self.spawn_time += 1
 
 		self.collision()
 
