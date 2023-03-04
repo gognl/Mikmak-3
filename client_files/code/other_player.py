@@ -109,12 +109,6 @@ class OtherPlayer(Entity):
 						elif self.weapon_index == 2:
 							self.create_kettle(self, self.current_weapon.rect.center, attack.direction)
 
-							# switch to sword
-							self.destroy_attack(self)
-							self.weapon_index = 0
-							self.weapon = list(weapon_data.keys())[self.weapon_index]
-							self.attacking = False
-
 		self.update_pos(update.pos)
 
 	def update(self):

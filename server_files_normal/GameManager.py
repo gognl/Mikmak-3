@@ -14,7 +14,7 @@ from server_files_normal.game.player import Player
 from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.settings import *
-from random import randint, randrange
+from random import randint, randrange, choice
 import pygame
 
 
@@ -58,10 +58,11 @@ class GameManager(threading.Thread):
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
 				name = item_names[int(randint(0, len(item_names) - 1))]
+				name = choice(('kettle', 'heal'))
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
-					item = Item('kettle', (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+					item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
 					item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
 					break
 		self.next_item_id = 30
