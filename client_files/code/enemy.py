@@ -127,11 +127,12 @@ class Enemy(Entity):
 				self.can_attack = False
 				self.attack(player)
 
-		if self.status == 'move':
+		elif self.status == 'move':
 			if self.can_move:
 				self.can_move = False
 				self.direction = self.get_player_distance_direction(player)[1]
 				self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
+
 		else:
 			self.direction = pygame.math.Vector2()
 

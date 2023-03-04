@@ -45,7 +45,7 @@ class GameManager(threading.Thread):
 		# TODO temporary
 		for i in range(20):
 			pos = (randint(2000, 3000), randint(2000, 3000))
-			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=generate_entity_id(), obstacle_sprites=self.all_obstacles)
+			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=generate_entity_id(), obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion, create_bullet=self.create_bullet)
 
 		# TODO temporary, item spawning
 		self.layout: Dict[str, List[List[str]]] = {
@@ -268,5 +268,6 @@ class GameManager(threading.Thread):
 				else:
 					Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
 						  groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=self.generate_entity_id(),
-						  obstacle_sprites=self.all_obstacles)
+						  obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion,
+						  create_bullet=self.create_bullet)
 				break
