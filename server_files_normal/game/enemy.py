@@ -1,3 +1,4 @@
+from collections import deque
 from typing import List
 
 import pygame
@@ -57,6 +58,8 @@ class Enemy(pygame.sprite.Sprite):
 		# Attack actions
 		self.create_explosion = create_explosion
 		self.create_bullet = create_bullet
+
+		self.attacks: deque[Client.Output.EnemyAttackUpdate] = deque()
 
 	def create_dropped_item(self, name, pos, item_id):
 		new_item = Item(name, (self.item_sprites,), pos, item_id)

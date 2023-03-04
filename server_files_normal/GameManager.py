@@ -111,7 +111,7 @@ class GameManager(threading.Thread):
 			player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
 		for enemy in self.enemies.sprites():
-			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
+			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'attacks': tuple(enemy.attacks)}
 			enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 		for item in self.items.sprites():
@@ -157,7 +157,7 @@ class GameManager(threading.Thread):
 					enemy.enemy_update(self.players)
 				if previous_pos == (enemy.rect.x, enemy.rect.y):
 					continue
-				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
+				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'attacks': tuple(enemy.attacks)}
 				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 			for i in range(CLIENT_FPS // FPS):

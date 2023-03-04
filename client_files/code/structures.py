@@ -78,13 +78,26 @@ class Server:
 				self.pos: (int, int) = None
 				self.type: str = None
 				self.direction: (int, int) = None
+				self.attacks: Tuple[Server.Input.EnemyAttackUpdate] = None
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
 					return
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8'))}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8')), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
+
+		class EnemyAttackUpdate(Serializable):
+			def __init__(self, **kwargs):
+				s: bytes = kwargs.pop('ser', b'')
+				super().__init__(ser=s)
+				if s != b'':
+					return
+
+				self.direction = None  # if it's (0, 0) then it's an exploding red cow
+
+			def _get_attr(self) -> dict:
+				return {'direction': (tuple, (float, 'f_8'))}
 
 		class ItemUpdate(Serializable):
 
