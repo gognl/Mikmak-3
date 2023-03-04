@@ -116,8 +116,7 @@ class Enemy(Entity):
 			player.deal_damage(self.damage)
 		elif self.enemy_name == "red_cow":
 			self.create_explosion(self.rect.center, self.damage)
-			self.on_kill()
-			self.kill()
+			pass  # TODO die
 		elif self.enemy_name == "yellow_cow":
 			self.create_bullet(self, self.rect.center, pygame.math.Vector2(player.rect.center[0], player.rect.center[1]))
 
@@ -152,12 +151,6 @@ class Enemy(Entity):
 			else:
 				self.move_time += 1
 
-	def on_kill(self):
-		for i in range(min(2, len(self.death_items))):
-			self.create_dropped_item(random.choice(self.death_items), self.rect.center)
-		for i in range(self.xp):
-			self.create_dropped_item("xp", self.rect.center)
-
 	def update(self):
 
 		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
@@ -170,8 +163,9 @@ class Enemy(Entity):
 
 		# Death
 		if self.health <= 0:
-			self.on_kill()
-			self.kill()
+			# self.on_kill()
+			# self.kill()
+			pass  # moved to server
 
 		self.cooldowns()
 
@@ -225,7 +219,7 @@ class Pet(Enemy):
 
 		# Death
 		if self.health <= 0:
-			self.on_kill()
+			pass  # self.on_kill()
 
 			self.nametag.kill = True
 			self.owner.pets -= 1

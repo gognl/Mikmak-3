@@ -1,4 +1,5 @@
 from collections import deque
+from random import choice
 from typing import List
 
 import pygame
@@ -12,7 +13,7 @@ from server_files_normal.structures import Client
 
 
 class Enemy(pygame.sprite.Sprite):
-	def __init__(self, enemy_name: str, pos: (int, int), groups, entity_id: int, obstacle_sprites: pygame.sprite.Group, item_sprites, create_explosion, create_bullet):
+	def __init__(self, enemy_name: str, pos: (int, int), groups, entity_id: int, obstacle_sprites: pygame.sprite.Group, item_sprites, create_explosion, create_bullet, get_free_item_id):
 		super().__init__(groups)
 
 		self.entity_id = entity_id
@@ -66,9 +67,7 @@ class Enemy(pygame.sprite.Sprite):
 
 		self.previous_state = {}
 
-	def create_dropped_item(self, name, pos, item_id):
-		new_item = Item(name, (self.item_sprites,), pos, item_id)
-		new_item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='drop', pos=pos))
+		self.get_free_item_id = get_free_item_id
 
 	def import_graphics(self, name: str):
 		self.animations = {'move': []}
@@ -202,9 +201,18 @@ class Enemy(pygame.sprite.Sprite):
 	def die(self):
 		self.dead = True
 
+		for i in range(min(2, len(self.death_items))):
+			self.create_dropped_item(choice(self.death_items), self.rect.center, self.get_free_item_id())
+		for i in range(self.xp):
+			self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
+
 		# reset stats
 		self.xp = 0
 		self.health = 0
+
+	def create_dropped_item(self, name, pos, item_id):
+		new_item = Item(name, (self.item_sprites,), pos, item_id)
+		new_item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='drop', pos=pos))
 
 	def enemy_update(self, players):
 		if self.dead or not players:
