@@ -184,8 +184,8 @@ class Server:
 					return
 
 				self.item_name = kwargs.pop('item_name')
-				self.action_type = kwargs.pop('action_type')  # 'drop' or 'use'
-				self.item_id = kwargs.pop('item_id')
+				self.action_type = kwargs.pop('action_type')  # 'drop' or 'use' or 'skill'
+				self.item_id = kwargs.pop('item_id')  # if skill, then 1=speed, 2=magnet, 3=damage
 
 			def _get_attr(self) -> dict:
 				return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}

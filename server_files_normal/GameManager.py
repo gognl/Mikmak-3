@@ -36,6 +36,7 @@ class GameManager(threading.Thread):
 		self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
 		self.weapons: pygame.sprite.Group = pygame.sprite.Group()
 		self.items: pygame.sprite.Group = pygame.sprite.Group()
+		self.magnetic_players: pygame.sprite.Group = pygame.sprite.Group()
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
@@ -97,7 +98,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (900, 900)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
 
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
@@ -165,6 +166,9 @@ class GameManager(threading.Thread):
 				self.players.update()
 				self.items.update()
 
+				for item in self.items.sprites():
+					item.update_movement(self.magnetic_players)
+
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				player_changes = []
 				for player in self.players.sprites():
@@ -183,11 +187,16 @@ class GameManager(threading.Thread):
 				item_changes = []
 				item: Item
 				for item in self.items.sprites():
+
+					if tuple(item.rect.center) != item.previous_pos:
+						item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+
 					if not item.actions:
 						continue  # don't send if no new actions
 					item_update = Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item.actions)
 					item_changes.append(item_update)
 					item.reset_actions()
+					item.previous_pos = tuple(item.rect.center)
 					if item.die:
 						item.kill()
 

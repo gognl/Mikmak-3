@@ -9,7 +9,7 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -77,6 +77,22 @@ class Player(pygame.sprite.Sprite):
 		self.dead = False
 
 		self.spawn_enemy_from_egg = spawn_enemy_from_egg
+
+		# Speed skill
+		self.can_speed = True
+		self.is_fast = False
+		self.speed_start = None
+		self.speed_time = 1000
+		self.speed_skill_cooldown = 7500  # less than client cooldown, because of the possible latency
+		self.speed_skill_factor = 2
+
+		# Magnet skill
+		self.can_magnet = True
+		self.is_magnet = False
+		self.magnet_start = None
+		self.magnet_time = 10000
+		self.magnet_skill_cooldown = 49500  # less than client cooldown, because of the possible latency
+		self.magnetic_players = magnetic_players
 
 		super().__init__(groups)
 
@@ -163,6 +179,20 @@ class Player(pygame.sprite.Sprite):
 						self.switch_weapon(0)
 					del self.inventory_items[item_action.item_name]
 
+			elif item_action.action_type == 'skill':
+				if item_action.item_id == 1 and self.can_speed:  # speed
+					self.can_speed = False
+					self.is_fast = True
+					self.speed *= self.speed_skill_factor
+					self.speed_start = pygame.time.get_ticks()
+				elif item_action.item_id == 2:  # magnet
+					self.can_magnet = False
+					self.add(self.magnetic_players)
+					self.is_magnet = True
+					self.magnet_start = pygame.time.get_ticks()
+				elif item_action.item_id == 3:  # damage
+					pass
+
 		self.update_pos(update.pos)
 
 	def die(self):
@@ -207,22 +237,21 @@ class Player(pygame.sprite.Sprite):
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
 
-		# TODO - change this to match gabriel's changes after he fixes this to be based on ticks and not on time
 		# Speed skill timers
-		# if not self.can_speed:
-		# 	if current_time - self.speed_start >= self.speed_time and self.is_fast:
-		# 		self.speed = int(self.speed / self.speed_skill_factor)
-		# 		self.is_fast = False
-		# 	if current_time - self.speed_start >= self.speed_skill_cooldown:
-		# 		self.can_speed = True
-		#
-		# # Magnet skill timers
-		# if not self.can_magnet:
-		# 	if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
-		# 		self.is_magnet = False
-		# 		self.remove(self.magnetic_players)
-		# 	if current_time - self.magnet_start >= self.magnet_skill_cooldown:
-		# 		self.can_magnet = True
+		if not self.can_speed:
+			if current_time - self.speed_start >= self.speed_time and self.is_fast:
+				self.speed = int(self.speed / self.speed_skill_factor)
+				self.is_fast = False
+			if current_time - self.speed_start >= self.speed_skill_cooldown:
+				self.can_speed = True
+
+		# Magnet skill timers
+		if not self.can_magnet:
+			if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
+				self.is_magnet = False
+				self.remove(self.magnetic_players)
+			if current_time - self.magnet_start >= self.magnet_skill_cooldown:
+				self.can_magnet = True
 
 		if self.attacking:  # TODO - make this based on ticks not time
 			if current_time - self.attack_time >= self.attack_cooldown:

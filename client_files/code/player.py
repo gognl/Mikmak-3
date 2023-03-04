@@ -59,7 +59,7 @@ class Player(Entity):
 
         # Server
         self.attacks: deque = deque()
-        self.item_actions: deque = deque()
+        self.item_actions: deque = deque()  # also used as skills update
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
 
@@ -187,6 +187,7 @@ class Player(Entity):
             self.is_fast = True
             self.speed *= self.speed_skill_factor
             self.speed_start = pygame.time.get_ticks()
+            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=1, item_name=''))
 
         # Check if using magnet skill
         if self.can_magnet and keys[pygame.K_2]:
@@ -194,6 +195,7 @@ class Player(Entity):
             self.add(self.magnetic_players)
             self.is_magnet = True
             self.magnet_start = pygame.time.get_ticks()
+            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
 
         # Move nametag right after moving
         self.nametag_update(self.nametag)
