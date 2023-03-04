@@ -14,7 +14,7 @@ from server_files_normal.game.player import Player
 from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.settings import *
-from random import randint, randrange, choice
+from random import randint, randrange
 import pygame
 
 
@@ -58,7 +58,6 @@ class GameManager(threading.Thread):
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
 				name = item_names[int(randint(0, len(item_names) - 1))]
-				name = choice(('kettle', 'heal'))
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
@@ -97,7 +96,7 @@ class GameManager(threading.Thread):
 			client_manager.send_msg(msg)
 
 	def add_player(self, entity_id: int):
-		pos: (int, int) = (1024, 1024)
+		pos: (int, int) = (900, 900)
 		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg)
 
 	def send_initial_info(self, client_manager: ClientManager):
