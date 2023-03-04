@@ -18,6 +18,7 @@ class Enemy(pygame.sprite.Sprite):
 		self.entity_id = entity_id
 
 		self.import_graphics(enemy_name)
+		self.status = 'move'
 		self.image = self.animations[self.status][0]
 		self.rect = self.image.get_rect(topleft=pos)
 
@@ -59,7 +60,11 @@ class Enemy(pygame.sprite.Sprite):
 		self.create_explosion = create_explosion
 		self.create_bullet = create_bullet
 
+		self.dead = False
+
 		self.attacks: deque[Client.Output.EnemyAttackUpdate] = deque()
+
+		self.previous_state = {}
 
 	def create_dropped_item(self, name, pos, item_id):
 		new_item = Item(name, (self.item_sprites,), pos, item_id)
@@ -69,7 +74,6 @@ class Enemy(pygame.sprite.Sprite):
 		self.animations = {'move': []}
 		path = f'./graphics/monsters/{name}/move/'
 		self.animations['move'] = list(import_folder(path).values())
-		self.status = 'move'
 
 	def get_closest_player(self, players: List[Player]) -> Player:
 		enemy_pos = pygame.Vector2(self.rect.center)
@@ -184,15 +188,26 @@ class Enemy(pygame.sprite.Sprite):
 				self.move_time += 1
 
 	def update(self):
+
+		if self.dead:
+			return
+
 		self.move(self.speed)
 
 		if self.health <= 0:
-			pass  # die
+			self.die()
 
 		self.cooldowns()
 
+	def die(self):
+		self.dead = True
+
+		# reset stats
+		self.xp = 0
+		self.health = 0
+
 	def enemy_update(self, players):
-		if not players:
+		if self.dead or not players:
 			return
 		player: Player = self.get_closest_player(players)
 		self.get_status(player)
@@ -200,3 +215,6 @@ class Enemy(pygame.sprite.Sprite):
 
 	def deal_damage(self, damage):
 		self.health -= int(damage - (0.1 * self.resistance))
+
+	def reset_attacks(self):
+		self.attacks: deque[Client.Output.EnemyAttackUpdate] = deque()

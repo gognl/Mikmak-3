@@ -78,6 +78,7 @@ class Server:
 				self.pos: (int, int) = None
 				self.type: str = None
 				self.direction: (int, int) = None
+				self.status: int = None
 				self.attacks: Tuple[Server.Input.EnemyAttackUpdate] = None
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
@@ -85,7 +86,7 @@ class Server:
 					return
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8')), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
 
 		class EnemyAttackUpdate(Serializable):
 			def __init__(self, **kwargs):

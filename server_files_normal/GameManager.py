@@ -111,7 +111,7 @@ class GameManager(threading.Thread):
 			player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
 		for enemy in self.enemies.sprites():
-			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'attacks': tuple(enemy.attacks)}
+			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'status': enemy.status, 'attacks': tuple(enemy.attacks)}
 			enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 		for item in self.items.sprites():
@@ -151,14 +151,20 @@ class GameManager(threading.Thread):
 
 			# Run enemies simulation
 			for enemy in self.enemies.sprites():
-				previous_pos = (enemy.rect.x, enemy.rect.y)
 				for i in range(CLIENT_FPS//FPS):
 					enemy.update()
 					enemy.enemy_update(self.players)
-				if previous_pos == (enemy.rect.x, enemy.rect.y):
-					continue
-				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'attacks': tuple(enemy.attacks)}
-				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
+
+				if enemy.dead:
+					enemy.status = 'dead'
+				current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'attacks': tuple(enemy.attacks), 'status': enemy.status}
+				if enemy.previous_state != current_enemy_state:
+					enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=current_enemy_state)
+					enemy_changes.append(enemy_update)
+				enemy.reset_attacks()
+				enemy.previous_state = current_enemy_state
+				if enemy.status == 'dead':
+					enemy.kill()
 
 			for i in range(CLIENT_FPS // FPS):
 				self.projectiles.update()
@@ -241,7 +247,7 @@ class GameManager(threading.Thread):
 			damage = source.damage
 
 		Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.players, 3, 15, 120, './graphics/weapons/bullet.png', damage)
+				   self.all_obstacles, 3, 15, 120, './graphics/weapons/bullet.png', damage)
 
 	def create_kettle(self, player: Player, pos, mouse):
 		direction = pygame.math.Vector2(mouse)

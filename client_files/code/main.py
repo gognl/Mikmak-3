@@ -118,6 +118,9 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		enemy_name: str = enemy_update.type
 		entity_direction = enemy_update.direction
 		if entity_id in world.enemies:
+			if enemy_update.status == 'dead':
+				world.enemies[entity_id].kill()
+				continue
 			world.enemies[entity_id].update_pos(entity_pos)
 			world.enemies[entity_id].direction = pygame.math.Vector2(entity_direction)
 		else:
