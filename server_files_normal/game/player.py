@@ -9,7 +9,7 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -92,6 +92,7 @@ class Player(pygame.sprite.Sprite):
 		self.magnet_start = None
 		self.magnet_time = 10000
 		self.magnet_skill_cooldown = 49500  # less than client cooldown, because of the possible latency
+		self.magnetic_players = magnetic_players
 
 		super().__init__(groups)
 
@@ -185,7 +186,10 @@ class Player(pygame.sprite.Sprite):
 					self.speed *= self.speed_skill_factor
 					self.speed_start = pygame.time.get_ticks()
 				elif item_action.item_id == 2:  # magnet
-					pass
+					self.can_magnet = False
+					self.add(self.magnetic_players)
+					self.is_magnet = True
+					self.magnet_start = pygame.time.get_ticks()
 				elif item_action.item_id == 3:  # damage
 					pass
 
@@ -240,6 +244,14 @@ class Player(pygame.sprite.Sprite):
 				self.is_fast = False
 			if current_time - self.speed_start >= self.speed_skill_cooldown:
 				self.can_speed = True
+
+		# Magnet skill timers
+		if not self.can_magnet:
+			if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
+				self.is_magnet = False
+				self.remove(self.magnetic_players)
+			if current_time - self.magnet_start >= self.magnet_skill_cooldown:
+				self.can_magnet = True
 
 		if self.attacking:  # TODO - make this based on ticks not time
 			if current_time - self.attack_time >= self.attack_cooldown:

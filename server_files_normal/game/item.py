@@ -35,6 +35,8 @@ class Item(pygame.sprite.Sprite):
 
         self.die = False
 
+        self.previous_pos = ()
+
     def update_movement(self, magnetic_players):
         if len(magnetic_players) != 0:
             minvalue = 0
@@ -58,11 +60,12 @@ class Item(pygame.sprite.Sprite):
                 self.rect.y = int(self.ypos)
 
     def update(self):
+
         if self.spawn_time > self.pick_up_cooldown:
             self.can_pick_up = True
 
         if self.spawn_time > self.despawn_time:
-            del self
+            del self  # TODO do something about this
 
         self.spawn_time += 1
 

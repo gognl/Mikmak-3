@@ -217,8 +217,9 @@ class World:
         """
 
         # Update the items positions based on magnetic players
-        for item in self.item_sprites:
-            item.update_movement(self.magnetic_players)
+        # for item in self.item_sprites:
+        #    item.update_movement(self.magnetic_players)
+        # moved to the server!
 
         # Update the camera position
         self.update_camera()

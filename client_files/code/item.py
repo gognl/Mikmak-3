@@ -70,6 +70,8 @@ class Item(pygame.sprite.Sprite):
             self.item_drop(self, action.player_id, action.pos)
         elif action_type == 'use':
             self.item_use(self, action.player_id, action.pos)
+        elif action_type == 'move':
+            self.rect = self.image.get_rect(center=action.pos)
 
     def update(self):
         while self.update_queue:
