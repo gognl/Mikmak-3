@@ -3,6 +3,7 @@ from collections import deque
 from queue import Queue, Empty
 from typing import Union, Dict
 
+from server_files_normal.game.explosion import Explosion
 from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
@@ -240,8 +241,7 @@ class GameManager(threading.Thread):
 				   self.all_obstacles, 4, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
 
 	def create_explosion(self, pos, damage):
-		pass
-		#Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
+		Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites()+self.items.sprites()))
 
 	def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
 		while True:
