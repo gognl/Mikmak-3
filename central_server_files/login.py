@@ -7,9 +7,10 @@ from db_utils import load_info, is_user_in_db, add_new_to_db, get_current_id, up
 from SQLDataBase import SQLDataBase
 from server_files_normal.game.settings import *
 from encryption import *
+from _struct import unpack, pack
 
 PORT = 12402
-PROTOCOL_LEN = 1
+PROTOCOL_LEN = 2
 DATA_MAX_LENGTH = 510
 id_socket_dict = {}
 DH_normal_keys = {}
@@ -61,10 +62,10 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 	sock.listen()
 	while True:
 		client_sock, addr = sock.accept()
-		length = sock.recv(PROTOCOL_LEN).decode()
-		data = sock.recv(int(length)).decode()
+		length = unpack("<H",sock.recv(PROTOCOL_LEN))[0]
+		data = sock.recv(length).decode()
 		username = data.split(" ")[0]
-		password = data.split(" ")[1]
+		password = hash_and_salt(data.split(" ")[1])
 		if not is_user_in_db(db, username):
 			new_id = get_current_id(db) + 1
 			add_new_to_db(db, new_id, username, password)
@@ -83,10 +84,10 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 
 def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msgs], sock_to_normals: socket.socket) -> None:
 	msg = LB_to_login_q.pop()
-	wanted_id = int(msg.client_id.decode()) #maybe decrypt instead of decode
-	info_to_normals = InfoData(info=load_info(db, wanted_id)[0])     #Tuple of the info
+	wanted_id = msg.client_id.decode()
+	info_to_normals = InfoData(info=load_info(db, wanted_id)[0])  # Tuple of the info
 	sock_to_normals.send(InfoMsgToNormal(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), info=info_to_normals.serialize()).serialize())
 	client_sock: socket.socket = id_socket_dict.get(msg.client_id)
+	client_sock.send(pack("<H",len(LoginResponseToClient(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server)).serialize())))
 	client_sock.send(LoginResponseToClient(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server)).serialize())
-
 # TODO: send to the normal as well - done partially
