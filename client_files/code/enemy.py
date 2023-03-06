@@ -177,7 +177,7 @@ class Enemy(Entity):
 
 		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
 
-		self.move(self.speed)
+		#  self.move(self.speed)
 
 		self.changes: dict = {'pos': (self.rect.x, self.rect.y)}
 		if self.changes == previous_state:

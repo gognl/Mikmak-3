@@ -40,7 +40,7 @@ class GameManager(threading.Thread):
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
-		#self.initialize_obstacle_sprites()
+		#  self.initialize_obstacle_sprites()
 
 		# TODO temporary
 		for i in range(20):
@@ -59,6 +59,7 @@ class GameManager(threading.Thread):
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
 				name = item_names[int(randint(0, len(item_names) - 1))]
+				name = 'spawn_yellow'
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
@@ -83,7 +84,7 @@ class GameManager(threading.Thread):
 				if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
 					x: int = col_index * TILESIZE
 					y: int = row_index * TILESIZE
-					Barrier((x, y), (self.obstacle_sprites,))
+					Barrier((x, y), (self.obstacle_sprites, self.all_obstacles))
 
 	def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
 		while True:

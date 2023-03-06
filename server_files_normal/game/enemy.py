@@ -192,7 +192,8 @@ class Enemy(pygame.sprite.Sprite):
 		if self.dead:
 			return
 
-		self.move(self.speed)
+		if self.status == 'move':
+			self.move(self.speed)
 
 		if self.health <= 0:
 			self.die()
