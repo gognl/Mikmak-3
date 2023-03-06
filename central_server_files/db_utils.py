@@ -52,7 +52,7 @@ def add_new_to_db(db: SQLDataBase, ID: int, username: str, password: str):
 	statement = (
 		insert(db.users_table).values(id=ID, username=username, password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, inventory=DEFAULT_INVENTORY)
 	)
-
+	#TODO: change to random spawn location
 	return db.exec(statement)
 
 def is_user_in_db(db: SQLDataBase, username: str) -> bool:

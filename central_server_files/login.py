@@ -21,7 +21,7 @@ DH_g = 1194756922542169200661322416961365521679877128581391737298617215920480575
 
 server_indices = [i for i in range(4)]
 
-def login_main(sock_to_normals: socket.socket, new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msgs], db: SQLDataBase) -> None:
+def login_main(sock_to_normals: socket.socket, new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg], db: SQLDataBase) -> None:
 	sock: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	sock.bind(('0.0.0.0', PORT))
 
@@ -64,7 +64,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 	sock.listen()
 	while True:
 		client_sock, addr = sock.accept()
-		length = unpack("<H",sock.recv(PROTOCOL_LEN))[0]
+		length = unpack("<H", sock.recv(PROTOCOL_LEN))[0]
 		data = sock.recv(length).decode()
 		username = data.split(" ")[0]
 		password = hash_and_salt(data.split(" ")[1])
@@ -96,5 +96,3 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
 	resp_to_client_bytes = resp_to_client.serialize()
 	client_sock.send(pack("<H", len(resp_to_client_bytes)))
 	client_sock.send(resp_to_client_bytes)
-
-# TODO: send to the normal as well - done partially
