@@ -239,15 +239,15 @@ class GameManager(threading.Thread):
 
 	def create_bullet(self, source: Union[Player, Enemy], pos, mouse):
 		direction = pygame.math.Vector2(mouse)
-		source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
-
 		if not isinstance(source, Enemy):
+			source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
 			damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
 		else:
+			source.attacks.append(Client.Output.EnemyAttackUpdate(direction=mouse))
 			damage = source.damage
 
 		Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 3, 15, 120, './graphics/weapons/bullet.png', damage)
+				   self.all_obstacles, 4, 15, 120, './graphics/weapons/bullet.png', damage)
 
 	def create_kettle(self, player: Player, pos, mouse):
 		direction = pygame.math.Vector2(mouse)

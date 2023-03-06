@@ -162,6 +162,8 @@ class Enemy(Entity):
 			if attack.direction == (0, 0) and self.enemy_name == 'red_cow':
 				self.create_explosion(self.rect.center, self.damage)
 				return 'dead'
+			elif self.enemy_name == 'yellow_cow':
+				self.create_bullet(self, update.pos, pygame.math.Vector2(attack.direction))
 
 		if update.status == 'dead':
 			return 'dead'
@@ -194,9 +196,9 @@ class Enemy(Entity):
 			return
 
 		# Don't use players who are safe from this enemy
-		for i, player in enumerate(players):
-			if self.safe is not None and player in self.safe:
-				del players[i]
+		# for i, player in enumerate(players):
+		# 	if self.safe is not None and player in self.safe:
+		# 		del players[i]
 
 		if not players:
 			return
