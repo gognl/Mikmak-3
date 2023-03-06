@@ -78,7 +78,7 @@ class Server:
 				self.pos: (int, int) = None
 				self.type: str = None
 				self.direction: (int, int) = None
-				self.status: int = None
+				self.status: str = None
 				self.attacks: Tuple[Server.Input.EnemyAttackUpdate] = None
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)

@@ -121,12 +121,12 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 			world.enemies[entity_id].update_pos(entity_pos)
 			world.enemies[entity_id].direction = pygame.math.Vector2(entity_direction)
 			world.enemies[entity_id].update_queue.append(enemy_update)
-
 		else:
 			world.enemies[entity_id] = Enemy(enemy_name, entity_pos,
 											 (world.visible_sprites, world.server_sprites, world.all_obstacles),
 											 entity_id, world.all_obstacles, world.create_dropped_item, world.create_explosion,
 											 world.create_bullet, world.kill_enemy)
+			world.enemies[entity_id].update_queue.append(enemy_update)
 
 	for item_update in update_msg.state_update.item_changes:
 		# add it to the items dict if it's not already there
