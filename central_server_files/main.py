@@ -10,7 +10,7 @@ CONN_NORMALS_PORT = CENTRAL_SERVER.port
 
 def main():
 	new_players_q: deque[PlayerCentral] = deque()
-	LB_to_login_q: deque[LB_to_login_msgs] = deque()
+	LB_to_login_q: deque[LB_to_login_msg] = deque()
 	login_sock_to_normals: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 	login_sock_to_normals.bind(('0.0.0.0', CONN_NORMALS_PORT))

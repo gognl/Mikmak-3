@@ -14,6 +14,7 @@ PROTOCOL_LEN = 2
 DATA_MAX_LENGTH = 510
 id_socket_dict = {}
 DH_normal_keys = {}
+server_serverSocket_dict = {}
 
 DH_p = 129580882928432529101537842147269734269461392429415268045151341409571915390240545252786047823626355003667141296663918972102908481139133511887035351545132033655663683090166304802438003459450977581889646160951156933194756978255460848171968985564238788467016810538221614304187340780075305032745815204247560364281
 DH_g = 119475692254216920066132241696136552167987712858139173729861721592048057547464063002529177743099212305134089294733874076960807769722388944847002937915383340517574084979135586810183464775095834581566522721036079400681459953414957269562943460288437613755140572753576980521074966372619062067471488360595813421462
@@ -54,6 +55,7 @@ def initialize_conn_with_normal(sock_to_normals: socket.socket):
 			normal_sock.close()
 			continue
 
+		server_serverSocket_dict[server] = normal_sock
 		DH_with_normal(normal_sock, server)
 
 		amount_connected += 1
@@ -82,12 +84,17 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 		id_socket_dict[info_tuple[0]] = client_sock
 		new_players_q.append(PlayerCentral(Point(info_tuple[3], info_tuple[4]), info_tuple[0]))
 
-def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msgs], sock_to_normals: socket.socket) -> None:
-	msg = LB_to_login_q.pop()
-	wanted_id = msg.client_id.decode()
-	info_to_normals = InfoData(info=load_info(db, wanted_id)[0])  # Tuple of the info
-	sock_to_normals.send(InfoMsgToNormal(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), info=info_to_normals.serialize()).serialize())
-	client_sock: socket.socket = id_socket_dict.get(msg.client_id)
-	client_sock.send(pack("<H",len(LoginResponseToClient(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server)).serialize())))
-	client_sock.send(LoginResponseToClient(encrypted_id=encrypt(msg.client_id, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server)).serialize())
+def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]) -> None:
+	msg: LB_to_login_msg = LB_to_login_q.pop()
+	info_to_normals = InfoData(info=load_info(db, msg.client_id)[0])  # Tuple of the info
+	client_id_bytes = msg.client_id.to_bytes(6, 'little')
+
+	server_serverSocket_dict[msg.server].send(InfoMsgToNormal(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), info=info_to_normals.serialize()).serialize())
+
+	client_sock: socket.socket = id_socket_dict[msg.client_id]
+	resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server))
+	resp_to_client_bytes = resp_to_client.serialize()
+	client_sock.send(pack("<H", len(resp_to_client_bytes)))
+	client_sock.send(resp_to_client_bytes)
+
 # TODO: send to the normal as well - done partially

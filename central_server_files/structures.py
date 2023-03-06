@@ -1,6 +1,6 @@
 from central_server_files.serializable import Serializable
 
-ID = bytes
+ID = int
 
 class Point:
 	def __init__(self, x: int, y: int):
@@ -49,13 +49,12 @@ class ServerSer(Serializable, Server):
 			return
 		Server.__init__(self, kwargs['ip'], kwargs['port'])
 
-
 		Server.__init__(self, kwargs['ip'], kwargs['port'])
 
-class LB_to_login_msgs:
+class LB_to_login_msg:
 	def __init__(self, client_id: ID, server: Server):
 		self.client_id: ID = client_id
-		self.server = server
+		self.server: Server = server
 
 class LoginResponseToClient(Serializable):
 	def __init__(self, **kwargs):
