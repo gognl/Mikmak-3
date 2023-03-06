@@ -71,7 +71,7 @@ class GameManager(threading.Thread):
             self.sock_to_login.send(x.to_bytes(128, 'little'))
             y, addr = 0, ('0.0.0.0', 0)
             y = self.sock_to_login.recv(1024)
-            self.DH_login_key = pow(int.from_bytes(y, 'little', a, DH_p)).to_bytes(128, 'little')
+            self.DH_login_key = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
 
         DH_threads: list[threading.Thread] = []
