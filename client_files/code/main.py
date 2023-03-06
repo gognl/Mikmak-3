@@ -118,16 +118,15 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		enemy_name: str = enemy_update.type
 		entity_direction = enemy_update.direction
 		if entity_id in world.enemies:
-			if enemy_update.status == 'dead':
-				world.enemies[entity_id].kill()
-				continue
 			world.enemies[entity_id].update_pos(entity_pos)
 			world.enemies[entity_id].direction = pygame.math.Vector2(entity_direction)
+			world.enemies[entity_id].update_queue.append(enemy_update)
+
 		else:
 			world.enemies[entity_id] = Enemy(enemy_name, entity_pos,
 											 (world.visible_sprites, world.server_sprites, world.all_obstacles),
 											 entity_id, world.all_obstacles, world.create_dropped_item, world.create_explosion,
-											 world.create_bullet)
+											 world.create_bullet, world.kill_enemy)
 
 	for item_update in update_msg.state_update.item_changes:
 		# add it to the items dict if it's not already there
@@ -146,6 +145,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 	ids_to_remove = []
 	for tick_update in changes:
 		for enemy_change in tick_update.enemies_update:
+			if enemy_change.entity_id not in world.enemies:
+				continue
 			if pygame.Vector2(world.enemies[enemy_change.entity_id].rect.topleft).distance_squared_to(
 					pygame.Vector2(enemy_change.pos)) > MAX_DIVERGENCE_SQUARED:
 				ids_to_remove.append(enemy_change.entity_id)
@@ -163,6 +164,8 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 			world.player.status = player_change.status
 
 		for enemy_change in tick_update.enemies_update:
+			if enemy_change.entity_id not in world.enemies:
+				continue
 			world.enemies[enemy_change.entity_id].update_pos(enemy_change.pos)
 
 

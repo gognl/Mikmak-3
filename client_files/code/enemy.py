@@ -1,3 +1,4 @@
+from collections import deque
 from typing import List, Union
 import random
 
@@ -7,11 +8,12 @@ from client_files.code.other_player import OtherPlayer
 from client_files.code.player import Player
 from client_files.code.settings import *
 from client_files.code.entity import Entity
+from client_files.code.structures import Server
 from client_files.code.support import *
 
 
 class Enemy(Entity):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, create_explosion, create_bullet, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
+	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, create_explosion, create_bullet, die, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		# general setup
 		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
 		self.status = None
@@ -65,6 +67,10 @@ class Enemy(Entity):
 		# Attack actions
 		self.create_explosion = create_explosion
 		self.create_bullet = create_bullet
+
+		self.update_queue: deque[Server.Input.EnemyUpdate] = deque()
+
+		self.die = die
 
 	def import_graphics(self, name):
 		self.animations = {'move': []}
@@ -151,7 +157,21 @@ class Enemy(Entity):
 			else:
 				self.move_time += 1
 
+	def process_server_update(self, update: Server.Input.EnemyUpdate):
+		for attack in update.attacks:
+			if attack.direction == (0, 0) and self.enemy_name == 'red_cow':
+				self.create_explosion(self.rect.center, self.damage)
+				return 'dead'
+
+		if update.status == 'dead':
+			return 'dead'
+
 	def update(self):
+
+		while self.update_queue:
+			if self.process_server_update(self.update_queue.popleft()) == 'dead':
+				self.die(self)
+				return
 
 		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
 
@@ -232,7 +252,7 @@ class Pet(Enemy):
 
 class TitleEnemy(Enemy):
 	def __init__(self, enemy_name, pos, groups, direction):
-		super().__init__(enemy_name, pos, groups, 0, None, None, None, None)
+		super().__init__(enemy_name, pos, groups, 0, None, None, None, None, None)
 
 		self.direction = direction
 		self.image = self.animations['move'][0 if self.direction[0] < 0 else 1]

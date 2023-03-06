@@ -103,7 +103,8 @@ class Enemy(pygame.sprite.Sprite):
 			player.deal_damage(self.damage)
 		elif self.enemy_name == "red_cow":
 			self.create_explosion(self.rect.center, self.damage)
-			pass  # die
+			self.attacks.append(Client.Output.EnemyAttackUpdate(direction=(0, 0)))
+			self.die()
 		elif self.enemy_name == "yellow_cow":
 			self.create_bullet(self, self.rect.center, pygame.math.Vector2(player.rect.center[0], player.rect.center[1]))
 
