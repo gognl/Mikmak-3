@@ -15,6 +15,7 @@ SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36]
 MAX_DIVERGENCE_SQUARED: int = 80 ** 2
 MAX_PETS_PER_PLAYER: int = 5
 ENEMY_ATTACK_COOLDOWN: int = 18
+MAX_OBSTACLE_SIZE = 70
 
 weapon_data = {
     'sword': {'damage': 100, 'graphic': '../graphics/weapons/sword/full.png'},

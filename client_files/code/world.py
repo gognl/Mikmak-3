@@ -100,7 +100,7 @@ class World:
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
-                             0, self.magnetic_players)  # TODO - make starting player position random (or a spawn)
+                             0, self.magnetic_players, self.layout)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
