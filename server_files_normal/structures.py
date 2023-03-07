@@ -218,7 +218,7 @@ class Login:
                 self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
 
                 self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
-                                                            # max item count: 255
+                # max item count: 255
 
             def _get_attr(self) -> dict:
                 return {'entity_id': (int, 'u_2'),
@@ -228,3 +228,41 @@ class Login:
                         'resistance': (int, 'u_1'),
                         'xp': (int, 'u_2'),
                         'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1')))}
+
+
+class NormalServer:
+    class Output:
+        class StateUpdateNoAck(Serializable):
+            def __init__(self, **kwargs):
+                self.player_changes: Tuple[Client.Output.PlayerUpdate] = None
+                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = None
+
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    return
+
+                self.player_changes: Tuple[Client.Output.PlayerUpdate] = kwargs.pop('player_changes')
+                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = kwargs.pop('enemy_changes')
+
+            def _get_attr(self) -> dict:
+                return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
+                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o'))}
+
+
+class Rect:
+    def __init__(self, x1: int, y1: int, x2: int, y2: int):
+        self.x1: int = x1
+        self.y1: int = y1
+        self.x2: int = x2
+        self.y2: int = y2
+
+    def __contains__(self, item):
+        assert isinstance(item, tuple) and isinstance(item[0], int), isinstance(item[1], int)
+        return self.x1 <= item[0] <= self.x2 and self.y1 <= item[1] <= self.y2
+
+
+class Point:
+    def __init__(self, x: int, y: int):
+        self.x: int = x
+        self.y: int = y
