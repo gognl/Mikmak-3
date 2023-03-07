@@ -101,6 +101,20 @@ class GameManager(threading.Thread):
 		pos: (int, int) = (900, 900)
 		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
 
+	@staticmethod
+	def remove_player(player: Player):
+		player.kill()
+
+	@staticmethod
+	def get_player_data(player: Player):
+		return {'entity_id': player.entity_id,
+				'pos': tuple(player.rect.topleft),
+				'health': player.health,
+				'strength': player.strength,
+				'resistance': player.resistance,
+				'xp': player.xp,
+				'inventory': player.inventory_items}
+
 	def send_initial_info(self, client_manager: ClientManager):
 		player_data: list = []
 		enemies_data: list = []
