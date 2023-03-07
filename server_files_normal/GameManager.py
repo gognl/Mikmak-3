@@ -54,19 +54,18 @@ class GameManager(threading.Thread):
 			'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
 		}
 
-		for item_id in range(30):
+		for item_id in range(40):
 			while True:
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
 				name = item_names[int(randint(0, len(item_names) - 1))]
-				name = 'spawn_yellow'
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
 					item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
 					item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
 					break
-		self.next_item_id = 30
+		self.next_item_id = 40
 
 	def get_free_item_id(self):
 		self.next_item_id += 1
@@ -100,10 +99,6 @@ class GameManager(threading.Thread):
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (900, 900)
 		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
-
-	@staticmethod
-	def remove_player(player: Player):
-		player.kill()
 
 	@staticmethod
 	def get_player_data(player: Player):

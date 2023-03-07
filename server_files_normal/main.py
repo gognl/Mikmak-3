@@ -76,7 +76,6 @@ def disconnect_client_manager(client_manager: ClientManager):
 	player_data = Login.Output.PlayerData(**game_manager.get_player_data(client_manager.player))
 	print(f'disconnected client. data:\n\t{player_data.__dict__}')
 	# TODO send to login @bar
-	game_manager.remove_player(client_manager.player)
 	client_managers.remove(client_manager)
 
 

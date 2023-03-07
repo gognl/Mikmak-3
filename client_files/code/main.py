@@ -43,9 +43,13 @@ def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpd
 	"""Sends a message to the server (and encrypts it)"""
 	data: bytes = msg.serialize()
 	size: bytes = pack("<H", len(data))
-	# TODO encrypt here
-	server_socket.send(size)
-	server_socket.send(data)
+	try:
+		# TODO encrypt here
+		server_socket.send(size)
+		server_socket.send(data)
+	except socket.error:
+		pygame.quit()
+		exit()
 
 
 def get_server_pkt(server_socket: socket.socket) -> bytes:
@@ -53,11 +57,15 @@ def get_server_pkt(server_socket: socket.socket) -> bytes:
 	Gets a packet from the server (and decrypts them...)
 	:return: The packet from the server.
 	"""
-	size: int = unpack("<H", server_socket.recv(2))[0]
-	# TODO decrypt here too maybe
-	data: bytes = server_socket.recv(size)
-	# TODO decrypt here
-	return data
+	try:
+		size: int = unpack("<H", server_socket.recv(2))[0]
+		# TODO decrypt here too maybe
+		data: bytes = server_socket.recv(size)
+		# TODO decrypt here
+		return data
+	except socket.error:
+		pygame.quit()
+		exit()
 
 
 def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> None:
