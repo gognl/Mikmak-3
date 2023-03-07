@@ -163,7 +163,7 @@ class Enemy(Entity):
 				self.create_explosion(self.rect.center, self.damage)
 				return 'dead'
 			elif self.enemy_name == 'yellow_cow':
-				self.create_bullet(self, update.pos, pygame.math.Vector2(attack.direction))
+				self.create_bullet(self, self.rect.center, pygame.math.Vector2(attack.direction))
 
 		if update.status == 'dead':
 			return 'dead'
