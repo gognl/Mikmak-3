@@ -244,6 +244,7 @@ class GameManager(threading.Thread):
 			source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
 			damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
 		else:
+			direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
 			source.attacks.append(Client.Output.EnemyAttackUpdate(direction=mouse))
 			damage = source.damage
 
