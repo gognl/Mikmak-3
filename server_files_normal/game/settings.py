@@ -2,6 +2,7 @@ FPS: int = 60
 CLIENT_FPS: int = 120
 UPDATE_FREQUENCY: int = 10
 OVERLAPPED_UPDATE_FREQUENCY: int = 15
+SEND_TO_LB_FREQUENCY: int = 1
 TILESIZE = 64
 ROW_TILES: int = 450
 COL_TILES: int = 800
@@ -29,7 +30,8 @@ class Server:
 
 # TODO: get this list in the starting of the server
 NORMAL_SERVERS = [Server('192.168.174.189', 14760), Server('192.168.172.117', 14760), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
-CENTRAL_SERVER = Server('192.168.171.117', 12304)
+LOGIN_SERVER = Server('192.168.171.117', 12304)
+LB_SERVER = Server('192.168.171.117', 12328)
 
 weapon_data = {
 	'sword': {'cooldown': 100, 'damage': 15, 'graphic': '../graphics/weapons/sword/full.png'},

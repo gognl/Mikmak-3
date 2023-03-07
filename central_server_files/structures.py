@@ -24,10 +24,24 @@ class Point:
 		assert isinstance(other, Point)
 		return (self.x - other.x) ** 2 + (self.y - other.y) ** 2
 
-class PlayerCentral:
-	def __init__(self, pos: Point, client_id: ID):
-		self.pos: Point = pos
-		self.id: ID = client_id
+class PlayerCentral(Serializable):
+	def __init__(self, **kwargs):
+		ser = kwargs.get('ser', b'')
+		super().__init__(ser)
+		if ser != b'':
+			return
+
+		self.pos: Point = kwargs['pos']
+		self.id: ID = kwargs['player_id']
+
+class PlayerCentralList(Serializable):
+	def __init__(self, **kwargs):
+		ser = kwargs.get('ser', b'')
+		super().__init__(ser)
+		if ser != b'':
+			return
+
+		self.players: list[PlayerCentral] = kwargs['players']
 
 class Server:
 	def __init__(self, ip, port):
@@ -47,8 +61,6 @@ class ServerSer(Serializable, Server):
 		Serializable.__init__(self, ser)
 		if ser != b'':
 			return
-		Server.__init__(self, kwargs['ip'], kwargs['port'])
-
 		Server.__init__(self, kwargs['ip'], kwargs['port'])
 
 class LB_to_login_msg:

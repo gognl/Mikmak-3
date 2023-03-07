@@ -135,3 +135,6 @@ class Player(pygame.sprite.Sprite):
 
 	def reset_attacks(self):
 		self.attacks: deque = deque()
+
+	def get_pos(self):
+		return Point(self.rect.x, self.rect.y)

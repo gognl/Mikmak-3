@@ -6,6 +6,7 @@ from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_folder
 from server_files_normal.game.player import Player
 from server_files_normal.game.settings import *
+from server_files_normal.structures import Point
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -134,3 +135,6 @@ class Enemy(pygame.sprite.Sprite):
 		player: Player = self.get_closest_player(players)
 		self.get_status(player)
 		self.actions(player)
+
+	def get_pos(self):
+		return Point(self.rect.x, self.rect.y)

@@ -46,7 +46,7 @@ def DH_with_normal(normal_sock: socket.socket, server: Server):
 	y = normal_sock.recv(1024)
 	DH_normal_keys[server] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
-def initialize_conn_with_normal(sock_to_normals: socket.socket):
+def initialize_conn_with_normals(sock_to_normals: socket.socket):
 	amount_connected = 0
 	while amount_connected < 4:
 		normal_sock, addr = sock_to_normals.accept()
@@ -82,7 +82,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 
 		info_tuple = list_user_info[0]
 		id_socket_dict[info_tuple[0]] = client_sock
-		new_players_q.append(PlayerCentral(Point(info_tuple[3], info_tuple[4]), info_tuple[0]))
+		new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
 def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]) -> None:
 	msg: LB_to_login_msg = LB_to_login_q.pop()
