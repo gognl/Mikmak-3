@@ -1,3 +1,4 @@
+from collections import deque
 from typing import List, Union
 import random
 
@@ -7,11 +8,12 @@ from client_files.code.other_player import OtherPlayer
 from client_files.code.player import Player
 from client_files.code.settings import *
 from client_files.code.entity import Entity
+from client_files.code.structures import Server
 from client_files.code.support import *
 
 
 class Enemy(Entity):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, create_explosion, create_bullet, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
+	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, create_explosion, create_bullet, die, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
 		# general setup
 		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
 		self.status = None
@@ -66,6 +68,10 @@ class Enemy(Entity):
 		self.create_explosion = create_explosion
 		self.create_bullet = create_bullet
 
+		self.update_queue: deque[Server.Input.EnemyUpdate] = deque()
+
+		self.die = die
+
 	def import_graphics(self, name):
 		self.animations = {'move': []}
 		path = f'../graphics/monsters/{name}/move/'
@@ -116,22 +122,23 @@ class Enemy(Entity):
 			player.deal_damage(self.damage)
 		elif self.enemy_name == "red_cow":
 			self.create_explosion(self.rect.center, self.damage)
-			self.on_kill()
-			self.kill()
+			pass  # TODO die
 		elif self.enemy_name == "yellow_cow":
 			self.create_bullet(self, self.rect.center, pygame.math.Vector2(player.rect.center[0], player.rect.center[1]))
 
 	def actions(self, player):
 		if self.status == 'attack':
-			if self.can_attack:
-				self.can_attack = False
-				self.attack(player)
+			# if self.can_attack:
+			# 	self.can_attack = False
+			# 	self.attack(player)
+			pass  # moved to server
 
-		if self.status == 'move':
+		elif self.status == 'move':
 			if self.can_move:
 				self.can_move = False
 				self.direction = self.get_player_distance_direction(player)[1]
 				self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
+
 		else:
 			self.direction = pygame.math.Vector2()
 
@@ -150,17 +157,27 @@ class Enemy(Entity):
 			else:
 				self.move_time += 1
 
-	def on_kill(self):
-		for i in range(min(2, len(self.death_items))):
-			self.create_dropped_item(random.choice(self.death_items), self.rect.center)
-		for i in range(self.xp):
-			self.create_dropped_item("xp", self.rect.center)
+	def process_server_update(self, update: Server.Input.EnemyUpdate):
+		for attack in update.attacks:
+			if attack.direction == (0, 0) and self.enemy_name == 'red_cow':
+				self.create_explosion(self.rect.center, self.damage)
+				return 'dead'
+			elif self.enemy_name == 'yellow_cow':
+				self.create_bullet(self, self.rect.center, pygame.math.Vector2(attack.direction))
+
+		if update.status == 'dead':
+			return 'dead'
 
 	def update(self):
 
+		while self.update_queue:
+			if self.process_server_update(self.update_queue.popleft()) == 'dead':
+				self.die(self)
+				return
+
 		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
 
-		self.move(self.speed)
+		#  self.move(self.speed)
 
 		self.changes: dict = {'pos': (self.rect.x, self.rect.y)}
 		if self.changes == previous_state:
@@ -168,8 +185,9 @@ class Enemy(Entity):
 
 		# Death
 		if self.health <= 0:
-			self.on_kill()
-			self.kill()
+			# self.on_kill()
+			# self.kill()
+			pass  # moved to server
 
 		self.cooldowns()
 
@@ -178,9 +196,9 @@ class Enemy(Entity):
 			return
 
 		# Don't use players who are safe from this enemy
-		for i, player in enumerate(players):
-			if self.safe is not None and player in self.safe:
-				del players[i]
+		# for i, player in enumerate(players):
+		# 	if self.safe is not None and player in self.safe:
+		# 		del players[i]
 
 		if not players:
 			return
@@ -223,7 +241,7 @@ class Pet(Enemy):
 
 		# Death
 		if self.health <= 0:
-			self.on_kill()
+			pass  # self.on_kill()
 
 			self.nametag.kill = True
 			self.owner.pets -= 1
@@ -236,7 +254,7 @@ class Pet(Enemy):
 
 class TitleEnemy(Enemy):
 	def __init__(self, enemy_name, pos, groups, direction):
-		super().__init__(enemy_name, pos, groups, 0, None, None, None, None)
+		super().__init__(enemy_name, pos, groups, 0, None, None, None, None, None)
 
 		self.direction = direction
 		self.image = self.animations['move'][0 if self.direction[0] < 0 else 1]

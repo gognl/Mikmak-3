@@ -76,9 +76,23 @@ class Client:
                 changes = kwargs.pop('changes')
                 self.pos = changes['pos']
                 self.direction = changes['direction']
+                self.status = changes['status']
+                self.attacks = changes['attacks']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8'))}
+                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'), 'attacks': (tuple, (Client.Output.EnemyAttackUpdate, 'o'))}
+
+        class EnemyAttackUpdate(Serializable):
+            def __init__(self, **kwargs):
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    return
+
+                self.direction = kwargs.pop('direction')  # if it's (0, 0) then it's an exploding red cow
+
+            def _get_attr(self) -> dict:
+                return {'direction': (tuple, (float, 'f_8'))}
 
         class ItemUpdate(Serializable):
 

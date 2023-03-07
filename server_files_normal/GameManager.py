@@ -40,12 +40,12 @@ class GameManager(threading.Thread):
 
 		self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
 		self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
-		#self.initialize_obstacle_sprites()
+		#  self.initialize_obstacle_sprites()
 
 		# TODO temporary
 		for i in range(20):
 			pos = (randint(2000, 3000), randint(2000, 3000))
-			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=generate_entity_id(), obstacle_sprites=self.all_obstacles)
+			Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=generate_entity_id(), obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion, create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
 
 		# TODO temporary, item spawning
 		self.layout: Dict[str, List[List[str]]] = {
@@ -59,6 +59,7 @@ class GameManager(threading.Thread):
 				random_x = randint(20, 30)
 				random_y = randint(20, 30)
 				name = item_names[int(randint(0, len(item_names) - 1))]
+				name = 'spawn_yellow'
 
 				if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 						self.layout['objects'][random_y][random_x]) == -1:
@@ -83,7 +84,7 @@ class GameManager(threading.Thread):
 				if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
 					x: int = col_index * TILESIZE
 					y: int = row_index * TILESIZE
-					Barrier((x, y), (self.obstacle_sprites,))
+					Barrier((x, y), (self.obstacle_sprites, self.all_obstacles))
 
 	def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
 		while True:
@@ -111,7 +112,7 @@ class GameManager(threading.Thread):
 			player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
 		for enemy in self.enemies.sprites():
-			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
+			changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'status': enemy.status, 'attacks': tuple(enemy.attacks)}
 			enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
 		for item in self.items.sprites():
@@ -151,14 +152,20 @@ class GameManager(threading.Thread):
 
 			# Run enemies simulation
 			for enemy in self.enemies.sprites():
-				previous_pos = (enemy.rect.x, enemy.rect.y)
 				for i in range(CLIENT_FPS//FPS):
 					enemy.update()
 					enemy.enemy_update(self.players)
-				if previous_pos == (enemy.rect.x, enemy.rect.y):
-					continue
-				changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y)}
-				enemy_changes.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
+
+				if enemy.dead:
+					enemy.status = 'dead'
+				current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'attacks': tuple(enemy.attacks), 'status': enemy.status}
+				if enemy.previous_state != current_enemy_state:
+					enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=current_enemy_state)
+					enemy_changes.append(enemy_update)
+				enemy.reset_attacks()
+				enemy.previous_state = current_enemy_state
+				if enemy.status == 'dead':
+					enemy.kill()
 
 			for i in range(CLIENT_FPS // FPS):
 				self.projectiles.update()
@@ -188,7 +195,7 @@ class GameManager(threading.Thread):
 				item: Item
 				for item in self.items.sprites():
 
-					if tuple(item.rect.center) != item.previous_pos:
+					if tuple(item.rect.center) != item.previous_pos and item.previous_pos != ():
 						item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
 
 					if not item.actions:
@@ -233,15 +240,16 @@ class GameManager(threading.Thread):
 
 	def create_bullet(self, source: Union[Player, Enemy], pos, mouse):
 		direction = pygame.math.Vector2(mouse)
-		source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
-
 		if not isinstance(source, Enemy):
+			source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
 			damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
 		else:
+			direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
+			source.attacks.append(Client.Output.EnemyAttackUpdate(direction=mouse))
 			damage = source.damage
 
 		Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.players, 3, 15, 120, './graphics/weapons/bullet.png', damage)
+				   self.all_obstacles, 4, 15, 120, './graphics/weapons/bullet.png', damage)
 
 	def create_kettle(self, player: Player, pos, mouse):
 		direction = pygame.math.Vector2(mouse)
@@ -268,5 +276,6 @@ class GameManager(threading.Thread):
 				else:
 					Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
 						  groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=self.generate_entity_id(),
-						  obstacle_sprites=self.all_obstacles)
+						  obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion,
+						  create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
 				break

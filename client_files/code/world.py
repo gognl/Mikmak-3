@@ -210,6 +210,10 @@ class World:
     def create_explosion(self, pos, damage):
         Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
 
+    def kill_enemy(self, enemy: Enemy):
+        del self.enemies[enemy.entity_id]
+        enemy.kill()
+
     def run(self) -> (TickUpdate, Server.Output.StateUpdate):
         """
         Run one world frame
