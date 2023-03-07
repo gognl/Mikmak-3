@@ -2,11 +2,13 @@ from typing import Tuple, List
 
 from server_files_normal.serializable import Serializable
 
+
 class Client:
     class Output:
 
         class StateUpdate(Serializable):
             """Like StateUpdate but with an acknowledgement number"""
+
             def __init__(self, ack: int, state_update: 'Client.Output.StateUpdateNoAck'):
                 super().__init__(ser=b'')
                 self.ack: int = ack
@@ -18,14 +20,18 @@ class Client:
         class StateUpdateNoAck(Serializable):
             """ A class that describes the message to the client, which contains the current state of relevant game changes"""
 
-            def __init__(self, player_changes: Tuple['Client.Output.PlayerUpdate'], enemy_changes: Tuple['Client.Output.EnemyUpdate']):
+            def __init__(self, player_changes: Tuple['Client.Output.PlayerUpdate'],
+                         enemy_changes: Tuple['Client.Output.EnemyUpdate'],
+                         item_changes: Tuple['Client.Output.ItemUpdate']):
                 super().__init__(ser=b'')
                 self.player_changes: Tuple[Client.Output.PlayerUpdate] = player_changes
                 self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = enemy_changes
+                self.item_changes: Tuple[Client.Output.ItemUpdate] = item_changes
 
             def _get_attr(self) -> dict:
                 return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
-                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o'))}
+                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o')),
+                        'item_changes': (tuple, (Client.Output.ItemUpdate, 'o'))}
 
         class PlayerUpdate(Serializable):
 
@@ -41,9 +47,12 @@ class Client:
                 self.pos = changes['pos']
                 self.attacks = changes['attacks']
                 self.status = changes['status']
+                self.health = changes['health']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Client.Output.AttackUpdate, 'o')), 'status': (str, 'str')}
+                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')),
+                        'attacks': (tuple, (Client.Output.AttackUpdate, 'o')), 'status': (str, 'str'),
+                        'health': (int, 'u_1')}
 
         class AttackUpdate(Serializable):
             def __init__(self, **kwargs):
@@ -71,18 +80,57 @@ class Client:
                 changes = kwargs.pop('changes')
                 self.pos = changes['pos']
                 self.direction = changes['direction']
+                self.status = changes['status']
+                self.attacks = changes['attacks']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8'))}
+                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'),
+                        'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'),
+                        'attacks': (tuple, (Client.Output.EnemyAttackUpdate, 'o'))}
 
-        class ServerSwitch(Serializable):
-            """A class of a message to the client which included data about switching to a different server (and region)"""
+        class EnemyAttackUpdate(Serializable):
+            def __init__(self, **kwargs):
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    return
+
+                self.direction = kwargs.pop('direction')  # if it's (0, 0) then it's an exploding red cow
+
+            def _get_attr(self) -> dict:
+                return {'direction': (tuple, (float, 'f_8'))}
+
+        class ItemUpdate(Serializable):
 
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
                     return
+
+                self.id = kwargs.pop('id')
+                self.name = kwargs.pop('name')
+                self.actions = kwargs.pop('actions')
+
+            def _get_attr(self) -> dict:
+                return {'id': (int, 'u_3'), 'name': (str, 'str'),
+                        'actions': (tuple, (Client.Output.ItemActionUpdate, 'o'))}
+
+        class ItemActionUpdate(Serializable):
+
+            def __init__(self, **kwargs):
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    return
+
+                self.player_id = kwargs.pop('player_id', 0)  # id of player
+                self.action_type = kwargs.pop('action_type',
+                                              'spawn')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move' or 'use'
+                self.pos = kwargs.pop('pos', (0, 0))  # tuple of item position
+
+            def _get_attr(self) -> dict:
+                return {'player_id': (int, 'u_2'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
 
     class Input:
         class ClientCMD(Serializable):
@@ -108,11 +156,11 @@ class Client:
             """
 
             def __init__(self, **kwargs):
-
                 self.id: int = None
                 self.pos: Tuple[int, int] = None
                 self.attacks: Tuple[Client.Input.AttackUpdate] = None
                 self.status: str = None
+                self.item_actions: Tuple[Client.Input.ItemActionUpdate] = None
 
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
@@ -120,7 +168,11 @@ class Client:
                     return
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Client.Input.AttackUpdate, 'o')), 'status': (str, 'str')}
+                return {'id': (int, 'u_2'),
+                        'pos': (tuple, (int, 'u_8')),
+                        'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
+                        'status': (str, 'str'),
+                        'item_actions': (tuple, (Client.Input.ItemActionUpdate, 'o'))}
 
         class AttackUpdate(Serializable):
             def __init__(self, **kwargs):
@@ -136,47 +188,43 @@ class Client:
             def _get_attr(self) -> dict:
                 return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
 
-class NormalServer:
-    class Output:
-        class StateUpdateNoAck(Serializable):
+        class ItemActionUpdate(Serializable):
             def __init__(self, **kwargs):
-                self.player_changes: Tuple[Client.Output.PlayerUpdate] = None
-                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = None
-
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
                     return
 
-                self.player_changes: Tuple[Client.Output.PlayerUpdate] = kwargs.pop('player_changes')
-                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = kwargs.pop('enemy_changes')
+                self.item_name: str = None
+                self.action_type: str = None  # 'drop' or 'use'
+                self.item_id: int = None
 
             def _get_attr(self) -> dict:
-                return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
-                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o'))}
+                return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}
 
 
-class Rect:
-    def __init__(self, x1: int, y1: int, x2: int, y2: int):
-        self.x1: int = x1
-        self.y1: int = y1
-        self.x2: int = x2
-        self.y2: int = y2
+class Login:
+    class Output:
+        class PlayerData(Serializable):
+            def __init__(self, **kwargs):
+                super().__init__(ser=b'')
+                self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
 
-    def __contains__(self, item):
-        assert isinstance(item, tuple) and isinstance(item[0], int), isinstance(item[1], int)
-        return self.x1 <= item[0] <= self.x2 and self.y1 <= item[1] <= self.y2
+                self.pos = kwargs.pop('pos')
 
-class Point:
-    def __init__(self, x: int, y : int):
-        self.x: int = x
-        self.y: int = y
+                self.health = kwargs.pop('health')  # 1 byte unsigned integer
+                self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
+                self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
+                self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
 
-class Encryption:
-    @staticmethod
-    def encrypt(msg: bytes, key: bytes):
-        return msg
+                self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
+                                                            # max item count: 255
 
-    @staticmethod
-    def decrypt(msg: bytes, key: bytes):
-        return msg
+            def _get_attr(self) -> dict:
+                return {'entity_id': (int, 'u_2'),
+                        'pos': (tuple, 'u_2'),
+                        'health': (int, 'u_1'),
+                        'strength': (int, 'u_1'),
+                        'resistance': (int, 'u_1'),
+                        'xp': (int, 'u_2'),
+                        'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1')))}

@@ -1,29 +1,40 @@
+from collections import deque
+
 import pygame
 import re
 from client_files.code.settings import *
+from client_files.code.structures import Server
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, name, groups, pos):
+    def __init__(self, item_id, name, groups, pos, item_despawn=None, item_pickup=None, item_drop=None, item_use=None):
         super().__init__(groups)
 
         # Inventory
         self.name = re.sub("\(.*?\)", "", name)
+        self.item_id = item_id
 
         # Sprite
         self.image = pygame.image.load(f'../graphics/items/{self.name}.png').convert_alpha()
         self.rect = self.image.get_rect(center=pos)
-        self.height = 4
+        self.height = 1
 
         # Exact position so magnet movement looks better
         self.xpos = self.rect.x
         self.ypos = self.rect.y
 
         # Pick up cooldown
-        self.spawn_time = pygame.time.get_ticks()
+        self.spawn_time = 0
         self.pick_up_cooldown = ITEM_PICK_UP_COOLDOWN
         self.can_pick_up = False
 
         self.despawn_time = ITEM_DESPAWN_TIME
+
+        self.update_queue: deque = deque()
+
+        self.item_despawn = item_despawn
+        self.item_pickup = item_pickup
+        self.item_drop = item_drop
+        self.item_use = item_use
 
     def update_movement(self, magnetic_players):
         if len(magnetic_players) != 0:
@@ -47,10 +58,29 @@ class Item(pygame.sprite.Sprite):
                 self.rect.x = int(self.xpos)
                 self.rect.y = int(self.ypos)
 
+    def process_server_update(self, action: Server.Input.ItemActionUpdate):
+        action_type = action.action_type
+        if action_type == 'spawn':
+            self.rect = self.image.get_rect(center=action.pos)
+        elif action_type == 'despawn':
+            self.item_despawn(self)
+        elif action_type == 'pickup':
+            self.item_pickup(self, action.player_id)
+        elif action_type == 'drop':
+            self.item_drop(self, action.player_id, action.pos)
+        elif action_type == 'use':
+            self.item_use(self, action.player_id, action.pos)
+        elif action_type == 'move':
+            self.rect = self.image.get_rect(center=action.pos)
+
     def update(self):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.spawn_time > self.pick_up_cooldown:
+        while self.update_queue:
+            self.process_server_update(self.update_queue.popleft())
+
+        '''if self.spawn_time > self.pick_up_cooldown:
             self.can_pick_up = True
 
-        if current_time - self.spawn_time > self.despawn_time:
+        if self.spawn_time > self.despawn_time:
             del self
+
+        self.spawn_time += 1'''

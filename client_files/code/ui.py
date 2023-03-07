@@ -32,6 +32,12 @@ class UI:
         # Inventory UI
         self.inventory_ui_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 48)
 
+        # Chat
+        self.chat_active: bool = False
+
+        # Minimap
+        self.minimap_active = False
+
         # Mouse
         self.release_mouse: bool = False
 
@@ -57,9 +63,16 @@ class UI:
             x -= INVENTORY_WIDTH
         text_rect = text_surf.get_rect(bottomright=(x, y))
 
-        pygame.draw.rect(self.display_surface, UI_BG_COLOR, text_rect.inflate(20, 20))
+        star = pygame.image.load('../graphics/items/xp.png').convert_alpha()
+        star_rect = star.get_rect(center=text_rect.center)
+        star_rect.x -= 45
+
+        # bg, text, star, border
+        j = pygame.Rect.union(text_rect.inflate(20, 20), star_rect.inflate(10, 0))
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, j)
         self.display_surface.blit(text_surf, text_rect)
-        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, text_rect.inflate(20, 20), 3)
+        self.display_surface.blit(star, star_rect)
+        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, j, 3)
 
     def selection_box(self, left, top, has_switched):
         bg_rect = pygame.Rect(left, top, ITEM_BOX_SIZE, ITEM_BOX_SIZE)
@@ -79,7 +92,7 @@ class UI:
         self.display_surface.blit(weapon_surf, weapon_rect)
 
         if weapon_index == 2:
-            item_amount = inventory_items['kettle']
+            item_amount = inventory_items['kettle'].count
             if item_amount > 1:
                 font = pygame.font.Font(UI_FONT, INVENTORY_FONT_SIZE)
                 item_text = font.render(f'{item_amount}', False, TEXT_COLOR)
@@ -127,9 +140,9 @@ class UI:
                 number = y * INVENTORY_SIZE[0] + x
                 if len(inventory_items) > number:
                     item_name = list(inventory_items)[number]
-                    item_amount = inventory_items[item_name]
+                    item_amount = inventory_items[item_name].count
 
-                    item = Item(item_name, (), rect.center)
+                    item = Item(-1, item_name, (), rect.center)
                     self.display_surface.blit(item.image, item.rect)
 
                     if item_amount > 1:
@@ -155,19 +168,62 @@ class UI:
         # Create weapon box
         self.weapon_overlay(player.weapon_index, not player.can_switch_weapon, player.inventory_items)
 
-        # after we add magic
-        # Create magic box
-        # self.selection_box(93, 630)
-
         # Inventory
         if self.inventory_active:
             self.show_inventory(player, player.inventory_items)
+
+        if self.chat_active:
+            self.show_chat()
+
+        if self.minimap_active:
+            self.show_minimap(player)
 
     def create_inventory(self):
         self.inventory_active = True
 
     def destroy_inventory(self):
         self.inventory_active = False
+
+    def create_chat(self):
+        self.chat_active = True
+
+    def destroy_chat(self):
+        self.chat_active = False
+
+    def create_minimap(self):
+        self.minimap_active = True
+
+    def destroy_minimap(self):
+        self.minimap_active = False
+
+    def show_chat(self):
+        x = 10
+        y = 95
+
+        # Background
+        transparent = pygame.Surface((CHAT_WIDTH, CHAT_HEIGHT))
+        transparent.set_alpha(128)
+        transparent.fill(UI_BG_COLOR)
+        self.display_surface.blit(transparent, (x, y))
+
+    def show_minimap(self, player):
+        x = 128
+        y = 72
+
+        # Background
+        rect = pygame.Rect(x, y, self.display_surface.get_size()[0] - (2 * x), self.display_surface.get_size()[1] - (2 * y))
+
+        # Show image
+        map_image = pygame.image.load('../graphics/minimap/map.png').convert_alpha()
+        map_rect = map_image.get_rect(center=rect.center)
+        self.display_surface.blit(map_image, map_rect)
+
+        # Show player head
+        head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
+        head_rect = head_image.get_rect(center=rect.center)
+        head_rect.x = x + player.rect.x/50 - head_rect.height/2
+        head_rect.y = y + player.rect.y/50 - head_rect.width/2
+        self.display_surface.blit(head_image, head_rect)
 
 
 class NameTag:

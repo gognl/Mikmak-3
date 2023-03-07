@@ -28,9 +28,11 @@ class Explosion(pygame.sprite.Sprite):
         for sprite in self.sprites:
             if position.distance_to(sprite.rect.center) <= self.radius:
                 if hasattr(sprite, "health"):
-                    sprite.health -= self.damage
+                    pass
+                    #  sprite.deal_damage(self.damage)
                 elif isinstance(sprite, Item):
-                    sprite.kill()
+                    pass
+                    #  sprite.kill()
 
     def update(self):
         self.image = pygame.transform.scale(self.original_image, (int(self.rect.width * self.speed), int(self.rect.height * self.speed)))
