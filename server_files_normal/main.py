@@ -24,6 +24,7 @@ from server_files_normal.LoadBalancerManager import LoadBalancerManager
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
 from server_files_normal.game.player import Player
+from server_files_normal.structures import Login
 
 
 def initialize_connection(login_addr: (str, int), lb_addr: (str, int)) -> (socket.socket, LoadBalancerManager):
@@ -56,7 +57,7 @@ def generate_entity_id():
 		free_entity_id += 1  # maybe change this to make it less predictable
 		return free_entity_id
 
-def accept_new_clients(server_sock, client_managers, game_manager: GameManager, cmd_semaphore: Semaphore):
+def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
 	while True:
 		client_id: int = generate_entity_id()
 		client_sock, client_addr = server_sock.accept()
@@ -65,13 +66,21 @@ def accept_new_clients(server_sock, client_managers, game_manager: GameManager, 
 		client_sock.send(f'id_{client_id}'.encode())
 
 		player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
-		new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore)  # Create a new client manager
+		new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore, disconnect_client_manager)  # Create a new client manager
 		client_managers.append(new_client_manager)
 		new_client_manager.start()
 		player.client_manager = new_client_manager  # Add the client manager to the player's attributes
 		game_manager.send_initial_info(new_client_manager)
 
+def disconnect_client_manager(client_manager: ClientManager):
+	player_data = Login.Output.PlayerData(**game_manager.get_player_data(client_manager.player))
+	print(f'disconnected client. data:\n\t{player_data.__dict__}')
+	# TODO send to login @bar
+	client_managers.remove(client_manager)
 
+
+client_managers: deque[ClientManager]
+game_manager: GameManager
 def main():
 	# Change later
 	login_addr: (str, int) = ('127.0.0.1', 56793)
@@ -87,11 +96,13 @@ def main():
 	server_sock.listen()
 
 	cmd_semaphore: Semaphore = Semaphore(0)
-	client_managers: deque[ClientManager] = deque([])
+	global client_managers
+	client_managers = deque()
+	global game_manager
 	game_manager = GameManager(client_managers, cmd_semaphore, generate_entity_id)
 	game_manager.start()
 
-	accept_new_clients(server_sock, client_managers, game_manager, cmd_semaphore)
+	accept_new_clients(server_sock, cmd_semaphore)
 
 
 if __name__ == '__main__':

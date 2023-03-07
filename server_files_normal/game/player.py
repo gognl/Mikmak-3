@@ -97,6 +97,10 @@ class Player(pygame.sprite.Sprite):
 		super().__init__(groups)
 
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
+
+		if self.dead:
+			return
+
 		self.status = update.status
 
 		self.cooldowns()
