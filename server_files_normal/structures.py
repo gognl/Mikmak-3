@@ -231,23 +231,41 @@ class Login:
 
 
 class NormalServer:
-    class Output:
-        class StateUpdateNoAck(Serializable):
-            def __init__(self, **kwargs):
-                self.player_changes: Tuple[Client.Output.PlayerUpdate] = None
-                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = None
+    class PlayerUpdate(Serializable):
+        def __init__(self, **kwargs):
+            s: bytes = kwargs.pop('ser', b'')
+            super().__init__(ser=s)
+            if s != b'':
+                return
+            self.id: int = kwargs['player_id']
+            self.pos: Tuple[int, int] = kwargs['pos']
+            self.attacks: Tuple[Client.Input.AttackUpdate] = kwargs['attacks']
+            self.status: str = kwargs['status']
+            self.item_actions: Tuple[Client.Input.ItemActionUpdate] = kwargs['item_actions']
 
-                s: bytes = kwargs.pop('ser', b'')
-                super().__init__(ser=s)
-                if s != b'':
-                    return
 
-                self.player_changes: Tuple[Client.Output.PlayerUpdate] = kwargs.pop('player_changes')
-                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = kwargs.pop('enemy_changes')
+        def _get_attr(self) -> dict:
+            return {'id': (int, 'u_2'),
+                    'pos': (tuple, (int, 'u_8')),
+                    'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
+                    'status': (str, 'str'),
+                    'item_actions': (tuple, (Client.Input.ItemActionUpdate, 'o'))}
 
-            def _get_attr(self) -> dict:
-                return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
-                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o'))}
+    class StateUpdateNoAck(Serializable):
+        def __init__(self, **kwargs):
+            s: bytes = kwargs.pop('ser', b'')
+            super().__init__(ser=s)
+            if s != b'':
+                return
+
+            self.player_changes: Tuple[Client.Output.PlayerUpdate] = kwargs.pop('player_changes')
+            self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = kwargs.pop('enemy_changes')
+            self.item_changes: Tuple[Client.Output.ItemUpdate] = kwargs.pop('item_changes')
+
+        def _get_attr(self) -> dict:
+            return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
+                    'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o')),
+                    'item_changes': (tuple, (Client.Output.ItemUpdate, 'o'))}
 
 
 class Rect:

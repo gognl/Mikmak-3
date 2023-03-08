@@ -26,7 +26,7 @@ from server_files_normal.structures import Login
 
 
 def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
-    client_id: int = 0
+    client_id: int = 40
     while True:
         client_sock, client_addr = server_sock.accept()
 
@@ -60,7 +60,7 @@ def main():
     global client_managers
     client_managers = deque()
     global game_manager
-    game_manager = GameManager(client_managers, cmd_semaphore, 1)
+    game_manager = GameManager(client_managers, cmd_semaphore, 0)
     game_manager.start()
 
     accept_new_clients(server_sock, cmd_semaphore)

@@ -8,6 +8,7 @@ import socket
 from typing import Union, Dict
 from struct import unpack, pack
 
+import client_files.code.main
 from server_files_normal.game.explosion import Explosion
 from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
@@ -67,7 +68,7 @@ class GameManager(threading.Thread):
             self.sock_to_other_normals[i].settimeout(0.02)
 
         # self.sock_to_login.connect(LOGIN_SERVER.addr())
-        self.sock_to_LB.connect(LB_SERVER.addr())
+        # self.sock_to_LB.connect(LB_SERVER.addr())
 
         self.DH_keys: list[bytes] = [bytes(0) for _ in range(4)]
         self.DH_login_key: bytes = bytes(0)
@@ -211,16 +212,20 @@ class GameManager(threading.Thread):
                                                                                       tuple(items_data))
         client_manager.send_msg(state_update)
 
-    def handle_read_only_player_update(self, player_update: Client.Input.PlayerUpdate):
+    def handle_read_only_player_update(self, player_update: Client.Output.PlayerUpdate):
         for p in self.read_only_players:
             if player_update.id == p.entity_id:
                 player = p
                 break
         else:
-            player = Player((self.read_only_players,), player_update.id, player_update.pos, self.create_bullet,
-                            self.create_kettle)
+            player = Player((self.read_only_players,), player_update.id, player_update.pos,
+                      self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
+                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
 
         # Update the player
+        player_update = NormalServer.PlayerUpdate(player_id=player_update.id, pos=player_update.pos,
+                                                  attacks=player_update.attacks, status=player_update.status,
+                                                  item_actions=())
         player.process_client_updates(player_update)
 
         player.reset_attacks()
@@ -230,17 +235,17 @@ class GameManager(threading.Thread):
             for i in self.other_server_indices:
                 sock = self.sock_to_other_normals[i]
                 try:
-                    data, addr = sock.recvfrom(1024)
+                    data, addr = sock.recvfrom(4096)
                 except socket.timeout:
                     continue
                 except ConnectionResetError:
                     print(i)
                     continue
                 if Server(addr[0], addr[1] - self.my_server_index) == NORMAL_SERVERS[i]:
-                    data = Encryption.decrypt(data, self.DH_keys[i])
+                    #data = Encryption.decrypt(data, self.DH_keys[i])
                     prefix, data = data[0], data[1:]
                     if prefix == 0:  # overlapped players update
-                        state_update = NormalServer.Output.StateUpdateNoAck(ser=data)
+                        state_update = NormalServer.StateUpdateNoAck(ser=data)
                         self.players_updates.extend(state_update.player_changes)
                         self.enemy_changes.extend(state_update.enemy_changes)
 
@@ -291,7 +296,7 @@ class GameManager(threading.Thread):
             # Update the player
             player.process_client_updates(player_update)
 
-            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status}
+            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status, 'health': player.health}
             player.reset_attacks()
             player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
@@ -307,7 +312,7 @@ class GameManager(threading.Thread):
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
     def send_to_normal_server(self, server_index: int, msg: bytes):
-        msg = Encryption.encrypt(msg, self.DH_keys[server_index])
+        #msg = Encryption.encrypt(msg, self.DH_keys[server_index])
         self.sock_to_other_normals[server_index].sendto(msg,
                                                         (NORMAL_SERVERS[server_index] + self.my_server_index).addr())
 
@@ -338,11 +343,11 @@ class GameManager(threading.Thread):
                 if enemy.previous_state != current_enemy_state:
                     enemy_pos: Point = enemy.get_pos()
                     suitable_server_index = self.find_suitable_server_index(enemy_pos)
-                    if suitable_server_index != self.my_server_index:
-                        self.send_to_normal_server(suitable_server_index,
-                                                   b'\x01' + enemy.serialize())  # TODO: add serialize to enemy
-                        enemy.kill()
-                        continue
+                    # if suitable_server_index != self.my_server_index:
+                    #     self.send_to_normal_server(suitable_server_index,
+                    #                                b'\x01' + enemy.serialize())  # TODO: add serialize to enemy
+                    #     enemy.kill()
+                    #     continue
 
                     enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name,
                                                              changes=current_enemy_state)
@@ -366,20 +371,22 @@ class GameManager(threading.Thread):
             if tick_count % (FPS // OVERLAPPED_UPDATE_FREQUENCY) == 0:
 
                 for i in self.other_server_indices:
-                    state_update: NormalServer.Output.StateUpdateNoAck = NormalServer.Output.StateUpdateNoAck(
+                    state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
                         player_changes=tuple(self.output_overlapped_players_updates[i].values()),
-                        enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()))
+                        enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
+                        item_changes=()
+                    )
 
                     self.output_overlapped_players_updates[i] = {}
                     self.output_overlapped_enemies_updates[i] = {}
 
                     self.send_to_normal_server(i, b'\x00' + state_update.serialize())
 
-            if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
-                player_central_list = PlayerCentralList(
-                    players=[PlayerCentral(pos=player.get_pos(), player_id=player.entity_id) for player in
-                             self.players])
-                self.sock_to_LB.send(player_central_list.serialize())
+            # if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
+            #     player_central_list = PlayerCentralList(
+            #         players=[PlayerCentral(pos=player.get_pos(), player_id=player.entity_id) for player in
+            #                  self.players])
+            #     self.sock_to_LB.send(player_central_list.serialize())
 
             if tick_count % (FPS / UPDATE_FREQUENCY) == 0:
                 player_changes = []
