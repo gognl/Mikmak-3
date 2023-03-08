@@ -6,7 +6,7 @@ from pygame.math import Vector2
 from client_files.code.enemy import Enemy
 from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
-from client_files.code.settings import INTERPOLATION_PERIOD
+from client_files.code.settings import INTERPOLATION_PERIOD, INTERPOLATION_ACTIVE
 from client_files.code.structures import Server
 
 class Interpolator:
@@ -20,9 +20,15 @@ class Interpolator:
         self.first_item_update = True
 
     def add_update(self, update: Server.Input.StateUpdateNoAck):
-        self.updates_queue.append(update)
+
+        if INTERPOLATION_ACTIVE:
+            self.updates_queue.append(update)
+        else:
+            self.update_entities(update)
 
     def interpolate(self):
+        if not INTERPOLATION_ACTIVE:
+            return
 
         # return if less than 2 updates, else continue and start interpolating
         if self.current_target is None:
@@ -144,17 +150,3 @@ class Interpolator:
                                                  entity_id, self.world.all_obstacles, self.world.create_explosion,
                                                  self.world.create_bullet, self.world.kill_enemy)
                 self.world.enemies[entity_id].update_queue.append(enemy_update)
-
-        for item_update in state.item_changes:
-            # add it to the items dict if it's not already there
-            if item_update.id not in self.world.items:
-                print('creating item')
-                self.world.items[item_update.id] = Item(item_update.id, item_update.name,
-                                                   (self.world.visible_sprites, self.world.item_sprites), (0, 0), self.world.item_despawn,
-                                                   self.world.item_pickup, self.world.item_drop, self.world.item_use)
-            # add to its update queue
-            self.world.items[item_update.id].update_queue.extend(item_update.actions)
-
-
-
-
