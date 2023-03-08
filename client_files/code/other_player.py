@@ -88,7 +88,7 @@ class OtherPlayer(Entity):
 			self.xp = 0
 			if self.current_weapon is not None:
 				self.current_weapon.kill()
-			Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.1, radius=50)
+			Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26, radius=50)
 			self.kill()
 			return 'dead'
 
