@@ -214,6 +214,7 @@ class World:
         Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
 
     def kill_enemy(self, enemy: Enemy):
+        Explosion(enemy.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.1, radius=50)
         del self.enemies[enemy.entity_id]
         enemy.kill()
 

@@ -2,13 +2,14 @@ from collections import deque
 from typing import Union
 
 from client_files.code.entity import Entity
+from client_files.code.explosion import Explosion
 from client_files.code.settings import weapon_data
 from client_files.code.structures import Server
 from client_files.code.support import *
 
 class OtherPlayer(Entity):
 	def __init__(self, pos, groups, entity_id, obstacle_sprites, create_attack, destroy_attack,
-				 create_bullet, create_kettle, create_dropped_item):
+				 create_bullet, create_kettle, create_dropped_item, visible_sprites):
 		super().__init__(groups, entity_id)
 
 		self.status = None
@@ -54,6 +55,8 @@ class OtherPlayer(Entity):
 
 		self.create_dropped_item = create_dropped_item
 
+		self.visible_sprites = visible_sprites
+
 	def import_graphics(self):
 		path: str = '../graphics/player/'
 		self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
@@ -85,6 +88,7 @@ class OtherPlayer(Entity):
 			self.xp = 0
 			if self.current_weapon is not None:
 				self.current_weapon.kill()
+			Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.1, radius=50)
 			self.kill()
 			return 'dead'
 

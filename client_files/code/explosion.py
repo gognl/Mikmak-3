@@ -5,7 +5,7 @@ from client_files.code.player import Player
 
 
 class Explosion(pygame.sprite.Sprite):
-    def __init__(self, pos, damage, groups, sprites):
+    def __init__(self, pos, damage, groups, sprites, speed=EXPLOSION_SPEED, radius=EXPLOSION_RADIUS):
         super().__init__(groups)
 
         # Sprite
@@ -15,8 +15,8 @@ class Explosion(pygame.sprite.Sprite):
         self.height = 5
 
         # Explosion stats
-        self.speed = EXPLOSION_SPEED
-        self.radius = EXPLOSION_RADIUS
+        self.speed = speed
+        self.radius = radius
 
         # Damage
         self.damage = damage

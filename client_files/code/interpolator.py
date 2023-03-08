@@ -9,6 +9,7 @@ from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import INTERPOLATION_PERIOD, INTERPOLATION_ACTIVE
 from client_files.code.structures import Server
 
+
 class Interpolator:
     def __init__(self, world):
         self.updates_queue: deque[Server.Input.StateUpdateNoAck] = deque()
@@ -44,13 +45,14 @@ class Interpolator:
                 return
 
         current_time = time_ns()
-        time_part = (current_time-self.start_time)/INTERPOLATION_PERIOD
+        time_part = (current_time - self.start_time) / INTERPOLATION_PERIOD
         if not 0 <= time_part <= 1:
             self.current_state = self.current_target
             self.current_target = None
             return  # TODO tp to final pos
 
-        interp_state: Server.Input.StateUpdateNoAck = self.create_interpolated_state(self.current_state, self.current_target, time_part)
+        interp_state: Server.Input.StateUpdateNoAck = self.create_interpolated_state(self.current_state,
+                                                                                     self.current_target, time_part)
         self.update_entities(interp_state)
 
     def create_interpolated_state(self,
@@ -66,13 +68,13 @@ class Interpolator:
         """
 
         player_lookup = {k: v for v in start.player_changes for k in end.player_changes if k.id == v.id}
-        player_changes: List[Tuple[Server.Input.PlayerUpdate, Server.Input.PlayerUpdate]] = [(k, player_lookup.get(k)) for k in end.player_changes]
+        player_changes: List[Tuple[Server.Input.PlayerUpdate, Server.Input.PlayerUpdate]] = [(k, player_lookup.get(k))
+                                                                                             for k in
+                                                                                             end.player_changes]
 
         enemy_lookup = {k: v for v in start.enemy_changes for k in end.enemy_changes if k.id == v.id}
-        enemy_changes: List[Tuple[Server.Input.EnemyUpdate, Server.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k in end.enemy_changes]
-
-        item_lookup = {k: v for v in start.item_changes for k in end.item_changes if k.id == v.id}
-        item_changes: List[Tuple[Server.Input.ItemUpdate, Server.Input.ItemUpdate]] = [(k, item_lookup.get(k)) for k in end.item_changes]
+        enemy_changes: List[Tuple[Server.Input.EnemyUpdate, Server.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k
+                                                                                          in end.enemy_changes]
 
         interp_player_changes = []
         for end_player_update, start_player_update in player_changes:
@@ -121,7 +123,8 @@ class Interpolator:
             interp_enemy_update = Server.Input.EnemyUpdate(data=data)
             interp_enemy_changes.append(interp_enemy_update)
 
-        interp_state = Server.Input.StateUpdateNoAck(player_changes=interp_player_changes, enemy_changes=interp_enemy_changes, item_changes=())
+        interp_state = Server.Input.StateUpdateNoAck(player_changes=interp_player_changes,
+                                                     enemy_changes=interp_enemy_changes, item_changes=())
         return interp_state
 
     def update_entities(self, state):
@@ -136,9 +139,11 @@ class Interpolator:
             else:
                 self.world.other_players[entity_id] = OtherPlayer(entity_pos, (
                     self.world.visible_sprites, self.world.obstacle_sprites, self.world.all_obstacles), entity_id,
-                                                             self.world.obstacle_sprites, self.world.create_attack,
-                                                             self.world.destroy_attack, self.world.create_bullet,
-                                                             self.world.create_kettle, self.world.create_dropped_item)
+                                                                  self.world.obstacle_sprites, self.world.create_attack,
+                                                                  self.world.destroy_attack, self.world.create_bullet,
+                                                                  self.world.create_kettle,
+                                                                  self.world.create_dropped_item,
+                                                                  self.world.visible_sprites)
                 self.world.all_players.append(self.world.other_players[entity_id])
 
         for enemy_update in state.enemy_changes:
@@ -149,7 +154,8 @@ class Interpolator:
                 self.world.enemies[entity_id].update_queue.append(enemy_update)
             else:
                 self.world.enemies[entity_id] = Enemy(enemy_name, entity_pos,
-                                                 (self.world.visible_sprites, self.world.server_sprites, self.world.all_obstacles),
-                                                 entity_id, self.world.all_obstacles, self.world.create_explosion,
-                                                 self.world.create_bullet, self.world.kill_enemy)
+                                                      (self.world.visible_sprites, self.world.server_sprites,
+                                                       self.world.all_obstacles),
+                                                      entity_id, self.world.all_obstacles, self.world.create_explosion,
+                                                      self.world.create_bullet, self.world.kill_enemy)
                 self.world.enemies[entity_id].update_queue.append(enemy_update)
