@@ -89,12 +89,11 @@ class Server:
 				self.id: int = data.pop('id')
 				self.pos: (int, int) = data.pop('pos')
 				self.type: str = data.pop('type')
-				self.direction: (int, int) = data.pop('direction')
 				self.status: str = data.pop('status')
 				self.attacks: Tuple[Server.Input.EnemyAttackUpdate] = data.pop('attacks')
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'status': (str, 'str'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
 
 		class EnemyAttackUpdate(Serializable):
 			def __init__(self, **kwargs):

@@ -79,13 +79,12 @@ class Client:
                 self.type = kwargs.pop('type')
                 changes = kwargs.pop('changes')
                 self.pos = changes['pos']
-                self.direction = changes['direction']
                 self.status = changes['status']
                 self.attacks = changes['attacks']
 
             def _get_attr(self) -> dict:
                 return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'),
-                        'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'),
+                        'status': (str, 'str'),
                         'attacks': (tuple, (Client.Output.EnemyAttackUpdate, 'o'))}
 
         class EnemyAttackUpdate(Serializable):

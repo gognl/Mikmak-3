@@ -99,7 +99,6 @@ class Interpolator:
 
             data = {'id': end_enemy_update.id,
                     'type': end_enemy_update.type,
-                    'direction': end_enemy_update.direction,
                     'status': end_enemy_update.status,
                     'attacks': (),
                     'pos': interp_pos}
