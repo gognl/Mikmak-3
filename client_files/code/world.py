@@ -2,6 +2,8 @@ import random
 import pygame
 from math import floor, ceil
 from typing import Dict, Union, List
+
+from client_files.code.interpolator import Interpolator
 from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import *
@@ -80,6 +82,8 @@ class World:
         # Zen
         self.zen_active = False
 
+        self.interpolator: Interpolator = Interpolator(self)
+
     def create_map(self) -> None:
         """
         Place movable tiles on the map
@@ -107,7 +111,6 @@ class World:
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
-
 
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
         player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 3)
@@ -210,6 +213,7 @@ class World:
         Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
 
     def kill_enemy(self, enemy: Enemy):
+        Explosion(enemy.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26, radius=50)
         del self.enemies[enemy.entity_id]
         enemy.kill()
 
@@ -219,10 +223,8 @@ class World:
         :return: None
         """
 
-        # Update the items positions based on magnetic players
-        # for item in self.item_sprites:
-        #    item.update_movement(self.magnetic_players)
-        # moved to the server!
+        # Run the interpolation
+        self.interpolator.interpolate()
 
         # Update the camera position
         self.update_camera()
@@ -266,7 +268,6 @@ class World:
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
-        self.visible_sprites.enemy_update(self.all_players)
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
@@ -283,19 +284,12 @@ class World:
             self.ui.display(self.player)
 
         # Get info about changes made in this tick (used for server synchronization)
-        local_changes = [None, []]  # A list of changes made in this tick. player, enemies
-        state_update: Server.Output.StateUpdate = None
-        for sprite in self.server_sprites.sprites():
-            if sprite.changes is None:  # If no new changes were made
-                continue
-            if type(sprite) is Player:
-                player_changes = Server.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes)
-                state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)
-                local_changes[0] = player_changes
-            elif type(sprite) is Enemy:
-                local_changes[1].append(EnemyUpdate(sprite.entity_id, sprite.changes['pos']))
+        if self.player.changes is None:
+            return None, None  # no changes
+        player_changes = Server.Output.PlayerUpdate(id=self.player.entity_id, changes=self.player.changes)
+        state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)  # sent to server
+        tick_update: TickUpdate = TickUpdate(player_changes)  # kept for synchronization
 
-        tick_update: TickUpdate = TickUpdate(*local_changes)
         return tick_update, state_update
 
     def update_camera(self) -> None:
@@ -384,8 +378,3 @@ class GroupYSort(pygame.sprite.Group):
         for sprite in sorted(self.sprites(), key=lambda x: (x.height, x.rect.centery)):
             # Display the sprite on screen, moving it by the calculated offset
             self.display_surface.blit(sprite.image, sprite.rect.topleft - camera + screen_center)
-
-    def enemy_update(self, players):
-        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy' and sprite.enemy_name != 'other_player']
-        for enemy in enemy_sprites:
-            enemy.enemy_update(players)

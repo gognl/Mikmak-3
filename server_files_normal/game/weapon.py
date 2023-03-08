@@ -30,6 +30,10 @@ class Weapon(pygame.sprite.Sprite):
 
 		self.direction = self.player.status.split('_')[0]
 
+		if self.direction == 'dead':
+			self.kill()
+			return
+
 		full_path: str = f'./graphics/weapons/{self.player.weapon}/{self.direction}.png'
 		self.image = pygame.image.load(full_path)
 

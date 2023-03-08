@@ -167,7 +167,7 @@ class GameManager(threading.Thread):
 
 				if enemy.dead:
 					enemy.status = 'dead'
-				current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'attacks': tuple(enemy.attacks), 'status': enemy.status}
+				current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y), 'attacks': tuple(enemy.attacks), 'status': enemy.status}
 				if enemy.previous_state != current_enemy_state:
 					enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=current_enemy_state)
 					enemy_changes.append(enemy_update)

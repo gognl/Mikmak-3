@@ -91,3 +91,6 @@ RANDOM_NAMETAG = ['goni', 'omri', 'bar', 'alon', 'liron', 'gabriel', 'god', 'dog
                   'not a bot', 'pet', 'SOS', 'obama', 'allah', 'not a cow', 'meow', 'woof', 'moo', 'BLOOD', 'VIOLENCE',
                   'DEATH', 'MASSACRE', 'GENOCIDE', 'what', 'server', 'alt+f4', 'die', 'mom', 'dad',
                   'joe', 'this game was encrypted using-']  # TODO - add more
+
+INTERPOLATION_PERIOD = 100_000_000  # ns
+INTERPOLATION_ACTIVE = False

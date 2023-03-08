@@ -28,9 +28,9 @@ class Server:
 				super().__init__(ser=s)
 				if s != b'':
 					return
-				self.player_changes: Tuple[Server.Input.PlayerUpdate] = None
-				self.enemy_changes: Tuple[Server.Input.EnemyUpdate] = None
-				self.item_changes: Tuple[Server.Input.ItemUpdate] = None
+				self.player_changes: Tuple[Server.Input.PlayerUpdate] = kwargs.pop('player_changes', ())
+				self.enemy_changes: Tuple[Server.Input.EnemyUpdate] = kwargs.pop('enemy_changes', ())
+				self.item_changes: Tuple[Server.Input.ItemUpdate] = kwargs.pop('item_changes', ())
 
 			def _get_attr(self) -> dict:
 				return {'player_changes': (tuple, (Server.Input.PlayerUpdate, 'o')),
@@ -43,20 +43,25 @@ class Server:
 			"""
 
 			def __init__(self, **kwargs):
-				self.id: int = None
-				self.pos: Tuple[int, int] = None
-				self.attacks: Tuple[Server.Input.AttackUpdate] = None
-				self.status: str = None
-				self.health: int = None
 
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
 					return
 
+				data: dict = kwargs.pop('data')
+				self.id: int = data.pop('id')
+				self.pos: Tuple[int, int] = data.pop('pos')
+				self.attacks: Tuple[Server.Input.AttackUpdate] = data.pop('attacks')
+				self.status: str = data.pop('status')
+				self.health: int = data.pop('health')
+
 			def _get_attr(self) -> dict:
 				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Server.Output.AttackUpdate, 'o')),
 						'status': (str, 'str'), 'health': (int, 'u_1')}
+
+			def __repr__(self):
+				return f'id={self.id};'
 
 		class AttackUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -74,19 +79,21 @@ class Server:
 
 		class EnemyUpdate(Serializable):
 			def __init__(self, **kwargs):
-				self.id: int = None
-				self.pos: (int, int) = None
-				self.type: str = None
-				self.direction: (int, int) = None
-				self.status: str = None
-				self.attacks: Tuple[Server.Input.EnemyAttackUpdate] = None
+
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
 					return
 
+				data = kwargs.pop('data')
+				self.id: int = data.pop('id')
+				self.pos: (int, int) = data.pop('pos')
+				self.type: str = data.pop('type')
+				self.status: str = data.pop('status')
+				self.attacks: Tuple[Server.Input.EnemyAttackUpdate] = data.pop('attacks')
+
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'status': (str, 'str'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
 
 		class EnemyAttackUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -210,9 +217,8 @@ class EnemyUpdate:
 		self.pos = pos
 
 class TickUpdate:
-	def __init__(self, player_update: Server.Output.PlayerUpdate, enemies_update: List[EnemyUpdate]):
+	def __init__(self, player_update: Server.Output.PlayerUpdate):
 		self.player_update:  Server.Output.PlayerUpdate = player_update
-		self.enemies_update: List[EnemyUpdate] = enemies_update
 		self.seq: int = Server.Output.StateUpdate.seq_count
 
 class InventorySlot:
