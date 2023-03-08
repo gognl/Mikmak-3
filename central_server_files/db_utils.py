@@ -1,23 +1,26 @@
 import json
 from central_server_files.SQLDataBase import SQLDataBase
-from client_files.code.player import Player
 from sqlalchemy import select, delete
 from sqlalchemy.dialects.mysql import insert
 from encryption import hash_and_salt
 from Constant import *
+from structures import PlayerData
 
-def update_user_info(db: SQLDataBase, user: Player) -> None:
+def update_user_info(db: SQLDataBase, user: PlayerData) -> None:
 	"""Updating user's info in database - done by id because names are not exclusive."""
 	x, y = user.get_pos()
-	inventory = json.dumps(user.inventory_items)
+	inventory = json.dumps(user.inventory)
 	statement = (
-		insert(db.users_table).values(id=user.entity_id, pos_x=x, pos_y=y, health=user.health, inventory=inventory)
+		insert(db.users_table).values(id=user.entity_id, pos_x=x, pos_y=y, health=user.health, strength=user.strength, resistance=user.resistance, xp=user.xp, inventory=inventory)
 	)
 
 	on_duplicate_key = statement.on_duplicate_key_update(
 		pos_x=statement.inserted.pos_x,
 		pos_y=statement.inserted.pos_y,
 		health=statement.inserted.health,
+		strength=statement.inserted.strength,
+		resistance=statement.inserted.resistance,
+		xp=statement.inserted.xp,
 		inventory=statement.inserted.inventoty
 	)
 
@@ -50,7 +53,7 @@ def delete_user_info(db: SQLDataBase, username: str) -> None:
 def add_new_to_db(db: SQLDataBase, ID: int, username: str, password: str):
 	password = hash_and_salt(password)
 	statement = (
-		insert(db.users_table).values(id=ID, username=username, password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, inventory=DEFAULT_INVENTORY)
+		insert(db.users_table).values(id=ID, username=username, password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, strength=DEFAULT_STRENGTH, resistance=DEFAULT_RESISTANCE, xp=DEFAULT_XP, inventory=DEFAULT_INVENTORY)
 	)
 	#TODO: change to random spawn location
 	return db.exec(statement)

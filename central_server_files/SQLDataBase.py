@@ -25,6 +25,9 @@ class SQLDataBase:
 		                                Column("pos_x", INT),
 		                                Column("pos_y", INT),
 		                                Column("health", INT),
+		                                Column("strength", INT),
+		                                Column("resistance", INT),
+		                                Column("xp", INT),
 		                                Column("inventory", JSON)
 		                                )
 
