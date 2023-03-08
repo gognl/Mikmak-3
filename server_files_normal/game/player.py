@@ -178,9 +178,6 @@ class Player(pygame.sprite.Sprite):
 				self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
 				self.inventory_items[item_action.item_name] -= 1
 				if self.inventory_items[item_action.item_name] == 0:
-					del self.inventory_items[item_action.item_name]
-
-				if self.inventory_items[item_action.item_name] == 0:
 					if item_action.item_name == "kettle" and self.weapon_index == 2:
 						self.switch_weapon(0)
 					del self.inventory_items[item_action.item_name]
