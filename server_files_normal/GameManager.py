@@ -22,7 +22,7 @@ from server_files_normal.structures import *
 from server_files_normal.game.settings import *
 from central_server_files.structures import PlayerCentral, PlayerCentralList
 import pygame
-
+from encryption import encrypt, decrypt
 
 class GameManager(threading.Thread):
     def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, my_server_index: int):
@@ -242,7 +242,7 @@ class GameManager(threading.Thread):
                     print(i)
                     continue
                 if Server(addr[0], addr[1] - self.my_server_index) == NORMAL_SERVERS[i]:
-                    #data = Encryption.decrypt(data, self.DH_keys[i])
+                    data = decrypt(data, self.DH_keys[i])
                     prefix, data = data[0], data[1:]
                     if prefix == 0:  # overlapped players update
                         state_update = NormalServer.StateUpdateNoAck(ser=data)
@@ -312,7 +312,7 @@ class GameManager(threading.Thread):
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
     def send_to_normal_server(self, server_index: int, msg: bytes):
-        #msg = Encryption.encrypt(msg, self.DH_keys[server_index])
+        msg = encrypt(msg, self.DH_keys[server_index])
         self.sock_to_other_normals[server_index].sendto(msg,
                                                         (NORMAL_SERVERS[server_index] + self.my_server_index).addr())
 
