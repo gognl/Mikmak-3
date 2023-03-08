@@ -2,6 +2,8 @@ import random
 import pygame
 from math import floor, ceil
 from typing import Dict, Union, List
+
+from client_files.code.interpolator import Interpolator
 from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import *
@@ -80,6 +82,8 @@ class World:
         # Zen
         self.zen_active = False
 
+        self.interpolator: Interpolator = Interpolator(self)
+
     def create_map(self) -> None:
         """
         Place movable tiles on the map
@@ -108,7 +112,6 @@ class World:
         # Center camera
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
-
 
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
         player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 3)
@@ -220,10 +223,8 @@ class World:
         :return: None
         """
 
-        # Update the items positions based on magnetic players
-        # for item in self.item_sprites:
-        #    item.update_movement(self.magnetic_players)
-        # moved to the server!
+        # Run the interpolation
+        self.interpolator.interpolate()
 
         # Update the camera position
         self.update_camera()

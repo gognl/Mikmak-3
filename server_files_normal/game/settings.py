@@ -1,6 +1,6 @@
 from typing import List
 
-FPS: int = 60
+FPS: int = 5
 CLIENT_FPS: int = 120
 UPDATE_FREQUENCY: int = 10
 TILESIZE = 64

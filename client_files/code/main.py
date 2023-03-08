@@ -97,6 +97,9 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		print(
 			f'Returning from update_game():\n\tplayer_changes: {update_msg.state_update.player_changes}\n\tenemy_changes: {update_msg.state_update.enemy_changes}')
 		return
+
+	world.interpolator.add_update(update_msg.state_update)
+
 	for player_update in update_msg.state_update.player_changes:
 		entity_id: int = player_update.id
 		entity_pos: (int, int) = player_update.pos
@@ -110,38 +113,6 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 				world.player.die()  # TODO display death screen
 				pygame.quit()
 				exit()
-		elif entity_id in world.other_players:
-			world.other_players[entity_id].update_queue.append(player_update)
-		else:
-			world.other_players[entity_id] = OtherPlayer(entity_pos, (
-				world.visible_sprites, world.obstacle_sprites, world.all_obstacles), entity_id,
-														 world.obstacle_sprites, world.create_attack,
-														 world.destroy_attack, world.create_bullet,
-														 world.create_kettle, world.create_dropped_item)
-			world.all_players.append(world.other_players[entity_id])
-
-	for enemy_update in update_msg.state_update.enemy_changes:
-		entity_id: int = enemy_update.id
-		entity_pos: (int, int) = enemy_update.pos
-		enemy_name: str = enemy_update.type
-		entity_direction = enemy_update.direction
-		if entity_id in world.enemies:
-			world.enemies[entity_id].update_pos(entity_pos)
-			world.enemies[entity_id].direction = pygame.math.Vector2(entity_direction)
-			world.enemies[entity_id].update_queue.append(enemy_update)
-		else:
-			world.enemies[entity_id] = Enemy(enemy_name, entity_pos,
-											 (world.visible_sprites, world.server_sprites, world.all_obstacles),
-											 entity_id, world.all_obstacles, world.create_explosion,
-											 world.create_bullet, world.kill_enemy)
-			world.enemies[entity_id].update_queue.append(enemy_update)
-
-	for item_update in update_msg.state_update.item_changes:
-		# add it to the items dict if it's not already there
-		if item_update.id not in world.items:
-			world.items[item_update.id] = Item(item_update.id, item_update.name, (world.visible_sprites, world.item_sprites), (0, 0), world.item_despawn, world.item_pickup, world.item_drop, world.item_use)
-		# add to its update queue
-		world.items[item_update.id].update_queue.extend(item_update.actions)
 
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:

@@ -72,6 +72,9 @@ class Enemy(Entity):
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 
 	def process_server_update(self, update: Server.Input.EnemyUpdate):
+
+		self.update_pos(update.pos)
+
 		for attack in update.attacks:
 			if attack.direction == (0, 0) and self.enemy_name == 'red_cow':
 				self.create_explosion(self.rect.center, self.damage)
