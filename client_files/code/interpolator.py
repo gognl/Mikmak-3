@@ -17,6 +17,8 @@ class Interpolator:
         self.start_time: int = 0
         self.world = world
 
+        self.first_item_update = True
+
     def add_update(self, update: Server.Input.StateUpdateNoAck):
         self.updates_queue.append(update)
 
@@ -59,6 +61,9 @@ class Interpolator:
 
         enemy_lookup = {k: v for v in start.enemy_changes for k in end.enemy_changes if k.id == v.id}
         enemy_changes: List[Tuple[Server.Input.EnemyUpdate, Server.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k in end.enemy_changes]
+
+        item_lookup = {k: v for v in start.item_changes for k in end.item_changes if k.id == v.id}
+        item_changes: List[Tuple[Server.Input.ItemUpdate, Server.Input.ItemUpdate]] = [(k, item_lookup.get(k)) for k in end.item_changes]
 
         interp_player_changes = []
         for end_player_update, start_player_update in player_changes:
@@ -107,7 +112,7 @@ class Interpolator:
             interp_enemy_update = Server.Input.EnemyUpdate(data=data)
             interp_enemy_changes.append(interp_enemy_update)
 
-        interp_state = Server.Input.StateUpdateNoAck(player_changes=tuple(interp_player_changes), enemy_changes=interp_enemy_changes)
+        interp_state = Server.Input.StateUpdateNoAck(player_changes=interp_player_changes, enemy_changes=interp_enemy_changes, item_changes=())
         return interp_state
 
     def update_entities(self, state):
