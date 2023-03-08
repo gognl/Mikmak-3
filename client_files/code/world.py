@@ -267,7 +267,6 @@ class World:
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
-        self.visible_sprites.enemy_update(self.all_players)
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
@@ -284,19 +283,12 @@ class World:
             self.ui.display(self.player)
 
         # Get info about changes made in this tick (used for server synchronization)
-        local_changes = [None, []]  # A list of changes made in this tick. player, enemies
-        state_update: Server.Output.StateUpdate = None
-        for sprite in self.server_sprites.sprites():
-            if sprite.changes is None:  # If no new changes were made
-                continue
-            if type(sprite) is Player:
-                player_changes = Server.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes)
-                state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)
-                local_changes[0] = player_changes
-            elif type(sprite) is Enemy:
-                local_changes[1].append(EnemyUpdate(sprite.entity_id, sprite.changes['pos']))
+        if self.player.changes is None:
+            return None, None  # no changes
+        player_changes = Server.Output.PlayerUpdate(id=self.player.entity_id, changes=self.player.changes)
+        state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)  # sent to server
+        tick_update: TickUpdate = TickUpdate(player_changes)  # kept for synchronization
 
-        tick_update: TickUpdate = TickUpdate(*local_changes)
         return tick_update, state_update
 
     def update_camera(self) -> None:
@@ -385,8 +377,3 @@ class GroupYSort(pygame.sprite.Group):
         for sprite in sorted(self.sprites(), key=lambda x: (x.height, x.rect.centery)):
             # Display the sprite on screen, moving it by the calculated offset
             self.display_surface.blit(sprite.image, sprite.rect.topleft - camera + screen_center)
-
-    def enemy_update(self, players):
-        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy' and sprite.enemy_name != 'other_player']
-        for enemy in enemy_sprites:
-            enemy.enemy_update(players)

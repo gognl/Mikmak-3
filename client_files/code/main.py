@@ -132,7 +132,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		else:
 			world.enemies[entity_id] = Enemy(enemy_name, entity_pos,
 											 (world.visible_sprites, world.server_sprites, world.all_obstacles),
-											 entity_id, world.all_obstacles, world.create_dropped_item, world.create_explosion,
+											 entity_id, world.all_obstacles, world.create_explosion,
 											 world.create_bullet, world.kill_enemy)
 			world.enemies[entity_id].update_queue.append(enemy_update)
 
@@ -143,38 +143,15 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 		# add to its update queue
 		world.items[item_update.id].update_queue.extend(item_update.actions)
 
-
 	# Clear the changes deque; Leave only the changes made after the acknowledged CMD
 	while changes and changes[0].seq < update_msg.ack:
 		changes.popleft()
 
-	# Check if difference is too large; reset to server state if it is
-	# TODO interpolate between the states instead of teleporting the enemy
-	ids_to_remove = []
-	for tick_update in changes:
-		for enemy_change in tick_update.enemies_update:
-			if enemy_change.entity_id not in world.enemies:
-				continue
-			if pygame.Vector2(world.enemies[enemy_change.entity_id].rect.topleft).distance_squared_to(
-					pygame.Vector2(enemy_change.pos)) > MAX_DIVERGENCE_SQUARED:
-				ids_to_remove.append(enemy_change.entity_id)
-	for tick_update in changes:
-		new_enemies_update = tick_update.enemies_update.copy()
-		for enemy_change in new_enemies_update:
-			if enemy_change.entity_id in ids_to_remove:
-				tick_update.enemies_update.remove(enemy_change)
-
 	# Apply the changes
 	for tick_update in changes:
-		if tick_update.player_update is not None:
-			player_change: Server.Output.PlayerUpdate = tick_update.player_update
-			world.player.update_pos(player_change.pos)
-			world.player.status = player_change.status
-
-		for enemy_change in tick_update.enemies_update:
-			if enemy_change.entity_id not in world.enemies:
-				continue
-			world.enemies[enemy_change.entity_id].update_pos(enemy_change.pos)
+		player_change: Server.Output.PlayerUpdate = tick_update.player_update
+		world.player.update_pos(player_change.pos)
+		world.player.status = player_change.status
 
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
@@ -280,7 +257,7 @@ def run_game(*args) -> None:
 		if state_update is not None:
 			send_msg_to_server(server_socket, state_update)
 			Server.Output.StateUpdate.seq_count += 1
-		reported_changes.append(tick_update)
+			reported_changes.append(tick_update)
 
 		# Check if an update is needed
 		if not update_queue.empty():

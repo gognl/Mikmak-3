@@ -210,9 +210,8 @@ class EnemyUpdate:
 		self.pos = pos
 
 class TickUpdate:
-	def __init__(self, player_update: Server.Output.PlayerUpdate, enemies_update: List[EnemyUpdate]):
+	def __init__(self, player_update: Server.Output.PlayerUpdate):
 		self.player_update:  Server.Output.PlayerUpdate = player_update
-		self.enemies_update: List[EnemyUpdate] = enemies_update
 		self.seq: int = Server.Output.StateUpdate.seq_count
 
 class InventorySlot:
