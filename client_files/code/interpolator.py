@@ -54,8 +54,11 @@ class Interpolator:
         :return: The new interpolated state
         """
 
-        lookup = {k: v for v in start.player_changes for k in end.player_changes if k.id == v.id}
-        player_changes: List[Tuple[Server.Input.PlayerUpdate, Server.Input.PlayerUpdate]] = [(k, lookup.get(k)) for k in end.player_changes]
+        player_lookup = {k: v for v in start.player_changes for k in end.player_changes if k.id == v.id}
+        player_changes: List[Tuple[Server.Input.PlayerUpdate, Server.Input.PlayerUpdate]] = [(k, player_lookup.get(k)) for k in end.player_changes]
+
+        enemy_lookup = {k: v for v in start.enemy_changes for k in end.enemy_changes if k.id == v.id}
+        enemy_changes: List[Tuple[Server.Input.EnemyUpdate, Server.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k in end.enemy_changes]
 
         interp_player_changes = []
         for end_player_update, start_player_update in player_changes:
@@ -73,15 +76,39 @@ class Interpolator:
             interp_pos = Vector2(start_pos).lerp(Vector2(end_pos), part)
 
             data = {'id': end_player_update.id,
-                    'attacks': end_player_update.attacks,
+                    'attacks': (),
                     'status': end_player_update.status,
                     'health': end_player_update.health,
                     'pos': interp_pos}
+            if part == 0:
+                data['attacks'] = end_player_update.attacks
             interp_player_update = Server.Input.PlayerUpdate(data=data)
             interp_player_changes.append(interp_player_update)
 
-        interp_state = Server.Input.StateUpdateNoAck(player_changes=tuple(interp_player_changes))
+        interp_enemy_changes = []
+        for end_enemy_update, start_enemy_update in enemy_changes:
+            if start_enemy_update is None and end_enemy_update.id in self.world.enemies:
+                start_pos = tuple(self.world.enemies[end_enemy_update.id].rect.topleft)
+            elif start_enemy_update is not None:
+                start_pos = start_enemy_update.pos
+            else:
+                start_pos = end_enemy_update.pos
+            end_pos = end_enemy_update.pos
 
+            interp_pos = Vector2(start_pos).lerp(Vector2(end_pos), part)
+
+            data = {'id': end_enemy_update.id,
+                    'type': end_enemy_update.type,
+                    'direction': end_enemy_update.direction,
+                    'status': end_enemy_update.status,
+                    'attacks': (),
+                    'pos': interp_pos}
+            if part == 0:
+                data['attacks'] = end_enemy_update.attacks
+            interp_enemy_update = Server.Input.EnemyUpdate(data=data)
+            interp_enemy_changes.append(interp_enemy_update)
+
+        interp_state = Server.Input.StateUpdateNoAck(player_changes=tuple(interp_player_changes), enemy_changes=interp_enemy_changes)
         return interp_state
 
     def update_entities(self, state):
