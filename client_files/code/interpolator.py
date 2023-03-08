@@ -17,12 +17,15 @@ class Interpolator:
         self.start_time: int = 0
         self.world = world
 
-        self.first_item_update = True
+        self.first_update = True
 
     def add_update(self, update: Server.Input.StateUpdateNoAck):
 
         if INTERPOLATION_ACTIVE:
             self.updates_queue.append(update)
+            if self.first_update:
+                self.update_entities(update)
+                self.first_update = False
         else:
             self.update_entities(update)
 
