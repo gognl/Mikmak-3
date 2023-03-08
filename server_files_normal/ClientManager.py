@@ -47,6 +47,7 @@ class ClientManager(threading.Thread):
             # TODO decrypt here
         except socket.error:
             self.player.dead = True
+            self.player.disconnected = True
             self.disconnect(self)
             return b''
         return data
@@ -60,10 +61,11 @@ class ClientManager(threading.Thread):
             self.client_sock.send(pkt)
         except socket.error:
             self.player.dead = True
+            self.player.disconnected = True
             self.disconnect(self)
 
     def send_msg(self, changes: Client.Output.StateUpdateNoAck):
-        if self.player.dead:
+        if self.player.disconnected:
             return
         msg = Client.Output.StateUpdate(self.ack, changes)  # Add an ack to the msg
         data: bytes = msg.serialize()

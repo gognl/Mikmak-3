@@ -94,6 +94,8 @@ class Player(pygame.sprite.Sprite):
 		self.magnet_skill_cooldown = 49500  # less than client cooldown, because of the possible latency
 		self.magnetic_players = magnetic_players
 
+		self.disconnected = False
+
 		super().__init__(groups)
 
 	def process_client_updates(self, update: Client.Input.PlayerUpdate):
