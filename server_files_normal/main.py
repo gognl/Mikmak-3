@@ -17,15 +17,18 @@ TODO:
 import socket
 from collections import deque
 from threading import Semaphore
+from _struct import pack
 
 from server_files_normal.LoadBalancerManager import LoadBalancerManager
+from server_files_normal.encryption import encrypt
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
 from server_files_normal.game.player import Player
 from server_files_normal.structures import Login
+from server_files_normal.game.settings import LOGIN_SERVER
 
 
-def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
+def accept_new_clients(server_sock, cmd_semaphore: Semaphore, key):
     client_id: int = 0
     while True:
         client_sock, client_addr = server_sock.accept()
@@ -34,7 +37,7 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
         client_sock.send(f'id_{client_id}'.encode())
 
         player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
-        new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore, disconnect_client_manager)  # Create a new client manager
+        new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore, disconnect_client_manager, key)  # Create a new client manager
         client_managers.append(new_client_manager)
         new_client_manager.start()
         player.client_manager = new_client_manager  # Add the client manager to the player's attributes
@@ -42,15 +45,23 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
 
         client_id += 1
 
-def disconnect_client_manager(client_manager: ClientManager):
+def disconnect_client_manager(client_manager: ClientManager, DH_key):
     player_data = Login.Output.PlayerData(**game_manager.get_player_data(client_manager.player))
     print(f'disconnected client. data:\n\t{player_data.__dict__}')
     # TODO send to login @bar
+    login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    login_socket.connect(LOGIN_SERVER.addr())
+    #server_id = pack('<H', server_index)
+    size = pack("<H", len(encrypt(player_data.serialize(), DH_key)))
+    #login_socket.send(server_id)
+    login_socket.send(size)
+    login_socket.send(encrypt(player_data.serialize(), DH_key))
     client_managers.remove(client_manager)
 
 
 client_managers: deque[ClientManager]
 game_manager: GameManager
+server_index = 1
 def main():
     server_sock: socket.socket = socket.socket()
     server_sock.bind(('0.0.0.0', 34861))
@@ -60,10 +71,10 @@ def main():
     global client_managers
     client_managers = deque()
     global game_manager
-    game_manager = GameManager(client_managers, cmd_semaphore, 1)
+    game_manager = GameManager(client_managers, cmd_semaphore, server_index)
     game_manager.start()
 
-    accept_new_clients(server_sock, cmd_semaphore)
+    accept_new_clients(server_sock, cmd_semaphore, game_manager.DH_login_key)
 
 
 if __name__ == '__main__':

@@ -20,6 +20,8 @@ from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.settings import *
 from central_server_files.structures import PlayerCentral, PlayerCentralList
+from encryption import encrypt, decrypt
+
 import pygame
 
 
@@ -66,7 +68,7 @@ class GameManager(threading.Thread):
             self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_index].port + i))
             self.sock_to_other_normals[i].settimeout(0.02)
 
-        # self.sock_to_login.connect(LOGIN_SERVER.addr())
+        self.sock_to_login.connect(LOGIN_SERVER.addr())
         self.sock_to_LB.connect(LB_SERVER.addr())
 
         self.DH_keys: list[bytes] = [bytes(0) for _ in range(4)]
@@ -237,7 +239,7 @@ class GameManager(threading.Thread):
                     print(i)
                     continue
                 if Server(addr[0], addr[1] - self.my_server_index) == NORMAL_SERVERS[i]:
-                    data = Encryption.decrypt(data, self.DH_keys[i])
+                    data = decrypt(data, self.DH_keys[i])
                     prefix, data = data[0], data[1:]
                     if prefix == 0:  # overlapped players update
                         state_update = NormalServer.Output.StateUpdateNoAck(ser=data)
@@ -307,7 +309,7 @@ class GameManager(threading.Thread):
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
     def send_to_normal_server(self, server_index: int, msg: bytes):
-        msg = Encryption.encrypt(msg, self.DH_keys[server_index])
+        msg = encrypt(msg, self.DH_keys[server_index])
         self.sock_to_other_normals[server_index].sendto(msg,
                                                         (NORMAL_SERVERS[server_index] + self.my_server_index).addr())
 

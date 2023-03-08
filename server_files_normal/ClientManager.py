@@ -11,7 +11,7 @@ from server_files_normal.structures import *
 class ClientManager(threading.Thread):
     """Handles the interactions with the client server"""
 
-    def __init__(self, client_sock: socket.socket, client_id: int, player: Player, cmd_semaphore: threading.Semaphore, disconnect):
+    def __init__(self, client_sock: socket.socket, client_id: int, player: Player, cmd_semaphore: threading.Semaphore, disconnect, key):
         super().__init__()
         self.client_sock: socket.socket = client_sock
         self.client_id: int = client_id
@@ -19,7 +19,7 @@ class ClientManager(threading.Thread):
         self.ack: int = 0
         self.queue: deque[Tuple[ClientManager, Client.Input.ClientCMD]] = deque()
         self.cmd_semaphore = cmd_semaphore
-
+        self.DH_key = key
         self.disconnect = disconnect
 
     def run(self) -> None:
@@ -47,7 +47,7 @@ class ClientManager(threading.Thread):
             # TODO decrypt here
         except socket.error:
             self.player.dead = True
-            self.disconnect(self)
+            self.disconnect(self,self.DH_key)
             return b''
         return data
 
