@@ -7,6 +7,7 @@ from queue import Queue, Empty
 import socket
 from typing import Union, Dict
 from struct import unpack, pack
+from base64 import urlsafe_b64encode as b64
 
 import client_files.code.main
 from server_files_normal.game.explosion import Explosion
@@ -85,13 +86,13 @@ class GameManager(threading.Thread):
                 except socket.timeout:
                     continue
 
-            keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
-
+            keys_list[server_index] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+)
         def DH_with_login():
             x = pow(DH_g, a, DH_p)
             self.sock_to_login.send(x.to_bytes(128, 'little'))
             y = self.sock_to_login.recv(1024)
-            self.DH_login_key = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+            self.DH_login_key = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
 
         DH_threads: list[threading.Thread] = []
         for i in self.other_server_indices:

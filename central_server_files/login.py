@@ -8,6 +8,7 @@ from SQLDataBase import SQLDataBase
 from server_files_normal.game.settings import *
 from encryption import *
 from _struct import unpack, pack
+from base64 import urlsafe_b64encode as b64
 
 PORT = 12402
 PROTOCOL_LEN = 2
@@ -47,7 +48,7 @@ def DH_with_normal(normal_sock: socket.socket, server: Server):
     x = pow(DH_g, a, DH_p)
     normal_sock.send(x.to_bytes(128, 'little'))
     y = normal_sock.recv(1024)
-    DH_normal_keys[server] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+    DH_normal_keys[server] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
 
 def initialize_conn_with_normals(sock_to_normals: socket.socket):
     amount_connected = 0
@@ -102,15 +103,16 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
     client_sock.send(resp_to_client_bytes)
 
 def handle_disconnect(db: SQLDataBase):
-    for server in server_serverSocket_dict:
-        normal_sock: socket.socket = server_serverSocket_dict[server]
-        try:
-            size = unpack('<H',normal_sock.recv(2))[0]
-        except socket.timeout:
-            continue
+    while True:
+        for server in server_serverSocket_dict:
+            normal_sock: socket.socket = server_serverSocket_dict[server]
+            try:
+                size = unpack('<H',normal_sock.recv(2))[0]
+            except socket.timeout:
+                continue
 
-        player_data = PlayerData(ser=decrypt(normal_sock.recv(size), DH_normal_keys[server]))
-        update_user_info(db, player_data)
+            player_data = PlayerData(ser=decrypt(normal_sock.recv(size), DH_normal_keys[server]))
+            update_user_info(db, player_data)
 
 
 #TODO chat
