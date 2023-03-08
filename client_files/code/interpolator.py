@@ -1,6 +1,7 @@
 from collections import deque
-from typing import Union
+from typing import Union, List, Tuple
 from time import time_ns
+from pygame.math import Vector2
 
 from client_files.code.enemy import Enemy
 from client_files.code.item import Item
@@ -34,16 +35,57 @@ class Interpolator:
         current_time = time_ns()
         time_part = (current_time-self.start_time)/INTERPOLATION_PERIOD
         if not 0 <= time_part <= 1:
-            print(f'reset, {time_part}')
             self.current_state = self.current_target
             self.current_target = None
             return  # TODO tp to final pos
 
-        print(f'no reset, {time_part}')
+        interp_state: Server.Input.StateUpdateNoAck = self.create_interpolated_state(self.current_state, self.current_target, time_part)
+        self.update_entities(interp_state)
 
-        interpolated_state: Server.Input.StateUpdateNoAck = self.create_interpolated_state(self.current_state, self.current_target, time_part)
+    def create_interpolated_state(self,
+                                  start: Server.Input.StateUpdateNoAck,
+                                  end: Server.Input.StateUpdateNoAck,
+                                  part: float) -> Server.Input.StateUpdateNoAck:
+        """
+        Calculates the state of each relevant entity in this time part.
+        :param start: The state in the beginning
+        :param end: The state in the end
+        :param part: The time part
+        :return: The new interpolated state
+        """
 
-        for player_update in interpolated_state.player_changes:
+        lookup = {k: v for v in start.player_changes for k in end.player_changes if k.id == v.id}
+        player_changes: List[Tuple[Server.Input.PlayerUpdate, Server.Input.PlayerUpdate]] = [(k, lookup.get(k)) for k in end.player_changes]
+
+        interp_player_changes = []
+        for end_player_update, start_player_update in player_changes:
+            if end_player_update.id == self.world.player.entity_id:
+                continue
+
+            if start_player_update is None and end_player_update.id in self.world.all_players:
+                start_pos = self.world.all_players[end_player_update.id].pos
+            elif start_player_update is not None:
+                start_pos = start_player_update.pos
+            else:
+                start_pos = end_player_update.pos
+            end_pos = end_player_update.pos
+
+            interp_pos = Vector2(start_pos).lerp(Vector2(end_pos), part)
+
+            data = {'id': end_player_update.id,
+                    'attacks': end_player_update.attacks,
+                    'status': end_player_update.status,
+                    'health': end_player_update.health,
+                    'pos': interp_pos}
+            interp_player_update = Server.Input.PlayerUpdate(data=data)
+            interp_player_changes.append(interp_player_update)
+
+        interp_state = Server.Input.StateUpdateNoAck(player_changes=tuple(interp_player_changes))
+
+        return interp_state
+
+    def update_entities(self, state):
+        for player_update in state.player_changes:
             if player_update.id == self.world.player.entity_id:
                 continue
             entity_id: int = player_update.id
@@ -59,7 +101,7 @@ class Interpolator:
                                                              self.world.create_kettle, self.world.create_dropped_item)
                 self.world.all_players.append(self.world.other_players[entity_id])
 
-        for enemy_update in interpolated_state.enemy_changes:
+        for enemy_update in state.enemy_changes:
             entity_id: int = enemy_update.id
             entity_pos: (int, int) = enemy_update.pos
             enemy_name: str = enemy_update.type
@@ -72,7 +114,7 @@ class Interpolator:
                                                  self.world.create_bullet, self.world.kill_enemy)
                 self.world.enemies[entity_id].update_queue.append(enemy_update)
 
-        for item_update in interpolated_state.item_changes:
+        for item_update in state.item_changes:
             # add it to the items dict if it's not already there
             if item_update.id not in self.world.items:
                 print('creating item')
@@ -81,19 +123,6 @@ class Interpolator:
                                                    self.world.item_pickup, self.world.item_drop, self.world.item_use)
             # add to its update queue
             self.world.items[item_update.id].update_queue.extend(item_update.actions)
-
-    def create_interpolated_state(self,
-                                  start: Server.Input.StateUpdateNoAck,
-                                  end: Server.Input.StateUpdateNoAck,
-                                  part: float) -> Server.Input.StateUpdateNoAck:
-        """
-        Calculates the state of each relevant entity in this time part.
-        :param start: The state in the beginning
-        :param end: The state in the end
-        :param part: The time part
-        :return: The new interpolated state
-        """
-        return start  # TODO change this so it works correctly
 
 
 

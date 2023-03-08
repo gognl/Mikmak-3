@@ -92,6 +92,5 @@ RANDOM_NAMETAG = ['goni', 'omri', 'bar', 'alon', 'liron', 'gabriel', 'god', 'dog
                   'DEATH', 'MASSACRE', 'GENOCIDE', 'what', 'server', 'alt+f4', 'die', 'mom', 'dad',
                   'joe', 'this game was encrypted using-']  # TODO - add more
 
-PACKET_SENDING_PERIOD = 200_000_000  # ns
 INTERPOLATION_PERIOD = 100_000_000  # ns
 
