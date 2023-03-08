@@ -5,7 +5,7 @@ from multiprocessing import Process
 from client_files.code.main import main as client_main
 from typing import Final
 
-CLIENTS_AMOUNT: Final[int] = 2
+CLIENTS_AMOUNT: Final[int] = 200
 
 
 def main():

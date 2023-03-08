@@ -87,16 +87,15 @@ class World:
         """
         # Create player with starting position
 
-        # Semi-random player starting position generator
-        random_x = random.randint(0, 1280 * 40 // 64 - 1)
-        random_y = random.randint(0, 720 * 40 // 64 - 1)
-        pos = (2048, 2048)
+        # Random player starting position generator
         while True:
+            random_x = random.randint(0, 1280 * 40 // 64 - 1)
+            random_y = random.randint(0, 720 * 40 // 64 - 1)
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
                 pos = (random_x * 64, random_y * 64)
                 break
 
-        self.player = Player("gognl", (900, 900), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
+        self.player = Player("gognl", pos, (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 2, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
