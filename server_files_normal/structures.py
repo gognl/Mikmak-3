@@ -3,13 +3,24 @@ from typing import Tuple, List
 from server_files_normal.serializable import Serializable
 from server_files_normal.game.settings import Server
 
+
+class ServerSer(Serializable, Server):
+    def __init__(self, **kwargs):
+        ser = kwargs.get("ser", b'')
+        Serializable.__init__(self, ser)
+        if ser != b'':
+            return
+        Server.__init__(self, kwargs['ip'], kwargs['port'])
+
 class Client:
     class Output:
         class ChangeServerMsg(Serializable):
-            def __init__(self, server: Server, encrypted_client_id):
+            def __init__(self, server: ServerSer, encrypted_client_id: bytes, src_server_index: int):
                 super().__init__(ser=b'')
-                self.encrypted_client_id = encrypted_client_id
-                self.server = server
+
+                self.server: ServerSer = server
+                self.encrypted_client_id: bytes = encrypted_client_id
+                self.src_server_index: int = src_server_index
 
 
         class StateUpdate(Serializable):
@@ -294,7 +305,7 @@ class Point:
 class HelloMsg(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser)
+        super().__init__(ser=ser)
         if ser != b'':
             return
 

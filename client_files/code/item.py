@@ -3,7 +3,7 @@ from collections import deque
 import pygame
 import re
 from client_files.code.settings import *
-from client_files.code.structures import Server
+from client_files.code.structures import NormalServer
 
 class Item(pygame.sprite.Sprite):
     def __init__(self, item_id, name, groups, pos, item_despawn=None, item_pickup=None, item_drop=None, item_use=None):
@@ -58,7 +58,7 @@ class Item(pygame.sprite.Sprite):
                 self.rect.x = int(self.xpos)
                 self.rect.y = int(self.ypos)
 
-    def process_server_update(self, action: Server.Input.ItemActionUpdate):
+    def process_server_update(self, action: NormalServer.Input.ItemActionUpdate):
         action_type = action.action_type
         if action_type == 'spawn':
             self.rect = self.image.get_rect(center=action.pos)

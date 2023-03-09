@@ -16,24 +16,27 @@ DH_g = 1194756922542169200661322416961365521679877128581391737298617215920480575
 AMOUNT_ENEMIES_PER_SERVER = 20
 MAX_ENTITY_ID_SIZE = 6
 
+
 class Server:
-	def __init__(self, ip, port):
-		self.ip: str = ip
-		self.port: int = port
+    def __init__(self, ip, port):
+        self.ip: str = ip
+        self.port: int = port
 
-	def addr(self):
-		return self.ip, self.port
+    def addr(self):
+        return self.ip, self.port
 
-	def __eq__(self, other):
-		assert isinstance(other, Server)
-		return self.ip == other.ip and self.port == other.port
+    def __eq__(self, other):
+        assert isinstance(other, Server)
+        return self.ip == other.ip and self.port == other.port
 
-	def __add__(self, other):
-		assert isinstance(other, int)
-		return Server(self.ip, self.port + other)
+    def __add__(self, other):
+        assert isinstance(other, int)
+        return Server(self.ip, self.port + other)
+
 
 # TODO: get this list in the starting of the server
-NORMAL_SERVERS = [Server('192.168.1.49', 14760), Server('192.168.1.47', 14760), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
+NORMAL_SERVERS = [Server('192.168.1.49', 14760), Server('192.168.1.47', 14760), Server('192.168.172.117', 14769),
+                  Server('192.168.172.117', 14769)]
 LOGIN_SERVER = Server('192.168.171.117', 12304)
 LB_SERVER = Server('192.168.171.117', 12328)
 
@@ -44,16 +47,22 @@ weapon_data = {
 }
 
 enemy_data = {
-    'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 400,
+    'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 0,
+                     'notice_radius': 400,
                      'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_player'], 'xp': 0},
     'red_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 0, 'attack_radius': 100, 'notice_radius': 500,
-                'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'], 'xp': 40},
+                'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red', 'spawn_pet'],
+                'xp': 40},
     'green_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 50, 'attack_radius': 55, 'notice_radius': 400,
-                  'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green', 'spawn_pet'], 'xp': 20},
+                  'move_cooldown': 0,
+                  'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green', 'spawn_pet'], 'xp': 20},
     'white_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
-                  'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
-    'yellow_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
-                   'move_cooldown': 24, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow', 'spawn_pet'], 'xp': 30},
+                  'move_cooldown': 0,
+                  'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_pet'], 'xp': 15},
+    'yellow_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 20, 'attack_radius': 350,
+                   'notice_radius': 600,
+                   'move_cooldown': 24,
+                   'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow', 'spawn_pet'], 'xp': 30},
     'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 50, 'attack_radius': 0, 'notice_radius': 400,
                 'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_pet'], 'xp': 5}
 }
@@ -61,7 +70,8 @@ enemy_data = {
 ITEM_PICK_UP_COOLDOWN = 60
 ITEM_DESPAWN_TIME = 36000
 item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
-              'spawn_red', 'spawn_yellow', 'spawn_pet', 'xp']  # TODO - keep only items that need to be naturally spawned
+              'spawn_red', 'spawn_yellow', 'spawn_pet',
+              'xp']  # TODO - keep only items that need to be naturally spawned
 
 # Inventory
 INVENTORY_SIZE = (3, 5)

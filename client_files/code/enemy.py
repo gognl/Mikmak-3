@@ -8,7 +8,7 @@ from client_files.code.other_player import OtherPlayer
 from client_files.code.player import Player
 from client_files.code.settings import *
 from client_files.code.entity import Entity
-from client_files.code.structures import Server
+from client_files.code.structures import NormalServer
 from client_files.code.support import *
 
 
@@ -68,7 +68,7 @@ class Enemy(Entity):
 		self.create_explosion = create_explosion
 		self.create_bullet = create_bullet
 
-		self.update_queue: deque[Server.Input.EnemyUpdate] = deque()
+		self.update_queue: deque[NormalServer.Input.EnemyUpdate] = deque()
 
 		self.die = die
 
@@ -157,7 +157,7 @@ class Enemy(Entity):
 			else:
 				self.move_time += 1
 
-	def process_server_update(self, update: Server.Input.EnemyUpdate):
+	def process_server_update(self, update: NormalServer.Input.EnemyUpdate):
 		for attack in update.attacks:
 			if attack.direction == (0, 0) and self.enemy_name == 'red_cow':
 				self.create_explosion(self.rect.center, self.damage)

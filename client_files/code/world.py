@@ -122,7 +122,7 @@ class World:
         if isinstance(source, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (source.rect.center - self.camera + self.screen_center)
-            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple(direction)))
+            source.attacks.append(NormalServer.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple(direction)))
         elif isinstance(source, Enemy):
             direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
         else:
@@ -141,7 +141,7 @@ class World:
         if isinstance(player, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
-            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+            player.attacks.append(NormalServer.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
@@ -214,7 +214,7 @@ class World:
         del self.enemies[enemy.entity_id]
         enemy.kill()
 
-    def run(self) -> (TickUpdate, Server.Output.StateUpdate):
+    def run(self) -> (TickUpdate, NormalServer.Output.StateUpdate):
         """
         Run one world frame
         :return: None
@@ -285,13 +285,13 @@ class World:
 
         # Get info about changes made in this tick (used for server synchronization)
         local_changes = [None, []]  # A list of changes made in this tick. player, enemies
-        state_update: Server.Output.StateUpdate = None
+        state_update: NormalServer.Output.StateUpdate = None
         for sprite in self.server_sprites.sprites():
             if sprite.changes is None:  # If no new changes were made
                 continue
             if type(sprite) is Player:
-                player_changes = Server.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes)
-                state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)
+                player_changes = NormalServer.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes)
+                state_update: NormalServer.Output.StateUpdate = NormalServer.Output.StateUpdate(player_changes=player_changes)
                 local_changes[0] = player_changes
             elif type(sprite) is Enemy:
                 local_changes[1].append(EnemyUpdate(sprite.entity_id, sprite.changes['pos']))

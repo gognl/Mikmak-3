@@ -107,8 +107,8 @@ class GameManager(threading.Thread):
         # 	thread.join()
 
         self.read_only_players = pygame.sprite.Group()
-        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
-                                                                                               {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_items_updates: list[dict[int, Client.Output.ItemUpdate]] = [{}, {}, {}, {}]
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
@@ -145,7 +145,7 @@ class GameManager(threading.Thread):
 
     def recv_from_login(self):
         while True:
-            size = unpack('<H',self.sock_to_login.recv(2))[0]
+            size = unpack('<H', self.sock_to_login.recv(2))[0]
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
             #TODO: @Bar
@@ -267,7 +267,7 @@ class GameManager(threading.Thread):
                         pass
 
     def add_overlapped_update(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
-        pos = update.pos
+        pos = update.pos if isinstance(update, Client.Output.PlayerUpdate) or isinstance(update, Client.Output.EnemyUpdate) else update.actions[0].pos
         dict_lists = [self.output_overlapped_players_updates, self.output_overlapped_enemies_updates, self.output_overlapped_items_updates]
         dict_list = dict_lists[0] if isinstance(update, Client.Output.PlayerUpdate) else (dict_lists[1] if isinstance(update, Client.Output.EnemyUpdate) else dict_lists[2])
 
@@ -314,7 +314,7 @@ class GameManager(threading.Thread):
             suitable_server_index = self.find_suitable_server_index(player_pos)
             if suitable_server_index != self.my_server_index:
                 encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'), self.DH_keys[suitable_server_index])
-                client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS[suitable_server_index], encrypted_id))
+                client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS[suitable_server_index], encrypted_id, self.my_server_index))
 
 
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
@@ -360,7 +360,7 @@ class GameManager(threading.Thread):
                     enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name,
                                                              changes=current_enemy_state)
                     self.enemy_changes.append(enemy_update)
-                    self.add_overlapped_entity_update(enemy_update)
+                    self.add_overlapped_update(enemy_update)
 
                 enemy.reset_attacks()
                 enemy.previous_state = current_enemy_state

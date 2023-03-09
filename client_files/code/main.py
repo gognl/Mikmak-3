@@ -16,7 +16,7 @@ from client_files.code.enemy import Enemy
 from client_files.code.title import Title
 from client_files.code.other_player import OtherPlayer
 
-
+server_socket: socket.socket
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
     """
     Initializes the connection to the server, and starts the packets-handler thread.
@@ -25,6 +25,7 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
     """
 
     # Create the socket
+    global server_socket
     server_socket: socket.socket = socket.socket()  # CHANGE LATER - TODO
     server_socket.connect(server_addr)
 
@@ -34,13 +35,13 @@ def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int
 
     # Start the packets-handler thread & initialize the queue
     updates_queue: Queue = Queue()
-    pkts_handler: Thread = Thread(target=handle_server_pkts, args=(server_socket, updates_queue))
+    pkts_handler: Thread = Thread(target=handle_server_pkts, args=(updates_queue,))
     pkts_handler.start()
 
     return server_socket, updates_queue, client_id
 
 
-def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpdate):
+def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
     """Sends a message to the server (and encrypts it)"""
     data: bytes = msg.serialize()
     size: bytes = pack("<H", len(data))
@@ -53,7 +54,7 @@ def send_msg_to_server(server_socket: socket.socket, msg: Server.Output.StateUpd
         exit()
 
 
-def get_server_pkt(server_socket: socket.socket) -> bytes:
+def get_server_pkt() -> bytes:
     """
     Gets a packet from the server (and decrypts them...)
     :return: The packet from the server.
@@ -69,21 +70,32 @@ def get_server_pkt(server_socket: socket.socket) -> bytes:
         exit()
 
 
-def handle_server_pkts(server_socket: socket.socket, updates_queue: Queue) -> None:
+def handle_server_pkts(updates_queue: Queue) -> None:
     """
     Handles the packets which are received from the server, and adds them to the updates priority queue.
     :return: None
     """
     while True:
         # Get a packet from the server; convert it to a ServerMessage object.
-        ser: bytes = get_server_pkt(server_socket)
-        if ser == b'':
+        data: bytes = get_server_pkt()
+        if data == b'':
             print('got empty msg')
-        msg: Server.Input.StateUpdate = Server.Input.StateUpdate(ser=ser)
-        updates_queue.put(msg)
+
+        prefix, ser = data[0], data[1:]
+        if prefix == 0:
+            msg: NormalServer.Input.StateUpdate = NormalServer.Input.StateUpdate(ser=ser)
+            updates_queue.put(msg)
+        elif prefix == 1:
+            msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
+            server_socket.close()
+            global server_socket
+            server_socket: socket.socket = socket.socket()
+            server_socket.connect(msg.server.addr())
+            hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
+            server_socket.send(hello_msg.serialize())
 
 
-def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
+def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
     """
     Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
     :param world: The pygame world.
@@ -171,7 +183,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
     # Apply the changes
     for tick_update in changes:
         if tick_update.player_update is not None:
-            player_change: Server.Output.PlayerUpdate = tick_update.player_update
+            player_change: NormalServer.Output.PlayerUpdate = tick_update.player_update
             world.player.update_pos(player_change.pos)
             world.player.status = player_change.status
 
@@ -197,7 +209,7 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
 
 
 def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (
-        pygame.Surface, pygame.time.Clock, World, TickUpdate, Server.Output.StateUpdate):
+        pygame.Surface, pygame.time.Clock, World, TickUpdate, NormalServer.Output.StateUpdate):
     """
     Run game according to user inputs - prediction before getting update from server
     :return: updated screen, clock, and world
@@ -208,7 +220,7 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
 
     # Update the world state and then the screen
     tick_update: TickUpdate
-    state_update: Server.Output.StateUpdate
+    state_update: NormalServer.Output.StateUpdate
     tick_update, state_update = world.run()
     pygame.display.update()
 
@@ -295,12 +307,12 @@ def run_game(*args) -> None:
 
         # Run game according to user inputs - prediction before getting update from server
         tick_update: TickUpdate
-        state_update: Server.Output.StateUpdate
+        state_update: NormalServer.Output.StateUpdate
         screen, clock, world, tick_update, state_update = game_tick(screen, clock, world)
 
         if state_update is not None:
             send_msg_to_server(server_socket, state_update)
-            Server.Output.StateUpdate.seq_count += 1
+            NormalServer.Output.StateUpdate.seq_count += 1
         reported_changes.append(tick_update)
 
         # Check if an update is needed
@@ -308,7 +320,7 @@ def run_game(*args) -> None:
 
             # Get the message from the queue
             try:
-                update_msg: Server.Input.StateUpdate = update_queue.get_nowait()
+                update_msg: NormalServer.Input.StateUpdate = update_queue.get_nowait()
             except Empty:
                 pass
             else:
