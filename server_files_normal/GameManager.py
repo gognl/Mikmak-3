@@ -110,8 +110,8 @@ class GameManager(threading.Thread):
                                                                                                {}]  # in index i are the (id, update) pairs to server i
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
-        threading.Thread(target=self.receive_from_another_normal_server).start()
-        threading.Thread(target=self.recv_from_login)
+        threading.Thread(target=self.receive_from_another_normal_servers).start()
+        threading.Thread(target=self.recv_from_login).start()
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):
@@ -240,7 +240,7 @@ class GameManager(threading.Thread):
 
         player.reset_attacks()
 
-    def receive_from_another_normal_server(self):
+    def receive_from_another_normal_servers(self):
         while True:
             for i in self.other_server_indices:
                 sock = self.sock_to_other_normals[i]
