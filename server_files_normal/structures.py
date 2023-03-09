@@ -302,6 +302,13 @@ class Point:
         self.x: int = x
         self.y: int = y
 
+class PointSer(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser=ser)
+        self.x = kwargs['x']
+        self.y = kwargs['y']
+
 class HelloMsg(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
@@ -309,7 +316,7 @@ class HelloMsg(Serializable):
         if ser != b'':
             return
 
-        self.encrypted_client_id: bytes = kwargs['encrypted_client_id']
+        self.encrypted_client_id: bytes = kwargs['encrypted_id']
         self.src_server_index: int = kwargs['src_server_index']
 
 class InfoMsgToNormal(Serializable):

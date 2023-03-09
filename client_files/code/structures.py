@@ -273,3 +273,14 @@ class HelloMsg(Serializable):
         super().__init__(ser=b'')
         self.encrypted_client_id: bytes = encrypted_client_id
         self.src_server_index: int = src_server_index  # -1 for login
+
+class HelloMsg2(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser=ser)
+        if ser != b'':
+            return
+
+        self.encrypted_client_id: bytes = kwargs['encrypted_id']
+        self.src_server_index: int = kwargs['src_server_index']
+

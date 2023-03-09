@@ -11,9 +11,9 @@ class Player(Entity):
     def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack,
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_chat,
                  destroy_chat, activate_zen, deactivate_zen, create_minimap, destroy_minimap, create_nametag,
-                 nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, encrypted_entity_id,
+                 nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
                  magnetic_players) -> None:
-        super().__init__(groups, encrypted_entity_id, True, name, create_nametag, nametag_update)
+        super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
         # sprite group of magnetic players
         self.magnetic_players = magnetic_players

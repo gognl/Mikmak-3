@@ -69,11 +69,11 @@ class ClientManager(threading.Thread):
             return
         msg = Client.Output.StateUpdate(self.ack, changes)  # Add an ack to the msg
         data: bytes = msg.serialize()
-        self._send_pkt(data)
+        self._send_pkt(b'\x00' + data)
 
     def send_change_server(self, msg: Client.Output.ChangeServerMsg):
         data: bytes = msg.serialize()
-        self._send_pkt(msg)
+        self._send_pkt(b'\x01' + data)
         self.connected = False
 
     def has_messages(self):

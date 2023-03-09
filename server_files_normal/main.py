@@ -30,18 +30,27 @@ from server_files_normal.encryption import decrypt
 def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
     while True:
         client_sock, client_addr = server_sock.accept()
-
-        hello_msg: HelloMsg = HelloMsg(ser=client_sock.recv())
+        data = client_sock.recv(1024)
+        print(data)
+        hello_msg: HelloMsg = HelloMsg(ser=data)
 
         if hello_msg.src_server_index == -1:  # login
             key = game_manager.DH_login_key
+            client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
         else:
             key = game_manager.DH_keys[hello_msg.src_server_index]
-        client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
+            client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
+            client_sock.send(client_id.to_bytes(6, 'little'))
 
         for player in game_manager.read_only_players:
             if player.entity_id == client_id:
                 player = player
+                game_manager.players.add(player)
+                game_manager.alive_entities.add(player)
+                game_manager.obstacle_sprites.add(player)
+                game_manager.all_obstacles.add(player)
+
+                game_manager.read_only_players.remove(player)
                 break
         else:
             player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
@@ -69,7 +78,7 @@ def disconnect_client_manager(client_manager: ClientManager, DH_key):
 
 client_managers: deque[ClientManager]
 game_manager: GameManager
-server_index = 0
+server_index = 1
 def main():
     server_sock: socket.socket = socket.socket()
     server_sock.bind(('0.0.0.0', 34861))

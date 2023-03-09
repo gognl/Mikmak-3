@@ -112,7 +112,7 @@ class GameManager(threading.Thread):
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
-        threading.Thread(target=self.recv_from_login).start()
+        # threading.Thread(target=self.recv_from_login).start()
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):
@@ -152,6 +152,14 @@ class GameManager(threading.Thread):
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
             self.id_info_dict[info_from_login.client_id] = info_from_login.info_list
+
+    def recv_from_LB(self):
+        while True:
+            data = self.sock_to_LB.recv(1024)
+
+            center: PointSer = PointSer(ser=data)
+            self.center.x = center.x
+            self.center.y = center.y
 
     def get_free_item_id(self):
         self.next_item_id += 1
@@ -320,6 +328,12 @@ class GameManager(threading.Thread):
             if suitable_server_index != self.my_server_index:
                 encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'), self.DH_keys[suitable_server_index])
                 client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS[suitable_server_index], encrypted_id, self.my_server_index))
+                self.players.remove(player)
+                self.alive_entities.remove(player)
+                self.obstacle_sprites.remove(player)
+                self.all_obstacles.remove(player)
+
+                self.read_only_players.add(player)
 
 
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly

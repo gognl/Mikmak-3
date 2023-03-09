@@ -24,15 +24,22 @@ def initialize_connection(server_addr: (str, int)) -> (Queue, int):
 
     encrypted_client_id = int(0).to_bytes(6, 'little')  # TODO: change it
 
-    hello_msg: HelloMsg = HelloMsg(encrypted_client_id, -1)
+    hello_msg: HelloMsg2 = HelloMsg2(encrypted_id=encrypted_client_id, src_server_index=-1)
+    print(hello_msg.serialize())
+
+    h = HelloMsg2(ser=hello_msg.serialize())
+    print(h.encrypted_client_id)
+
     server_socket.send(hello_msg.serialize())
+    data = server_socket.recv(6)
+    client_id = int.from_bytes(data, 'little')
 
     # Start the packets-handler thread & initialize the queue
     updates_queue: Queue = Queue()
     pkts_handler: Thread = Thread(target=handle_server_pkts, args=(updates_queue,))
     pkts_handler.start()
 
-    return updates_queue, encrypted_client_id
+    return updates_queue, client_id
 
 
 def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
@@ -78,6 +85,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             updates_queue.put(msg)
         elif prefix == 1:
             msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
+            print(msg.server.addr())
             global server_socket
             server_socket.close()
             server_socket = socket.socket()
@@ -282,8 +290,8 @@ def run_game(*args) -> None:
     server_addr: (str, int) = ('127.0.0.1', 34861)  # TEMPORARY
     update_queue: Queue
     client_id: int
-    update_queue, encrypted_client_id = initialize_connection(server_addr)
-    world.player.entity_id = encrypted_client_id
+    update_queue, client_id = initialize_connection(server_addr)
+    world.player.entity_id = client_id
 
     # The main game loop
     running: bool = True
@@ -303,7 +311,7 @@ def run_game(*args) -> None:
         screen, clock, world, tick_update, state_update = game_tick(screen, clock, world)
 
         if state_update is not None:
-            send_msg_to_server(server_socket, state_update)
+            send_msg_to_server(state_update)
             NormalServer.Output.StateUpdate.seq_count += 1
         reported_changes.append(tick_update)
 

@@ -31,7 +31,7 @@ def send_center_update_to_normals():
 		new_center: Point = get_new_center(players.copy())
 		for server in normal_sockets:
 			normal_sock: socket.socket = normal_sockets[server]
-			normal_sock.send(new_center.serialize())
+			normal_sock.send(PointSer(new_center.x, new_center.y).serialize())
 
 		global center
 		center = new_center

@@ -24,6 +24,14 @@ class Point:
         assert isinstance(other, Point)
         return (self.x - other.x) ** 2 + (self.y - other.y) ** 2
 
+class PointSer(Serializable):
+    def __init__(self, x: int, y: int):
+        super().__init__(ser=b'')
+        self.x = x
+        self.y = y
+
+
+
 class PlayerCentral(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
