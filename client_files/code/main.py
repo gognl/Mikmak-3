@@ -1,5 +1,6 @@
 import socket  # Socket
 import hashlib
+import sys
 
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
@@ -246,7 +247,7 @@ def run_game(*args) -> None:
         return
 
     # Connection with login
-    # login_addr: (str, int) = ('192.168.171.117', 12304)
+    login_addr: (str, int) = (login_host, login_port)
     # login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # login_socket.connect(login_addr)
 
@@ -340,6 +341,8 @@ def close_game(server_socket: socket.socket) -> None:
 
 
 def main():
+    login_host, login_port = sys.argv[1], sys.argv[2]
+    global login_host, login_port
     # Initialize the game
     screen, clock, world = initialize_game()
 
