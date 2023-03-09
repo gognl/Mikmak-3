@@ -16,6 +16,7 @@ DATA_MAX_LENGTH = 510
 id_socket_dict = {}
 DH_normal_keys = {}
 server_serverSocket_dict = {}
+active_players_username: list[str] = []
 
 DH_p = 129580882928432529101537842147269734269461392429415268045151341409571915390240545252786047823626355003667141296663918972102908481139133511887035351545132033655663683090166304802438003459450977581889646160951156933194756978255460848171968985564238788467016810538221614304187340780075305032745815204247560364281
 DH_g = 119475692254216920066132241696136552167987712858139173729861721592048057547464063002529177743099212305134089294733874076960807769722388944847002937915383340517574084979135586810183464775095834581566522721036079400681459953414957269562943460288437613755140572753576980521074966372619062067471488360595813421462
@@ -80,12 +81,14 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
             list_user_info = load_info(db, username)
         else:
             list_user_info = load_info(db, username)
-            if not list_user_info[0][2] == password:
-                client_sock.send("incorrect password".encode())
+            if not list_user_info[0][2] == password or list_user_info[0][1] in active_players_username:
+                #client_sock.send("incorrect password".encode())
+                client_sock.send("unable to enter".encode())
                 client_sock.close()
                 continue
 
         info_tuple = list_user_info[0]
+        active_players_username.append(info_tuple[1])
         id_socket_dict[info_tuple[0]] = client_sock
         new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
