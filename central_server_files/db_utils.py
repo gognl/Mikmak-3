@@ -42,6 +42,18 @@ def load_info(db: SQLDataBase, ID: int) -> list:
 
 	return db.exec(statement).fetchall()
 
+def load_player_data(db: SQLDataBase, ID: int) -> list:
+	statement = (
+		select(db.users_table).where(db.users_table.c.id == ID)
+	)
+	player_data = db.exec(statement).fetchall()[0]
+	indeces: list[int] = [3,4,5,6,7,8,9]
+	list_to_send = []
+	for i in indeces:
+		list_to_send.append(player_data[i])
+	return list_to_send
+
+
 def delete_user_info(db: SQLDataBase, username: str) -> None:
 	"""Delete user info of the give id."""
 	statement = (

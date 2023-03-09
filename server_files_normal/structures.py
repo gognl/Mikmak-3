@@ -284,3 +284,14 @@ class Point:
     def __init__(self, x: int, y: int):
         self.x: int = x
         self.y: int = y
+
+
+class InfoMsgToNormal(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser)
+        if ser != b'':
+            return
+
+        self.client_id: int = kwargs['client_id']
+        self.info_list: list = kwargs['info_list']

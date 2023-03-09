@@ -111,6 +111,7 @@ class GameManager(threading.Thread):
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_server).start()
+        threading.Thread(target=self.recv_from_login)
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):
@@ -140,6 +141,14 @@ class GameManager(threading.Thread):
                                                                        pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
         self.next_item_id = 40
+
+    def recv_from_login(self):
+        while True:
+            size = unpack('<H',self.sock_to_login.recv(2))[0]
+            data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
+            info_from_login = InfoMsgToNormal(ser=data)
+            #TODO: Alon
+
 
     def get_free_item_id(self):
         self.next_item_id += 1
