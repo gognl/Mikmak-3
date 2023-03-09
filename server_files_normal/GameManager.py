@@ -107,8 +107,8 @@ class GameManager(threading.Thread):
         # 	thread.join()
 
         self.read_only_players = pygame.sprite.Group()
-        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
-                                                                                               {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_items_updates: list[dict[int, Client.Output.ItemUpdate]] = [{}, {}, {}, {}]
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
@@ -142,13 +142,16 @@ class GameManager(threading.Thread):
                                                                        pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
         self.next_item_id = 40
+        self.id_info_dict = {}
+
+
 
     def recv_from_login(self):
         while True:
-            size = unpack('<H',self.sock_to_login.recv(2))[0]
+            size = unpack('<H', self.sock_to_login.recv(2))[0]
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
-            #TODO: @Bar
+            self.id_info_dict[info_from_login.client_id] = info_from_login.info_list
 
     def get_free_item_id(self):
         self.next_item_id += 1
@@ -180,8 +183,10 @@ class GameManager(threading.Thread):
             client_manager.send_msg(msg)
 
     def add_player(self, entity_id: int):
-        pos: (int, int) = (900, 900)
+        pos: (int, int) = (self.id_info_dict[entity_id].pos_x, self.id_info_dict[entity_id].pos_y)
         return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
+                      self.id_info_dict[entity_id].health, self.id_info_dict[entity_id].resistance, self.id_info_dict[entity_id].strength,
+                      self.id_info_dict[entity_id].xp, self.id_info_dict[entity_id].inventory,
                       self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
                       self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
 
@@ -360,7 +365,7 @@ class GameManager(threading.Thread):
                     enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name,
                                                              changes=current_enemy_state)
                     self.enemy_changes.append(enemy_update)
-                    self.add_overlapped_entity_update(enemy_update)
+                    self.add_overlapped_update(enemy_update)
 
                 enemy.reset_attacks()
                 enemy.previous_state = current_enemy_state
