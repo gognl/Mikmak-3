@@ -9,7 +9,7 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players):
+	def __init__(self, groups, entity_id: int, pos: (int, int), health, resistance, strength, xp, inventory, create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -55,20 +55,20 @@ class Player(pygame.sprite.Sprite):
 		self.update_queue: deque = deque()
 
 		# Stats
-		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}
+		self.stats = {'health': health, 'energy': 60, 'attack': strength, 'speed': 10}
 		self.health = self.stats['health']
 		self.energy = self.stats['energy']
-		self.xp = 0
+		self.xp = xp
 		self.speed = self.stats['speed']
 		self.strength = self.stats['attack']
-		self.resistance = 0
+		self.resistance = resistance
 
 		self.weapons_group = weapons_group
 
 		self.previous_state = {}
 
 		self.item_sprites = item_sprites
-		self.inventory_items = {}
+		self.inventory_items = inventory
 
 		self.pets_count = 0
 
