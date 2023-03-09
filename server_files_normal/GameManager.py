@@ -7,6 +7,7 @@ from queue import Queue, Empty
 import socket
 from typing import Union, Dict
 from struct import unpack, pack
+from base64 import urlsafe_b64encode as b64
 
 import client_files.code.main
 from server_files_normal.game.explosion import Explosion
@@ -86,13 +87,13 @@ class GameManager(threading.Thread):
                 except socket.timeout:
                     continue
 
-            keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
-
+            keys_list[server_index] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+)
         def DH_with_login():
             x = pow(DH_g, a, DH_p)
             self.sock_to_login.send(x.to_bytes(128, 'little'))
             y = self.sock_to_login.recv(1024)
-            self.DH_login_key = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+            self.DH_login_key = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
 
         DH_threads: list[threading.Thread] = []
         for i in self.other_server_indices:
@@ -106,11 +107,12 @@ class GameManager(threading.Thread):
         # 	thread.join()
 
         self.read_only_players = pygame.sprite.Group()
-        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}] # in index i are the (id, update) pairs to server i
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
+                                                                                               {}]  # in index i are the (id, update) pairs to server i
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
-        self.output_overlapped_items_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
+        threading.Thread(target=self.recv_from_login).start()
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):
@@ -140,6 +142,13 @@ class GameManager(threading.Thread):
                                                                        pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
         self.next_item_id = 40
+
+    def recv_from_login(self):
+        while True:
+            size = unpack('<H',self.sock_to_login.recv(2))[0]
+            data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
+            info_from_login = InfoMsgToNormal(ser=data)
+            #TODO: @Bar
 
     def get_free_item_id(self):
         self.next_item_id += 1
@@ -257,7 +266,6 @@ class GameManager(threading.Thread):
                     elif prefix == 1:  # enemy control transfer
                         pass
 
-
     def add_overlapped_update(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
         pos = update.pos
         dict_lists = [self.output_overlapped_players_updates, self.output_overlapped_enemies_updates, self.output_overlapped_items_updates]
@@ -352,7 +360,7 @@ class GameManager(threading.Thread):
                     enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name,
                                                              changes=current_enemy_state)
                     self.enemy_changes.append(enemy_update)
-                    self.add_overlapped_update(enemy_update)
+                    self.add_overlapped_entity_update(enemy_update)
 
                 enemy.reset_attacks()
                 enemy.previous_state = current_enemy_state
@@ -374,7 +382,7 @@ class GameManager(threading.Thread):
                     state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
                         player_changes=tuple(self.output_overlapped_players_updates[i].values()),
                         enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
-                        item_changes=tuple(self.output_overlapped_items_updates[0].values())
+                        item_changes=tuple(self.output_overlapped_items_updates[i].values())
                     )
 
                     self.output_overlapped_players_updates[i] = {}
@@ -496,7 +504,7 @@ class GameManager(threading.Thread):
                 else:
                     Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=self.generate_entity_id(),
+                          entity_id=next(self.generate_entity_id),
                           obstacle_sprites=self.all_obstacles, item_sprites=self.items,
                           create_explosion=self.create_explosion,
                           create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)

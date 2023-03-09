@@ -3,12 +3,13 @@ import threading
 from collections import deque
 import socket
 from structures import *
-from db_utils import load_info, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info
+from db_utils import load_info, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data
 from SQLDataBase import SQLDataBase
 from server_files_normal.game.settings import *
 from encryption import *
 from _struct import unpack, pack
-from Constant import MAX_ENTITY_ID_SIZE
+from Constant import MAX_ENTITY_ID_SIZE, DH_p, DH_g
+from base64 import urlsafe_b64encode as b64
 
 PORT = 12402
 PROTOCOL_LEN = 2
@@ -16,9 +17,7 @@ DATA_MAX_LENGTH = 510
 id_socket_dict = {}
 DH_normal_keys = {}
 server_serverSocket_dict = {}
-
-DH_p = 129580882928432529101537842147269734269461392429415268045151341409571915390240545252786047823626355003667141296663918972102908481139133511887035351545132033655663683090166304802438003459450977581889646160951156933194756978255460848171968985564238788467016810538221614304187340780075305032745815204247560364281
-DH_g = 119475692254216920066132241696136552167987712858139173729861721592048057547464063002529177743099212305134089294733874076960807769722388944847002937915383340517574084979135586810183464775095834581566522721036079400681459953414957269562943460288437613755140572753576980521074966372619062067471488360595813421462
+active_players_username: list[str] = []
 
 server_indices = [i for i in range(4)]
 
@@ -48,7 +47,7 @@ def DH_with_normal(normal_sock: socket.socket, server: Server):
     x = pow(DH_g, a, DH_p)
     normal_sock.send(x.to_bytes(128, 'little'))
     y = normal_sock.recv(1024)
-    DH_normal_keys[server] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+    DH_normal_keys[server] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
 
 def initialize_conn_with_normals(sock_to_normals: socket.socket):
     amount_connected = 0
@@ -80,21 +79,26 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
             list_user_info = load_info(db, username)
         else:
             list_user_info = load_info(db, username)
-            if not list_user_info[0][2] == password:
-                client_sock.send("incorrect password".encode())
+            if not list_user_info[0][2] == password or list_user_info[0][1] in active_players_username:
+                #client_sock.send("incorrect password".encode())
+                client_sock.send("unable to enter".encode())
                 client_sock.close()
                 continue
 
         info_tuple = list_user_info[0]
+        active_players_username.append(info_tuple[1])
         id_socket_dict[info_tuple[0]] = client_sock
         new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
 def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]) -> None:
     msg: LB_to_login_msg = LB_to_login_q.pop()
-    info_to_normals = InfoData(info=load_info(db, msg.client_id)[0])  # Tuple of the info
-    client_id_bytes = msg.client_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little')
+    info_to_normals = InfoData(info=load_player_data(db, msg.client_id)[0])  # list of the info
+    client_id_bytes = msg.client_id.to_bytes(6, 'little')
+    encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_to_normals).serialize(), DH_normal_keys[msg.server])
+    size = pack("<H", encrypted_package_info)
 
-    server_serverSocket_dict[msg.server].send(InfoMsgToNormal(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), info=info_to_normals.serialize()).serialize())
+    server_serverSocket_dict[msg.server].send(size)
+    server_serverSocket_dict[msg.server].send(encrypted_package_info)
 
     client_sock: socket.socket = id_socket_dict[msg.client_id]
     resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server))
@@ -103,15 +107,15 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
     client_sock.send(resp_to_client_bytes)
 
 def handle_disconnect(db: SQLDataBase):
-    for server in server_serverSocket_dict:
-        normal_sock: socket.socket = server_serverSocket_dict[server]
-        try:
-            size = unpack('<H',normal_sock.recv(2))[0]
-        except socket.timeout:
-            continue
+    while True:
+        for server in server_serverSocket_dict:
+            normal_sock: socket.socket = server_serverSocket_dict[server]
+            try:
+                size = unpack('<H',normal_sock.recv(2))[0]
+            except socket.timeout:
+                continue
 
-        player_data = PlayerData(ser=decrypt(normal_sock.recv(size), DH_normal_keys[server]))
-        update_user_info(db, player_data)
-
-
-#TODO chat
+            player_data = PlayerData(ser=decrypt(normal_sock.recv(size), DH_normal_keys[server]))
+            username = load_info(db, player_data.entity_id)[0][1]
+            active_players_username.remove(username)
+            update_user_info(db, player_data)

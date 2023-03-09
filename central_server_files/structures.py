@@ -94,8 +94,8 @@ class InfoMsgToNormal(Serializable):
         if ser != b'':
             return
 
-        self.client_id: bytes = kwargs['client_id']
-        self.info_list: bytes = kwargs['info']
+        self.client_id: int = kwargs['client_id']
+        self.info_list: list = kwargs['info_list']
 
 class Rect:
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
