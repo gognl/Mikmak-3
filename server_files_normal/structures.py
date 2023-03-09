@@ -1,10 +1,16 @@
 from typing import Tuple, List
 
 from server_files_normal.serializable import Serializable
-
+from server_files_normal.game.settings import Server
 
 class Client:
     class Output:
+        class ChangeServerMsg(Serializable):
+            def __init__(self, server: Server, encrypted_client_id):
+                super().__init__(ser=b'')
+                self.encrypted_client_id = encrypted_client_id
+                self.server = server
+
 
         class StateUpdate(Serializable):
             """Like StateUpdate but with an acknowledgement number"""
@@ -284,3 +290,13 @@ class Point:
     def __init__(self, x: int, y: int):
         self.x: int = x
         self.y: int = y
+
+class HelloMsg(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser)
+        if ser != b'':
+            return
+
+        self.encrypted_client_id: bytes = kwargs['encrypted_client_id']
+        self.src_server_index: int = kwargs['src_server_index']

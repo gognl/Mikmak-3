@@ -94,8 +94,8 @@ class InfoMsgToNormal(Serializable):
         if ser != b'':
             return
 
-        self.encrypted_client_id: bytes = kwargs['encrypted_id']
-        self.encrypted_info_list: bytes = kwargs['info']
+        self.client_id: bytes = kwargs['client_id']
+        self.info_list: bytes = kwargs['info']
 
 class Rect:
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
@@ -113,7 +113,7 @@ class PlayerData(Serializable):
         s: bytes = kwargs.pop('ser', b'')
         super().__init__(ser=s)
         if s != b'':
-	        return
+            return
         self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
 
         self.pos = kwargs.pop('pos')

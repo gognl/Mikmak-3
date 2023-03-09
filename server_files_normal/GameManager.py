@@ -50,6 +50,7 @@ class GameManager(threading.Thread):
 
         self.players_updates: List[Client.Output.PlayerUpdate] = []
         self.enemy_changes: List[Client.Output.EnemyUpdate] = []
+        self.item_changes: List[Client.Output.ItemUpdate] = []
 
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
         self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
@@ -105,9 +106,9 @@ class GameManager(threading.Thread):
         # 	thread.join()
 
         self.read_only_players = pygame.sprite.Group()
-        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
-                                                                                               {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}] # in index i are the (id, update) pairs to server i
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
+        self.output_overlapped_items_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_server).start()
 
@@ -225,7 +226,7 @@ class GameManager(threading.Thread):
         # Update the player
         player_update = NormalServer.PlayerUpdate(player_id=player_update.id, pos=player_update.pos,
                                                   attacks=player_update.attacks, status=player_update.status,
-                                                  item_actions=())
+                                                  item_actions=tuple())
         player.process_client_updates(player_update)
 
         player.reset_attacks()
@@ -248,6 +249,7 @@ class GameManager(threading.Thread):
                         state_update = NormalServer.StateUpdateNoAck(ser=data)
                         self.players_updates.extend(state_update.player_changes)
                         self.enemy_changes.extend(state_update.enemy_changes)
+                        self.item_changes.extend(state_update.item_changes)
 
                         for player_update in state_update.player_changes:
                             self.handle_read_only_player_update(player_update)
@@ -255,29 +257,27 @@ class GameManager(threading.Thread):
                     elif prefix == 1:  # enemy control transfer
                         pass
 
-                    elif prefix == 2:  # details about a player who will join
-                        pass
 
-    def add_overlapped_entity_update(self, entity_update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate):
-        pos = entity_update.pos
-        dict_list = self.output_overlapped_players_updates if isinstance(entity_update,
-                                                                         Client.Output.PlayerUpdate) else self.output_overlapped_enemies_updates
+    def add_overlapped_update(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
+        pos = update.pos
+        dict_lists = [self.output_overlapped_players_updates, self.output_overlapped_enemies_updates, self.output_overlapped_items_updates]
+        dict_list = dict_lists[0] if isinstance(update, Client.Output.PlayerUpdate) else (dict_lists[1] if isinstance(update, Client.Output.EnemyUpdate) else dict_lists[2])
 
         if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                      self.center.y + OVERLAPPING_AREA_T):
-            dict_list[0][entity_update.id] = entity_update
+            dict_list[0][update.id] = update
 
         if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
                                                      self.center.y + OVERLAPPING_AREA_T):
-            dict_list[1][entity_update.id] = entity_update
+            dict_list[1][update.id] = update
 
         if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T,
                                                      self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
-            dict_list[2][entity_update.id] = entity_update
+            dict_list[2][update.id] = update
 
         if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T,
                                                      self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
-            dict_list[3][entity_update.id] = entity_update
+            dict_list[3][update.id] = update
 
     def find_suitable_server_index(self, pos: Point) -> int:
         b0 = pos.x > self.center.x
@@ -300,14 +300,14 @@ class GameManager(threading.Thread):
             player.reset_attacks()
             player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
-            self.add_overlapped_entity_update(player_update)
+            self.add_overlapped_update(player_update)
 
             player_pos = player.get_pos()
             suitable_server_index = self.find_suitable_server_index(player_pos)
             if suitable_server_index != self.my_server_index:
-                # TODO: tell the server about the client
-                # TODO: and tell the client to switch the server
-                pass
+                encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'), self.DH_keys[suitable_server_index])
+                client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS[suitable_server_index], encrypted_id))
+
 
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
@@ -352,7 +352,7 @@ class GameManager(threading.Thread):
                     enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name,
                                                              changes=current_enemy_state)
                     self.enemy_changes.append(enemy_update)
-                    self.add_overlapped_entity_update(enemy_update)
+                    self.add_overlapped_update(enemy_update)
 
                 enemy.reset_attacks()
                 enemy.previous_state = current_enemy_state
@@ -374,7 +374,7 @@ class GameManager(threading.Thread):
                     state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
                         player_changes=tuple(self.output_overlapped_players_updates[i].values()),
                         enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
-                        item_changes=()
+                        item_changes=tuple(self.output_overlapped_items_updates[0].values())
                     )
 
                     self.output_overlapped_players_updates[i] = {}
@@ -404,7 +404,7 @@ class GameManager(threading.Thread):
                         player.kill()
                 self.players_updates.extend(player_changes)
 
-                item_changes = []
+
                 item: Item
                 for item in self.items.sprites():
 
@@ -415,17 +415,19 @@ class GameManager(threading.Thread):
                     if not item.actions:
                         continue  # don't send if no new actions
                     item_update = Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item.actions)
-                    item_changes.append(item_update)
+                    self.add_overlapped_update(item_update)
+                    self.item_changes.append(item_update)
                     item.reset_actions()
                     item.previous_pos = tuple(item.rect.center)
                     if item.die:
                         item.kill()
 
                 state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(
-                    tuple(self.players_updates), tuple(self.enemy_changes), tuple(item_changes))
+                    tuple(self.players_updates), tuple(self.enemy_changes), tuple(self.item_changes))
                 self.broadcast_msg(state_update)
                 self.players_updates.clear()  # clear the list
                 self.enemy_changes = []
+                self.item_changes = []
 
             self.clock.tick(FPS)
             tick_count += 1

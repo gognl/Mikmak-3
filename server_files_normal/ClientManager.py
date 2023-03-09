@@ -20,6 +20,7 @@ class ClientManager(threading.Thread):
         self.queue: deque[Tuple[ClientManager, Client.Input.ClientCMD]] = deque()
         self.cmd_semaphore = cmd_semaphore
         self.DH_key = key
+        self.connected = True
         self.disconnect = disconnect
 
     def run(self) -> None:
@@ -31,12 +32,13 @@ class ClientManager(threading.Thread):
         :return: None
         """
 
-        while True:
+        while self.connected:
             data: bytes = self._receive_pkt()
             if data == b'':
                 return  # kill this thread
             self.queue.append((self, Client.Input.ClientCMD(ser=data)))
             self.cmd_semaphore.release()
+        self.client_sock.close()
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
@@ -68,6 +70,11 @@ class ClientManager(threading.Thread):
         msg = Client.Output.StateUpdate(self.ack, changes)  # Add an ack to the msg
         data: bytes = msg.serialize()
         self._send_pkt(data)
+
+    def send_change_server(self, msg: Client.Output.ChangeServerMsg):
+        data: bytes = msg.serialize()
+        self._send_pkt(msg)
+        self.connected = False
 
     def has_messages(self):
         return len(self.queue) != 0

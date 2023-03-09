@@ -234,9 +234,9 @@ def run_game(*args) -> None:
         return
 
     # Connection with login
-    login_addr: (str, int) = ('192.168.171.117', 12304)
-    login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    login_socket.connect(login_addr)
+    # login_addr: (str, int) = ('192.168.171.117', 12304)
+    # login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # login_socket.connect(login_addr)
 
     # Unpack the arguments
     screen: pygame.Surface = args[0]
@@ -265,12 +265,12 @@ def run_game(*args) -> None:
         if quit_response:
             pygame.quit()
 
-    data_to_login = username + " " + str(hash_and_salt(password))
-    login_socket.send(pack("<H", len(data_to_login)))
-    login_socket.send(data_to_login.encode())
-    size = unpack("<H", login_socket.recv(2))[0]
-    data = login_socket.recv(size)
-    info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
+    # data_to_login = username + " " + str(hash_and_salt(password))
+    # login_socket.send(pack("<H", len(data_to_login)))
+    # login_socket.send(data_to_login.encode())
+    # size = unpack("<H", login_socket.recv(2))[0]
+    # data = login_socket.recv(size)
+    # info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
     # server_addr = info_to_client.server.addr()
 
     # Initialize the connection with the server

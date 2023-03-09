@@ -19,31 +19,39 @@ from collections import deque
 from threading import Semaphore
 from _struct import pack
 
-from server_files_normal.LoadBalancerManager import LoadBalancerManager
 from server_files_normal.encryption import encrypt
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
 from server_files_normal.game.player import Player
-from server_files_normal.structures import Login
+from server_files_normal.structures import Login, HelloMsg
 from server_files_normal.game.settings import LOGIN_SERVER
+from server_files_normal.encryption import decrypt
 
-
-def accept_new_clients(server_sock, cmd_semaphore: Semaphore, key):
-    client_id: int = 0
+def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
     while True:
         client_sock, client_addr = server_sock.accept()
 
-        # TODO change this later, maybe to a ConnectionInitialization structure
-        client_sock.send(f'id_{client_id}'.encode())
+        hello_msg: HelloMsg = HelloMsg(ser=client_sock.recv())
 
-        player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
+        if hello_msg.src_server_index == -1:  # login
+            key = game_manager.DH_login_key
+        else:
+            key = game_manager.DH_keys[hello_msg.src_server_index]
+        client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
+
+        for player in game_manager.read_only_players:
+            if player.entity_id == client_id:
+                player = player
+                break
+        else:
+            player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
+
         new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore, disconnect_client_manager, key)  # Create a new client manager
         client_managers.append(new_client_manager)
         new_client_manager.start()
         player.client_manager = new_client_manager  # Add the client manager to the player's attributes
         game_manager.send_initial_info(new_client_manager) # TODO: ugh?
 
-        client_id += 1
 
 def disconnect_client_manager(client_manager: ClientManager, DH_key):
     player_data = Login.Output.PlayerData(**game_manager.get_player_data(client_manager.player))
@@ -61,7 +69,7 @@ def disconnect_client_manager(client_manager: ClientManager, DH_key):
 
 client_managers: deque[ClientManager]
 game_manager: GameManager
-server_index = 1
+server_index = 0
 def main():
     server_sock: socket.socket = socket.socket()
     server_sock.bind(('0.0.0.0', 34861))
@@ -74,7 +82,7 @@ def main():
     game_manager = GameManager(client_managers, cmd_semaphore, server_index)
     game_manager.start()
 
-    accept_new_clients(server_sock, cmd_semaphore, game_manager.DH_login_key)
+    accept_new_clients(server_sock, cmd_semaphore)
 
 
 if __name__ == '__main__':

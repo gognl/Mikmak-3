@@ -9,6 +9,7 @@ TABLE_NAME = "data"
 COUNTER_NAME = "ID"
 MAX_SIZE = 255
 SALT = "WfLc6hyf"
+MAX_ENTITY_ID_SIZE = 6
 
 # Servers related constants:
 LOAD_BALANCING_PORT = 15151

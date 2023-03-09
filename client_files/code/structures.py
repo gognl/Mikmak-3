@@ -2,6 +2,7 @@ from typing import Tuple, List
 
 from client_files.code.serializable import Serializable
 
+
 class Server:
 	class Input:
 
@@ -23,7 +24,6 @@ class Server:
 			"""A class of an incoming message from the server"""
 
 			def __init__(self, **kwargs):
-
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
@@ -34,8 +34,8 @@ class Server:
 
 			def _get_attr(self) -> dict:
 				return {'player_changes': (tuple, (Server.Input.PlayerUpdate, 'o')),
-						'enemy_changes': (tuple, (Server.Input.EnemyUpdate, 'o')),
-						'item_changes': (tuple, (Server.Input.ItemUpdate, 'o'))}
+				        'enemy_changes': (tuple, (Server.Input.EnemyUpdate, 'o')),
+				        'item_changes': (tuple, (Server.Input.ItemUpdate, 'o'))}
 
 		class PlayerUpdate(Serializable):
 			"""
@@ -55,8 +55,9 @@ class Server:
 					return
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Server.Output.AttackUpdate, 'o')),
-						'status': (str, 'str'), 'health': (int, 'u_1')}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')),
+				        'attacks': (tuple, (Server.Output.AttackUpdate, 'o')),
+				        'status': (str, 'str'), 'health': (int, 'u_1')}
 
 		class AttackUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -86,7 +87,9 @@ class Server:
 					return
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
+				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'),
+				        'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'),
+				        'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
 
 		class EnemyAttackUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -114,7 +117,7 @@ class Server:
 
 			def _get_attr(self) -> dict:
 				return {'id': (int, 'u_3'), 'name': (str, 'str'),
-						'actions': (tuple, (Server.Input.ItemActionUpdate, 'o'))}
+				        'actions': (tuple, (Server.Input.ItemActionUpdate, 'o'))}
 
 		class ItemActionUpdate(Serializable):
 
@@ -125,7 +128,8 @@ class Server:
 					return
 
 				self.player_id = kwargs.pop('player_id')  # id of player
-				self.action_type = kwargs.pop('action_type')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move' or 'use'
+				self.action_type = kwargs.pop(
+					'action_type')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move' or 'use'
 				self.pos = kwargs.pop('pos')  # tuple of item position
 
 			def _get_attr(self) -> dict:
@@ -171,10 +175,10 @@ class Server:
 
 			def _get_attr(self) -> dict:
 				return {'id': (int, 'u_2'),
-						'pos': (tuple, (int, 'u_8')),
-						'attacks': (tuple, (Server.Input.AttackUpdate, 'o')),
-						'status': (str, 'str'),
-						'item_actions': (tuple, (Server.Output.ItemActionUpdate, 'o'))}
+				        'pos': (tuple, (int, 'u_8')),
+				        'attacks': (tuple, (Server.Input.AttackUpdate, 'o')),
+				        'status': (str, 'str'),
+				        'item_actions': (tuple, (Server.Output.ItemActionUpdate, 'o'))}
 
 		class AttackUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -204,16 +208,19 @@ class Server:
 			def _get_attr(self) -> dict:
 				return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}
 
+
 class EnemyUpdate:
 	def __init__(self, entity_id: int, pos: (int, int)):
 		self.entity_id = entity_id
 		self.pos = pos
 
+
 class TickUpdate:
 	def __init__(self, player_update: Server.Output.PlayerUpdate, enemies_update: List[EnemyUpdate]):
-		self.player_update:  Server.Output.PlayerUpdate = player_update
+		self.player_update: Server.Output.PlayerUpdate = player_update
 		self.enemies_update: List[EnemyUpdate] = enemies_update
 		self.seq: int = Server.Output.StateUpdate.seq_count
+
 
 class InventorySlot:
 	def __init__(self, item_id):
@@ -227,3 +234,9 @@ class InventorySlot:
 	def remove_item(self) -> int:
 		self.count -= 1
 		return self.item_ids.pop()
+
+class HelloMsg(Serializable):
+	def __init__(self, encrypted_client_id, src_server_index):
+		super().__init__(ser=b'')
+		self.encrypted_client_id: bytes = encrypted_client_id
+		self.src_server_index: int = src_server_index # -1 for login
