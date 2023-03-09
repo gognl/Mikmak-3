@@ -17,28 +17,22 @@ from client_files.code.title import Title
 from client_files.code.other_player import OtherPlayer
 
 server_socket: socket.socket
-def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
-    """
-    Initializes the connection to the server, and starts the packets-handler thread.
-    :param server_addr: The address of the server.
-    :return: A tuple containing the server socket, updates queue and the id of the client.
-    """
-
-    # Create the socket
+def initialize_connection(server_addr: (str, int)) -> (Queue, int):
     global server_socket
-    server_socket: socket.socket = socket.socket()  # CHANGE LATER - TODO
+    server_socket = socket.socket()
     server_socket.connect(server_addr)
 
-    # Establish some synchronization stuff
-    client_id: int = int(server_socket.recv(5)[3:])  # id_<2 bytes>
-    print(f'client {client_id} connected')
+    encrypted_client_id = int(0).to_bytes(6, 'little')  # TODO: change it
+
+    hello_msg: HelloMsg = HelloMsg(encrypted_client_id, -1)
+    server_socket.send(hello_msg.serialize())
 
     # Start the packets-handler thread & initialize the queue
     updates_queue: Queue = Queue()
     pkts_handler: Thread = Thread(target=handle_server_pkts, args=(updates_queue,))
     pkts_handler.start()
 
-    return server_socket, updates_queue, client_id
+    return updates_queue, encrypted_client_id
 
 
 def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
@@ -46,7 +40,6 @@ def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
     data: bytes = msg.serialize()
     size: bytes = pack("<H", len(data))
     try:
-        # TODO encrypt here
         server_socket.send(size)
         server_socket.send(data)
     except socket.error:
@@ -61,9 +54,7 @@ def get_server_pkt() -> bytes:
     """
     try:
         size: int = unpack("<H", server_socket.recv(2))[0]
-        # TODO decrypt here too maybe
         data: bytes = server_socket.recv(size)
-        # TODO decrypt here
         return data
     except socket.error:
         pygame.quit()
@@ -87,11 +78,13 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             updates_queue.put(msg)
         elif prefix == 1:
             msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
-            server_socket.close()
             global server_socket
-            server_socket: socket.socket = socket.socket()
+            server_socket.close()
+            server_socket = socket.socket()
             server_socket.connect(msg.server.addr())
+
             hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
+            print(msg.server.addr())
             server_socket.send(hello_msg.serialize())
 
 
@@ -287,11 +280,10 @@ def run_game(*args) -> None:
 
     # Initialize the connection with the server
     server_addr: (str, int) = ('127.0.0.1', 34861)  # TEMPORARY
-    server_socket: socket.socket
     update_queue: Queue
     client_id: int
-    server_socket, update_queue, client_id = initialize_connection(server_addr)
-    world.player.entity_id = client_id
+    update_queue, encrypted_client_id = initialize_connection(server_addr)
+    world.player.entity_id = encrypted_client_id
 
     # The main game loop
     running: bool = True
