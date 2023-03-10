@@ -6,7 +6,7 @@ from structures import *
 from server_files_normal.game.settings import *
 
 center = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
-players: dict[ID, PlayerCentral] = {}
+players: dict[int, PlayerCentral] = {}
 normal_sockets: dict[Server, socket.socket] = {}
 
 
@@ -39,7 +39,7 @@ def send_center_update_to_normals():
 		time.sleep(3)
 
 
-def get_new_center(players: dict[ID, PlayerCentral]):
+def get_new_center(players: dict[int, PlayerCentral]):
 	if len(players) == 0:
 		return Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 
