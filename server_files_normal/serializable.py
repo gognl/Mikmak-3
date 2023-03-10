@@ -34,11 +34,15 @@ class BaseSerializer:
 		if tsid[1] == 'b':
 			return BaseSerializer.serialize_boolean(value, length)
 
+		if tsid[1] == 'by':
+			return BaseSerializer.serialize_bytes(value, length)
+
 		if tsid[1] == 'str':
 			return BaseSerializer.serialize_string(value, length)
 
 		if tsid[1] == 'o':
 			return BaseSerializer.serialize_object(value, tsid, length)
+
 
 	@staticmethod
 	def serialize_iterable(value: Sequence, tsid: tuple) -> Union[bytes, None]:
@@ -169,6 +173,16 @@ class BaseSerializer:
 			return
 
 		return struct.pack('<H', len(serialized_value)) + serialized_value
+
+	@staticmethod
+	def serialize_bytes(value: Union[bytes, Sequence[bytes]], length: int):
+		if length == -1:
+			return struct.pack('<H', len(value)) + value
+
+		serialized_value: bytes = b''
+		for item in value:
+			serialized_value += struct.pack('<H', len(item)) + item
+		return serialized_value
 
 class BaseDeserializer:
 	"""A class that has static functions which deserialize basic types"""
@@ -501,10 +515,24 @@ class ClassB(Serializable):
 	def _get_attr(self) -> dict:
 		return {'var': (int, 'u_1')}
 
+class ClassC(Serializable):
+	def __init__(self, **kwargs):
+		s = kwargs.pop('ser', b'')
+		super().__init__(ser=s)
+		if s != b'':
+			return
+
+		self.var = [b'hello', b'world!!']
+
+	def _get_attr(self) -> dict:
+		return {'var': (list, (bytes, 'by'))}
+
 
 if __name__ == '__main__':
-	e1 = ClassA()
-	serial: bytes = e1.serialize()
-	print(serial)
-	e2 = ClassA(ser=serial)
-	print(e2.__dict__)
+	# e1 = ClassA()
+	# serial: bytes = e1.serialize()
+	# print(serial)
+	# e2 = ClassA(ser=serial)
+	# print(e2.__dict__)
+	obj = ClassC()
+	print(obj.serialize())
