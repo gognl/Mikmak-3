@@ -4,7 +4,6 @@ from time import time_ns
 from pygame.math import Vector2
 
 from client_files.code.enemy import Enemy
-from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import INTERPOLATION_PERIOD, INTERPOLATION_ACTIVE
 from client_files.code.structures import Server

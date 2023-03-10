@@ -1,6 +1,5 @@
 from collections import deque
 from random import choice
-from typing import List
 
 import pygame
 

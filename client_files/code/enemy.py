@@ -9,9 +9,9 @@ from client_files.code.support import *
 
 
 class Enemy(Entity):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_explosion, create_bullet, die, safe=None, nametag=False, name=None, create_nametag=None, nametag_update=None):
+	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_explosion, create_bullet, die):
 		# general setup
-		super().__init__(groups, entity_id, nametag, name, create_nametag, nametag_update)
+		super().__init__(groups, entity_id)
 		self.status = None
 		self.sprite_type = 'enemy'
 
@@ -34,13 +34,6 @@ class Enemy(Entity):
 		self.resistance = self.enemy_info['resistance']
 		self.attack_radius = self.enemy_info['attack_radius']
 		self.notice_radius = self.enemy_info['notice_radius']
-
-		# Safe from attacks
-		self.safe = safe
-
-		# Nametag
-		if nametag:
-			self.initialize_nametag()
 
 		# Attack actions
 		self.create_explosion = create_explosion
@@ -93,53 +86,9 @@ class Enemy(Entity):
 				return
 
 
-class Pet(Enemy):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, owner, create_dropped_item, create_explosion, create_bullet, safe, nametag, name, create_nametag, nametag_update):
-		super().__init__(enemy_name, pos, groups, entity_id, obstacle_sprites, create_dropped_item, create_explosion, create_bullet, safe, nametag, name, create_nametag, nametag_update)
-		self.owner = owner
-
-		self.stop_radius = self.enemy_info['stop_radius']
-
-	def get_status(self, owner):
-		distance = self.get_player_distance_direction(owner)[0]
-
-		if self.notice_radius < distance:
-			self.status = 'move'
-		elif self.stop_radius >= distance:
-			self.status = 'idle'
-
-	def actions(self, owner):
-		if self.status == 'move':
-			self.direction = self.get_player_distance_direction(owner)[1]
-			self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
-		else:
-			self.direction = pygame.math.Vector2()
-
-	def update(self):
-		previous_state: dict = {'pos': (self.rect.x, self.rect.y)}
-
-		self.move(self.speed)  # TODO - path finding for pets
-
-		self.changes: dict = {'pos': (self.rect.x, self.rect.y)}
-		if self.changes == previous_state:
-			self.changes = None
-
-		# Death
-		if self.health <= 0:
-			pass  # self.on_kill()
-
-			self.nametag.kill = True
-			self.owner.pets -= 1
-			self.kill()
-
-	def enemy_update(self, players):
-		self.get_status(self.owner)
-		self.actions(self.owner)
-
-
 class TitleEnemy(Enemy):
 	def __init__(self, enemy_name, pos, groups, direction):
-		super().__init__(enemy_name, pos, groups, 0, None, None, None, None, None)
+		super().__init__(enemy_name, pos, groups, 0, None, None, None, None)
 
 		self.direction = direction
 		self.image = self.animations['move'][0 if self.direction[0] < 0 else 1]

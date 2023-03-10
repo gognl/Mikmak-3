@@ -70,8 +70,6 @@ class Player(pygame.sprite.Sprite):
 		self.item_sprites = item_sprites
 		self.inventory_items = {}
 
-		self.pets_count = 0
-
 		self.get_free_item_id = get_free_item_id
 
 		self.dead = False
@@ -159,13 +157,6 @@ class Player(pygame.sprite.Sprite):
 					self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
 				elif item_name == "spawn_yellow":
 					self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
-				elif item_name == "spawn_pet":
-					if self.pets_count < MAX_PETS_PER_PLAYER:
-						pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
-						#  TODO add pets
-						self.pets_count += 1
-					else:
-						used = False
 
 				if used:
 					# remove the item from the player's inventory

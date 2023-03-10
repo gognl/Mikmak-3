@@ -1,17 +1,12 @@
 import random
-import pygame
-from math import floor, ceil
 from typing import Dict, Union, List
 
 from client_files.code.interpolator import Interpolator
-from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
-from client_files.code.settings import *
 from client_files.code.tile import Tile
-from client_files.code.player import Player
 from client_files.code.support import *
 from client_files.code.weapon import Weapon
-from client_files.code.enemy import Enemy, Pet
+from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
 from client_files.code.ui import *
 from client_files.code.structures import *
@@ -194,19 +189,14 @@ class World:
     def get_inventory_box_pressed(self, mouse):
         return self.ui.get_inventory_box_pressed(mouse)
 
-    def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
+    def spawn_enemy_from_egg(self, pos, name):
         while True:
             random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
             random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                if is_pet:
-                    Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                        self.obstacle_sprites, player, self.create_dropped_item, self.create_explosion, self.create_bullet, safe=[player], nametag=True, name="random", create_nametag=self.create_nametag,
-                        nametag_update=self.nametag_update)
-                else:
-                    Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                          self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet, safe=[])
+                Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
+                        self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
                 break
 
     def create_explosion(self, pos, damage):
@@ -338,7 +328,7 @@ class World:
         if item.name == "xp":
             self.player.xp += 1
             item.kill()
-        elif item.name == "grave_player" or item.name == "grave_pet":
+        elif item.name == "grave_player":
             self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = InventorySlot(item.item_id)
             del self.items[item.item_id]
             item.kill()

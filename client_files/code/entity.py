@@ -1,7 +1,5 @@
 import pygame
-import random
 from client_files.code.projectile import Projectile
-from client_files.code.settings import *
 
 
 class Entity(pygame.sprite.Sprite):
@@ -14,10 +12,7 @@ class Entity(pygame.sprite.Sprite):
 
 		# Name tag
 		if nametag:
-			if name == "random":
-				self.name = random.choice(RANDOM_NAMETAG)
-			else:
-				self.name = name
+			self.name = name
 
 		self.create_nametag = create_nametag
 		self.nametag_update = nametag_update
