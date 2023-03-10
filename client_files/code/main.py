@@ -154,6 +154,9 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
 	:return: updated screen, clock, and world
 	"""
 
+	# Wait for one tick
+	world.dt = clock.tick(FPS)/1000
+
 	# Reset screen to black - delete last frame from screen
 	screen.fill('black')
 
@@ -162,9 +165,6 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
 	state_update: Server.Output.StateUpdate
 	tick_update, state_update = world.run()
 	pygame.display.update()
-
-	# Wait for one tick
-	clock.tick(FPS)
 
 	return screen, clock, world, tick_update, state_update
 

@@ -159,11 +159,14 @@ class GameManager(threading.Thread):
 				if event.type == cmd_received_event:
 					self.handle_cmds(event.cmds)
 
+			dt = self.clock.tick(FPS)/1000
+			tick_count += 1
+
 			# Run enemies simulation
 			for enemy in self.enemies.sprites():
-				for i in range(CLIENT_FPS//FPS):
-					enemy.update()
-					enemy.enemy_update(self.players)
+				enemy.dt = dt
+				enemy.update()
+				enemy.enemy_update(self.players)
 
 				if enemy.dead:
 					enemy.status = 'dead'
@@ -176,14 +179,19 @@ class GameManager(threading.Thread):
 				if enemy.status == 'dead':
 					enemy.kill()
 
-			for i in range(CLIENT_FPS // FPS):
-				self.projectiles.update()
-				self.weapons.update()
-				self.players.update()
-				self.items.update()
+			for proj in self.projectiles.sprites():
+				proj.dt = dt
+			for player in self.players.sprites():
+				player.dt = dt
 
-				for item in self.items.sprites():
-					item.update_movement(self.magnetic_players)
+			self.projectiles.update()
+			self.weapons.update()
+			self.players.update()
+			self.items.update()
+
+			for item in self.items.sprites():
+				item.dt = dt
+				item.update_movement(self.magnetic_players)
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				player_changes = []
@@ -221,9 +229,6 @@ class GameManager(threading.Thread):
 
 				enemy_changes = []
 
-			self.clock.tick(FPS)
-			tick_count += 1
-
 			# Check if a cmd was received
 			cmds: List[(ClientManager, Client.Input.ClientCMD)] = []
 			while not self.cmd_queue.empty():
@@ -258,33 +263,26 @@ class GameManager(threading.Thread):
 			damage = source.damage
 
 		Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 4, 15, 120, './graphics/weapons/bullet.png', damage)
+				   self.all_obstacles, 4, 500, 5, './graphics/weapons/bullet.png', damage)
 
 	def create_kettle(self, player: Player, pos, mouse):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 4, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
+				   self.all_obstacles, 4, 75, 3, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
 
 	def create_explosion(self, pos, damage):
 		Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites()+self.items.sprites()))
 
-	def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
+	def spawn_enemy_from_egg(self, pos, name):
 		while True:
 			random_x = pos[0] // 64 + (randint(2, 4) * randrange(-1, 2))
 			random_y = pos[1] // 64 + (randint(2, 4) * randrange(-1, 2))
 
 			if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
 					self.layout['objects'][random_y][random_x]) == -1:
-				if is_pet:
-					'''Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-						self.obstacle_sprites, player, self.create_dropped_item, self.create_explosion,
-						self.create_bullet, safe=[player], nametag=True, name="random",
-						create_nametag=self.create_nametag,
-						nametag_update=self.nametag_update)'''
-				else:
-					Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
-						  groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=self.generate_entity_id(),
-						  obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion,
-						  create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
+				Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
+						groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=self.generate_entity_id(),
+						obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion,
+						create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
 				break

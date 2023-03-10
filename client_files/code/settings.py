@@ -78,13 +78,11 @@ enemy_data = {
     'white_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white'], 'xp': 15},
     'yellow_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
-                   'move_cooldown': 24, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30},
-    'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 50, 'attack_radius': 0, 'notice_radius': 400,
-                'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_pet'], 'xp': 5}
+                   'move_cooldown': 24, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30}
 }
 
 item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
               'spawn_red', 'spawn_yellow', 'xp']  # TODO - keep only items that need to be naturally spawned
 
-INTERPOLATION_PERIOD = 100_000_000  # ns
-INTERPOLATION_ACTIVE = False
+INTERPOLATION_PERIOD = 50_000_000  # ns
+INTERPOLATION_ACTIVE = True

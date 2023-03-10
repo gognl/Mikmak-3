@@ -79,6 +79,8 @@ class World:
 
         self.interpolator: Interpolator = Interpolator(self)
 
+        self.dt = 0
+
     def create_map(self) -> None:
         """
         Place movable tiles on the map
@@ -131,7 +133,7 @@ class World:
             damage = source.damage
 
         Projectile(source, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.all_obstacles, 4, 15, 120,
+                                            self.projectile_sprites), self.all_obstacles, 4, 500, 5,
                    '../graphics/weapons/bullet.png', damage)
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
@@ -142,7 +144,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                    self.projectile_sprites), self.all_obstacles, 4, 5, 45,
+                    self.projectile_sprites), self.all_obstacles, 4, 75, 3,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)),
                    'explode', self.create_explosion, True)
 
@@ -252,6 +254,10 @@ class World:
 
         # Update the obstacle sprites for the player
         self.player.update_items(self.item_sprites)
+
+        self.player.dt = self.dt
+        for proj in self.projectile_sprites.sprites():
+            proj.dt = self.dt
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
