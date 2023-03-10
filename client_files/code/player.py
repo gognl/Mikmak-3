@@ -15,6 +15,9 @@ class Player(Entity):
                  magnetic_players) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
+        # Player name TODO: might be temporary
+        self.name = name
+
         # sprite group of magnetic players
         self.magnetic_players = magnetic_players
 
