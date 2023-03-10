@@ -89,7 +89,7 @@ class ServerSer(Serializable, Server):
 
     def _get_attr(self) -> dict:
         return {'ip': (str, 'str'),
-                'port': (int, 'u_1')}
+                'port': (int, 'u_2')}
 
 
 class LB_to_login_msg:

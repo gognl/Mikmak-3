@@ -70,7 +70,7 @@ def initialize_conn_with_normals(sock_to_normals: socket.socket):
         normal_sock.settimeout(0.02)
 
         amount_connected += 1
-    print(123)
+    print("The servers are ready! (Login)")
 
 def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: socket.socket) -> None:
     sock.listen()
@@ -107,13 +107,13 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
         info_to_normals = InfoData(info=load_player_data(db, msg.client_id))  # list of the info
         client_id_bytes = msg.client_id.to_bytes(6, 'little')
         encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_to_normals).serialize(), DH_normal_keys[msg.server])
-        size = pack("<H", encrypted_package_info)
+        size = pack("<H", len(encrypted_package_info))
 
         server_serverSocket_dict[msg.server].send(size)
         server_serverSocket_dict[msg.server].send(encrypted_package_info)
 
         client_sock: socket.socket = id_socket_dict[msg.client_id]
-        resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server))
+        resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(ip=msg.server.ip, port=msg.server.port))
         resp_to_client_bytes = resp_to_client.serialize()
         client_sock.send(pack("<H", len(resp_to_client_bytes)))
         client_sock.send(resp_to_client_bytes)

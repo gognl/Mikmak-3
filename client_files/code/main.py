@@ -21,6 +21,7 @@ server_socket: socket.socket
 def initialize_connection(server_addr: (str, int), encrypted_id: bytes) -> (Queue, int):
     global server_socket
     server_socket = socket.socket()
+    print(server_addr, encrypted_id)
     server_socket.connect(server_addr)
 
     hello_msg: HelloMsg = HelloMsg(encrypted_id, -1)

@@ -22,7 +22,7 @@ def initialize_conn_with_normals(sock_to_normals: socket.socket):
         normal_sockets[server] = normal_sock
 
         amount_connected += 1
-    print(123)
+    print("The servers are ready! (LB)")
 
 
 def send_center_update_to_normals():

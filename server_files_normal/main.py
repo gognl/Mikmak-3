@@ -24,7 +24,7 @@ from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
 from server_files_normal.game.player import Player
 from server_files_normal.structures import HelloMsg, PlayerData
-from server_files_normal.game.settings import LOGIN_SERVER
+from server_files_normal.game.settings import LOGIN_SERVER, NORMAL_SERVERS
 from server_files_normal.encryption import decrypt
 
 def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
@@ -81,7 +81,7 @@ game_manager: GameManager
 server_index = 1
 def main():
     server_sock: socket.socket = socket.socket()
-    server_sock.bind(('0.0.0.0', 34861))
+    server_sock.bind(('0.0.0.0', NORMAL_SERVERS[server_index].port))
     server_sock.listen()
 
     cmd_semaphore: Semaphore = Semaphore(0)
