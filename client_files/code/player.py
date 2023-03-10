@@ -38,7 +38,7 @@ class Player(Entity):
 
         # Attacking
         self.attacking: bool = False
-        self.attack_cooldown: int = 400
+        self.attack_cooldown: int = 24
         self.attack_time: int = 0
 
         # weapon
@@ -66,9 +66,10 @@ class Player(Entity):
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}
         self.health = self.stats['health']
         self.energy = self.stats['energy']
+        self.max_energy = self.stats['energy']
         self.xp = 0
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']
@@ -88,17 +89,26 @@ class Player(Entity):
         # Magnet skill
         self.can_magnet = True
         self.is_magnet = False
-        self.magnet_start = None
-        self.magnet_time = 10000
-        self.magnet_skill_cooldown = 50000
+        self.magnet_start = 0
+        self.magnet_time = 600
+        self.magnet_skill_cooldown = 1200
+        self.magnet_cost = 20
 
         # Speed skill
         self.can_speed = True
         self.is_fast = False
-        self.speed_start = None
-        self.speed_time = 1000
-        self.speed_skill_cooldown = 8000
+        self.speed_start = 0
+        self.speed_time = 120
+        self.speed_skill_cooldown = 220
         self.speed_skill_factor = 2
+        self.speed_cost = 40
+
+        # Lightning skill
+        self.can_lightning = True
+        self.lightning_start = 0
+        self.lightning_skill_cooldown = 120
+        self.lightning_radius = 256
+        self.lightning_cost = 30
 
         # Inventory
         self.create_inventory = create_inventory
@@ -114,7 +124,7 @@ class Player(Entity):
         self.destroy_chat = destroy_chat
         self.last_chat = True
         self.chat_time = 0
-        self.chat_cooldown = 100
+        self.chat_cooldown = 6
         self.chat_active = False
         self.can_change_chat = True
 
@@ -123,7 +133,7 @@ class Player(Entity):
         self.deactivate_zen = deactivate_zen
         self.last_zen = True
         self.zen_time = 0
-        self.zen_cooldown = 100
+        self.zen_cooldown = 6
         self.zen_active = False
         self.can_change_zen = True
 
@@ -132,7 +142,7 @@ class Player(Entity):
         self.destroy_minimap = destroy_minimap
         self.last_minimap = True
         self.minimap_time = 0
-        self.minimap_cooldown = 100
+        self.minimap_cooldown = 6
         self.minimap_active = False
         self.can_change_minimap = True
 
@@ -142,6 +152,13 @@ class Player(Entity):
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
+
+        # Energy
+        self.can_energy = True
+        self.energy_cooldown = 60
+        self.energy_time = 0
+        self.energy_point_cooldown = 10
+        self.energy_point_time = 0
 
         self.dt = 1
 
@@ -187,20 +204,33 @@ class Player(Entity):
             self.direction.x = 0
 
         # Check if using speed skill
-        if self.can_speed and keys[pygame.K_1]:
+        if self.can_speed and keys[pygame.K_1] and self.energy >= self.speed_cost:
             self.can_speed = False
+            self.energy -= self.speed_cost
+            self.can_energy = False
             self.is_fast = True
             self.speed *= self.speed_skill_factor
-            self.speed_start = pygame.time.get_ticks()
             self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=1, item_name=''))
 
         # Check if using magnet skill
-        if self.can_magnet and keys[pygame.K_2]:
+        if self.can_magnet and keys[pygame.K_2] and self.energy >= self.magnet_cost:
             self.can_magnet = False
+            self.energy -= self.magnet_cost
+            self.can_energy = False
             self.add(self.magnetic_players)
             self.is_magnet = True
-            self.magnet_start = pygame.time.get_ticks()
             self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
+
+        # Check if using lightning skill
+        if self.can_lightning and keys[pygame.K_3] and self.energy >= self.lightning_cost:
+            self.can_lightning = False
+            self.energy -= self.lightning_cost
+            self.can_energy = False
+            for entity in []:  # TODO - @goni search through all entities
+                if entity.rect.distance(pygame.math.Vector2(self.rect.x, self.rect.y)) < self.lightning_radius:
+                    entity.deal_damage(self.strength // 10 + 25)
+            self.lightning_start = 0
+            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
 
         # Move nametag right after moving
         self.nametag_update(self.nametag)
@@ -227,7 +257,7 @@ class Player(Entity):
 
                 self.chat_active = not self.chat_active
                 self.can_change_chat = False
-                self.chat_time = pygame.time.get_ticks()
+                self.chat_time = 0
             self.last_chat = True
         else:
             self.last_chat = False
@@ -241,7 +271,7 @@ class Player(Entity):
 
                 self.minimap_active = not self.minimap_active
                 self.can_change_minimap = False
-                self.minimap_time = pygame.time.get_ticks()
+                self.minimap_time = 0
             self.last_minimap = True
         else:
             self.last_minimap = False
@@ -255,7 +285,7 @@ class Player(Entity):
 
                 self.zen_active = not self.zen_active
                 self.can_change_zen = False
-                self.zen_time = pygame.time.get_ticks()
+                self.zen_time = 0
             self.last_zen = True
         else:
             self.last_zen = False
@@ -273,7 +303,7 @@ class Player(Entity):
                     self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
-                    self.attack_time = pygame.time.get_ticks()
+                    self.attack_time = 0
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
@@ -282,7 +312,7 @@ class Player(Entity):
                     elif self.weapon_index == 2:
                         self.attacking = True
                         self.release_mouse[0] = True
-                        self.attack_time = pygame.time.get_ticks()
+                        self.attack_time = 0
 
                         self.create_kettle(self, self.current_weapon.rect.center)
                         self.inventory_items['kettle'].count -= 1
@@ -400,43 +430,73 @@ class Player(Entity):
         Manage cooldowns
         :return: None
         """
-        current_time: int = pygame.time.get_ticks()
+
+        # Energy
+        if not self.can_energy:
+            if self.energy_time >= self.energy_cooldown:
+                self.can_energy = True
+                self.energy_time = 0
+            else:
+                self.energy_time += 1
+        elif self.energy < self.max_energy:
+            if self.energy_point_time >= self.energy_point_cooldown:
+                self.energy += 1
+                self.energy_point_time = 0
+            else:
+                self.energy_point_time += 1
 
         # Speed skill timers
         if not self.can_speed:
-            if current_time - self.speed_start >= self.speed_time and self.is_fast:
+            if self.speed_start >= self.speed_time and self.is_fast:
                 self.speed = int(self.speed / self.speed_skill_factor)
                 self.is_fast = False
-            if current_time - self.speed_start >= self.speed_skill_cooldown:
+            elif self.speed_start >= self.speed_skill_cooldown:
                 self.can_speed = True
+                self.speed_start = 0
+            else:
+                self.speed_start += 1
 
         # Magnet skill timers
         if not self.can_magnet:
-            if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
+            if self.magnet_start >= self.magnet_time and self.is_magnet:
                 self.is_magnet = False
                 self.remove(self.magnetic_players)
-            if current_time - self.magnet_start >= self.magnet_skill_cooldown:
+            elif self.magnet_start >= self.magnet_skill_cooldown:
                 self.can_magnet = True
+                self.magnet_start = 0
+            else:
+                self.magnet_start += 1
 
-        if self.attacking:  # TODO - make this based on ticks not time
-            if current_time - self.attack_time >= self.attack_cooldown:
+        # Lightning skill timers
+        if not self.can_magnet:
+            if self.lightning_start >= self.lightning_skill_cooldown:
+                self.can_lightning = True
+                self.lightning_start = 0
+            else:
+                self.lightning_start += 1
+
+        if self.attacking:
+            if self.attack_time >= self.attack_cooldown:
                 self.attacking = False
+                self.attack_time = 0
                 if self.weapon_index not in self.on_screen:
                     self.destroy_attack(self)
+            else:
+                self.attack_time += 1
 
         if not self.can_switch_weapon:
             if self.weapon_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_weapon = True
                 self.weapon_switch_time = 0
             else:
-                self.weapon_switch_time += self.dt
+                self.weapon_switch_time += 1
 
         if not self.can_shoot:
             if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
                 self.shoot_time = 0
             else:
-                self.shoot_time += self.dt
+                self.shoot_time += 1
 
         if not self.can_change_inventory:
             if self.inventory_time >= self.inventory_cooldown:
@@ -446,16 +506,25 @@ class Player(Entity):
                 self.inventory_time += 1
 
         if not self.can_change_chat:
-            if current_time - self.chat_time >= self.chat_cooldown:
+            if self.chat_time >= self.chat_cooldown:
                 self.can_change_chat = True
+                self.chat_time = 0
+            else:
+                self.chat_time += 1
 
         if not self.can_change_zen:
-            if current_time - self.zen_time >= self.zen_cooldown:
+            if self.zen_time >= self.zen_cooldown:
                 self.can_change_zen = True
+                self.zen_time = 0
+            else:
+                self.zen_time += 1
 
         if not self.can_change_minimap:
-            if current_time - self.minimap_time >= self.minimap_cooldown:
+            if self.minimap_time >= self.minimap_cooldown:
                 self.can_change_minimap = True
+                self.minimap_time = 0
+            else:
+                self.minimap_time += 1
 
     def animate(self) -> None:
         """
