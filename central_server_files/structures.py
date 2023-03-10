@@ -1,7 +1,5 @@
 from central_server_files.serializable import Serializable
 
-ID = int
-
 class Point:
     def __init__(self, x: int, y: int):
         self.x: int = x
@@ -30,6 +28,10 @@ class PointSer(Serializable):
         self.x = x
         self.y = y
 
+    def _get_attr(self) -> dict:
+        return {'x': (int, 'u_2'),
+                'y': (int, 'u_2')}
+
 
 
 class PlayerCentral(Serializable):
@@ -39,8 +41,11 @@ class PlayerCentral(Serializable):
         if ser != b'':
             return
 
-        self.pos: Point = kwargs['pos']
-        self.id: ID = kwargs['player_id']
+        self.pos: PointSer = kwargs['pos']
+        self.id: int = kwargs['player_id']
+    def _get_attr(self) -> dict:
+        return {'pos': (PointSer, '0'),
+                'id': (int, u_2)}
 
 class PlayerCentralList(Serializable):
     def __init__(self, **kwargs):
@@ -50,6 +55,9 @@ class PlayerCentralList(Serializable):
             return
 
         self.players: list[PlayerCentral] = kwargs['players']
+
+    def _get_attr(self) -> dict:
+        return {'players': (list, (PlayerCentral, 'o'))}
 
 class Server:
     def __init__(self, ip, port):
@@ -71,6 +79,10 @@ class ServerSer(Serializable, Server):
             return
         Server.__init__(self, kwargs['ip'], kwargs['port'])
 
+    def _get_attr(self) -> dict:
+        return {'ip': (str, 'str'),
+                'port': (int, 'u_1')}
+
 class LB_to_login_msg:
     def __init__(self, client_id: ID, server: Server):
         self.client_id: ID = client_id
@@ -85,6 +97,9 @@ class LoginResponseToClient(Serializable):
 
         self.encrypted_client_id: bytes = kwargs['encrypted_id']
         self.server: ServerSer = kwargs['server']
+    def _get_attr(self) -> dict:
+        return {'encrypted_client_id': (bytes, 'by'),
+                'server': (ServerSer, 'o')}
 
 class InfoData(Serializable):
     def __init__(self, **kwargs):
@@ -93,7 +108,10 @@ class InfoData(Serializable):
         if ser != b'':
             return
 
-        self.info: tuple = kwargs['info']
+        self.info: list = kwargs['info']
+
+    def _get_attr(self) -> dict:
+        return {'info': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'), (dict, (tuple, (str, 'str'), (int, 'u_2'))))}
 
 class InfoMsgToNormal(Serializable):
     def __init__(self, **kwargs):
@@ -103,7 +121,12 @@ class InfoMsgToNormal(Serializable):
             return
 
         self.client_id: int = kwargs['client_id']
-        self.info_list: list = kwargs['info_list']
+        self.info: list = kwargs['info_list']
+
+    def _get_attr(self) -> dict:
+        return {'client_id': (int, 'u_2'),
+                'info_list': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'), (dict, (tuple, (str, 'str'), (int, 'u_2'))))
+                }
 
 class Rect:
     def __init__(self, x1: int, y1: int, x2: int, y2: int):

@@ -13,6 +13,10 @@ class ServerSer(Serializable, Server):
             return
         Server.__init__(self, kwargs['ip'], kwargs['port'])
 
+    def _get_attr(self) -> dict:
+        return {'ip': (str, 'str'),
+                'port': (int, 'u_1')}
+
 class Client:
     class Output:
         class ChangeServerMsg(Serializable):
@@ -310,6 +314,10 @@ class PointSer(Serializable):
         self.x = kwargs['x']
         self.y = kwargs['y']
 
+    def _get_attr(self) -> dict:
+        return {'x': (int, 'u_2'),
+                'y': (int, 'u_2')}
+
 class HelloMsg(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
@@ -329,6 +337,12 @@ class InfoMsgToNormal(Serializable):
 
         self.client_id: int = kwargs['client_id']
         self.info_list: list = kwargs['info_list']
+
+    def _get_attr(self) -> dict:
+        return {'client_id': (int, 'u_2'),
+                'info_list': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'), (dict, (tuple, (str, 'str'), (int, 'u_2'))))
+                }
+
 
 class ItemsList(Serializable):
     def __init__(self, **kwargs):

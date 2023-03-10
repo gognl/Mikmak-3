@@ -26,6 +26,10 @@ class ServerSer(Serializable, Server):
             return
         Server.__init__(self, kwargs['ip'], kwargs['port'])
 
+    def _get_attr(self) -> dict:
+        return {'ip': (str, 'str'),
+                'port': (int, 'u_1')}
+
 class NormalServer:
     class Input:
         class ChangeServerMsg(Serializable):
@@ -277,6 +281,10 @@ class LoginResponseToClient(Serializable):
 
         self.encrypted_client_id: bytes = kwargs['encrypted_id']
         self.server: ServerSer = kwargs['server']
+
+    def _get_attr(self) -> dict:
+        return {'encrypted_client_id': (bytes, 'by'),
+                'server': (ServerSer, 'o')}
 
 class HelloMsg(Serializable):
     def __init__(self, encrypted_client_id: bytes, src_server_index: int):
