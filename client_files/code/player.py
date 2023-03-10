@@ -66,6 +66,10 @@ class Player(Entity):
         self.y_value = None
         self.desired_x = None
         self.desired_y = None
+        self.last_x = None
+        self.last_y = None
+        self.auto_count = 0
+        self.rand_walk = False
 
         # Animations
         self.animations: Dict[str, List[pygame.Surface]] = {}
@@ -181,17 +185,45 @@ class Player(Entity):
             self.desired_y = None
             self.x_value = None
             self.y_value = None
+            self.last_x = None
+            self.last_y = None
+            self.auto_count = 0
+
+    def is_good_auto_walk(self, y: int, x: int, y_place: int, x_place: int) -> bool:
+        temp = True
+        for i in range(-3, 4):
+            for j in range(-3, 4):
+                if j + y == y_place and i + x == x_place:
+                    return True
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if len(self.layout['floor']) > y + j >= 0 and len(self.layout['floor'][y + j]) > x + i >= 0 and \
+                    not (int(self.layout['floor'][y + j][x + i]) in SPAWNABLE_TILES and
+                              int(self.layout['objects'][y + j][x + i]) == -1):
+                    temp = False
+        return temp
 
     def start_auto_walk(self) -> None:
         self.stop_auto_walk()
+        directions = [(-1, 0), (0, -1), (1, 0), (0, 1)]
+        if self.rand_walk:
+            self.rand_walk = False
+            i = random.randint(0, 3)
+            self.path_to_tile = directions[i]
+            for j in range(0, 5):
+                self.moves_auto_walk(directions[i])
+            return
         self.is_auto_walk = True
         x = self.rect.x
         y = self.rect.y
+        self.last_x = x
+        self.last_y = y
         x = int(x / 64)
         y = int(y / 64)
         x1 = 0
         y1 = 0
-        while not (int(self.layout['floor'][y1][x1]) in SPAWNABLE_TILES and int(self.layout['objects'][y1][x1]) == -1):
+        while not (int(self.layout['floor'][y1][x1]) in SPAWNABLE_TILES and int(self.layout['objects'][y1][x1]) == -1
+                   and abs(x - x1) >= 200):
             x1 = random.randint(0, 1280 * 40 // 64 - 1)
             y1 = random.randint(0, 720 * 40 // 64 - 1)
         x_values = (max(0, min(x1, x) - MAX_OBSTACLE_SIZE), min(COL_TILES - 1, max(x1, x) + MAX_OBSTACLE_SIZE))
@@ -212,28 +244,24 @@ class Player(Entity):
                     y_values.append((max(y1 - MAX_OBSTACLE_SIZE, 0), min(y1 + MAX_OBSTACLE_SIZE, ROW_TILES - 1)))
                     is_in_bfs.append([])
                     for j in range(max(y1 - MAX_OBSTACLE_SIZE, 0), min(y1 + MAX_OBSTACLE_SIZE, ROW_TILES - 1) + 1):
-                        is_in_bfs[-1].append(int(self.layout['floor'][j][i]) in SPAWNABLE_TILES and int(
-                            self.layout['objects'][j][i]) == -1)
+                        is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 else:
                     y_values.append((max(y - MAX_OBSTACLE_SIZE, 0), min(y + MAX_OBSTACLE_SIZE, ROW_TILES - 1)))
                     is_in_bfs.append([])
                     for j in range(max(y - MAX_OBSTACLE_SIZE, 0), min(y + MAX_OBSTACLE_SIZE, ROW_TILES - 1) + 1):
-                        is_in_bfs[-1].append(int(self.layout['floor'][j][i]) in SPAWNABLE_TILES and int(
-                            self.layout['objects'][j][i]) == -1)
+                        is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 continue
             elif i > max(x1, x):
                 if x1 >= x:
                     y_values.append((max(y1 - MAX_OBSTACLE_SIZE, 0), min(y1 + MAX_OBSTACLE_SIZE, ROW_TILES - 1)))
                     is_in_bfs.append([])
                     for j in range(max(y1 - MAX_OBSTACLE_SIZE, 0), min(y1 + MAX_OBSTACLE_SIZE, ROW_TILES - 1) + 1):
-                        is_in_bfs[-1].append(int(self.layout['floor'][j][i]) in SPAWNABLE_TILES and int(
-                            self.layout['objects'][j][i]) == -1)
+                        is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 else:
                     y_values.append((max(y - MAX_OBSTACLE_SIZE, 0), min(y + MAX_OBSTACLE_SIZE, ROW_TILES - 1)))
                     is_in_bfs.append([])
                     for j in range(max(y - MAX_OBSTACLE_SIZE, 0), min(y + MAX_OBSTACLE_SIZE, ROW_TILES - 1) + 1):
-                        is_in_bfs[-1].append(int(self.layout['floor'][j][i]) in SPAWNABLE_TILES and int(
-                            self.layout['objects'][j][i]) == -1)
+                        is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 continue
             else:
                 high -= y3 / x3 * plus
@@ -242,8 +270,7 @@ class Player(Entity):
                 is_in_bfs.append([])
                 for j in range(max(int(high) - MAX_OBSTACLE_SIZE, 0), min(
                         int(high) + MAX_OBSTACLE_SIZE, ROW_TILES - 1) + 1):
-                    is_in_bfs[-1].append(int(self.layout['floor'][j][i]) in SPAWNABLE_TILES and int(
-                            self.layout['objects'][j][i]) == -1)
+                    is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
         bfs_values = []
         for i in is_in_bfs:
             bfs_values.append([])
@@ -272,13 +299,8 @@ class Player(Entity):
         path = []
         new_directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
         mini = 1000000
-        for i in new_directions:
-            mini = min(mini, bfs_values[x + i[0] - x_values[0]][y + i[1] - y_values[x + i[0] - x_values[0]][0]])
-        if mini == 1000000:
-            self.start_auto_walk()
-        for i in new_directions:
-            if mini == bfs_values[x + i[0] - x_values[0]][y + i[1] - y_values[x + i[0] - x_values[0]][0]]:
-                self.path_to_tile = i
+        i = random.randint(0, 3)
+        self.path_to_tile = new_directions[i]
         x += self.path_to_tile[0]
         y += self.path_to_tile[1]
         x_last = x
@@ -415,6 +437,15 @@ class Player(Entity):
             self.x_value = self.desired_x
             self.y_value = self.desired_y
         if self.is_on_tile and len(self.moves_auto_walk) == 0:
+            self.start_auto_walk()
+        if self.hitbox.x == self.last_x and self.hitbox.y == self.last_y:
+            self.auto_count += 1
+        else:
+            self.last_x = self.hitbox.x
+            self.last_y = self.hitbox.y
+            self.auto_count = 0
+        if self.auto_count == 3:
+            self.rand_walk = True
             self.start_auto_walk()
 
     def input(self) -> None:
