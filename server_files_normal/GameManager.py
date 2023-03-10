@@ -318,10 +318,10 @@ class GameManager(threading.Thread):
                         for item_details in item_details_list:
                             item = Item(item_details.name, (self.items,), item_details.pos, item_details.id)
                             item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
-                    elif prefix == 3:
+                    elif prefix == 3:  # details about player moving to my region
                         player_data = PlayerData(ser=data)
                         for player in self.read_only_players:
-                            if player_data.entity_id == player.id:
+                            if player_data.entity_id == player.entity_id:
                                 player: Player
                                 player.health = player_data.health
                                 player.strength = player_data.strength
@@ -471,11 +471,11 @@ class GameManager(threading.Thread):
 
                         self.send_to_normal_server(i, b'\x00' + state_update.serialize())
 
-            # if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
-            #     player_central_list = PlayerCentralList(
-            #         players=[PlayerCentral(pos=player.get_pos(), player_id=player.entity_id) for player in
-            #                  self.players])
-            #     self.sock_to_LB.send(player_central_list.serialize())
+            if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
+                player_central_list = PlayerCentralList(
+                    players=[PlayerCentral(pos=player.get_pos(), player_id=player.entity_id) for player in
+                             self.players])
+                self.sock_to_LB.send(player_central_list.serialize())
 
             if tick_count % (FPS / UPDATE_FREQUENCY) == 0:
                 player_changes = []

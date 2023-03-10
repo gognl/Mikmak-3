@@ -10,21 +10,9 @@ def update_user_info(db: SQLDataBase, user: PlayerData) -> None:
 	"""Updating user's info in database - done by id because names are not exclusive."""
 	x, y = user.get_pos()
 	inventory = json.dumps(user.inventory)
-	statement = (
-		insert(db.users_table).values(id=user.entity_id, pos_x=x, pos_y=y, health=user.health, strength=user.strength, resistance=user.resistance, xp=user.xp, inventory=inventory)
-	)
 
-	on_duplicate_key = statement.on_duplicate_key_update(
-		pos_x=statement.inserted.pos_x,
-		pos_y=statement.inserted.pos_y,
-		health=statement.inserted.health,
-		strength=statement.inserted.strength,
-		resistance=statement.inserted.resistance,
-		xp=statement.inserted.xp,
-		inventory=statement.inserted.inventoty
-	)
-
-	return db.exec(on_duplicate_key)
+	statement = update(db.users_table).values(pos_x=x, pos_y=y, health=user.health, strength=user.strength, resistance=user.resistance, xp=user.xp, inventory=inventory).where(db.users_table.c.id == user.entity_id)
+	return db.exec(statement)
 
 def load_info(db: SQLDataBase, username: str) -> list:
 	"""Return a list with all the info of the given id. Return format: [(val0, val1, val2,...,valn)]."""
