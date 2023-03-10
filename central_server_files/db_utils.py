@@ -1,6 +1,6 @@
 import json
 from central_server_files.SQLDataBase import SQLDataBase
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, update
 from sqlalchemy.dialects.mysql import insert
 from encryption import hash_and_salt
 from Constant import *
@@ -65,15 +65,15 @@ def delete_user_info(db: SQLDataBase, username: str) -> None:
 
 def add_new_to_db(db: SQLDataBase, ID: int, username: str, password: str):
 	password = hash_and_salt(password)
-	statement = (
-		insert(db.users_table).values(id=ID, username=username, password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, strength=DEFAULT_STRENGTH, resistance=DEFAULT_RESISTANCE, xp=DEFAULT_XP, inventory=DEFAULT_INVENTORY)
-	)
+	statement = insert(db.users_table).values(id=ID, username=username, password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, strength=DEFAULT_STRENGTH, resistance=DEFAULT_RESISTANCE, xp=DEFAULT_XP, inventory=DEFAULT_INVENTORY)
+
 	#TODO: change to random spawn location
 	return db.exec(statement)
 
 def is_user_in_db(db: SQLDataBase, username: str) -> bool:
 	statement = select(db.users_table.c.username)
-	columns = [row[1] for row in db.exec(statement)]
+	print(db.exec(statement).fetchall())
+	columns = [row[0] for row in db.exec(statement).fetchall()]
 	return username in columns
 
 def get_current_id(db: SQLDataBase) -> int:
@@ -81,7 +81,6 @@ def get_current_id(db: SQLDataBase) -> int:
 	return db.exec(statement).fetchall()[0][0]
 
 def update_id_table(db: SQLDataBase):
-	to_update = get_current_id(db) + 1
-	statement = (insert(db.id_counter).values(current_id=to_update))
-	on_duplicate_key = statement.on_duplicate_key_update(current_id=statement.inserted.current_id)
-	return db.exec(on_duplicate_key)
+	current_id = get_current_id(db)
+	statement = update(db.id_counter).values(current_id=current_id+1).where(db.id_counter.c.current_id == current_id)
+	return db.exec(statement)

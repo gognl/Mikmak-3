@@ -31,7 +31,6 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
     while True:
         client_sock, client_addr = server_sock.accept()
         data = client_sock.recv(1024)
-        print(data)
         hello_msg: HelloMsg = HelloMsg(ser=data)
 
         if hello_msg.src_server_index == -1:  # login
@@ -78,7 +77,7 @@ def disconnect_client_manager(client_manager: ClientManager, DH_key):
 
 client_managers: deque[ClientManager]
 game_manager: GameManager
-server_index = 1
+server_index = 0
 def main():
     server_sock: socket.socket = socket.socket()
     server_sock.bind(('0.0.0.0', NORMAL_SERVERS_FOR_CLIENT[server_index].port))

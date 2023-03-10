@@ -38,7 +38,9 @@ class SQLDataBase:
 		self.metadata.create_all(bind=self.engine)
 
 	def exec(self, statement):
-		return self.connection.execute(statement)
+		data = self.connection.execute(statement)
+		self.connection.commit()
+		return data
 
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		self.connection.close()
