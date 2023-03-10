@@ -337,6 +337,19 @@ class HelloMsg(Serializable):
         return {'encrypted_client_id': (bytes, 'by'), 'src_server_index': (int, 'u_1')}
 
 
+class InfoData(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser)
+        if ser != b'':
+            return
+
+        self.info: list = kwargs['info']
+
+    def _get_attr(self) -> dict:
+        return {'info': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'),
+                         (dict, (tuple, (str, 'str'), (int, 'u_2'))))}
+
 class InfoMsgToNormal(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
@@ -345,13 +358,10 @@ class InfoMsgToNormal(Serializable):
             return
 
         self.client_id: int = kwargs['client_id']
-        self.info: list = kwargs['info_list']
+        self.info: InfoData = kwargs['info_list']
 
     def _get_attr(self) -> dict:
-        return {'client_id': (int, 'u_6'),
-                'info': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'),
-                              (dict, (tuple, (str, 'str'), (int, 'u_2'))))
-                }
+        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o')}
 
 
 class PlayerData(Serializable):

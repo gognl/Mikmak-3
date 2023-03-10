@@ -135,7 +135,7 @@ class InfoMsgToNormal(Serializable):
             return
 
         self.client_id: int = kwargs['client_id']
-        self.info: list = kwargs['info_list']
+        self.info: InfoData = kwargs['info_list']
 
     def _get_attr(self) -> dict:
         return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o')}
