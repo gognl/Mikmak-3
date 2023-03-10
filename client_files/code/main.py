@@ -18,18 +18,12 @@ from client_files.code.title import Title
 from client_files.code.other_player import OtherPlayer
 
 server_socket: socket.socket
-def initialize_connection(server_addr: (str, int)) -> (Queue, int):
+def initialize_connection(server_addr: (str, int), encrypted_id: bytes) -> (Queue, int):
     global server_socket
     server_socket = socket.socket()
     server_socket.connect(server_addr)
 
-    encrypted_client_id = int(0).to_bytes(6, 'little')  # TODO: change it
-
-    hello_msg: HelloMsg2 = HelloMsg2(encrypted_id=encrypted_client_id, src_server_index=-1)
-    print(hello_msg.serialize())
-
-    h = HelloMsg2(ser=hello_msg.serialize())
-    print(h.encrypted_client_id)
+    hello_msg: HelloMsg = HelloMsg(encrypted_id, -1)
 
     server_socket.send(hello_msg.serialize())
     data = server_socket.recv(6)
@@ -249,8 +243,8 @@ def run_game(*args) -> None:
 
     # Connection with login
     login_addr: (str, int) = (login_host, login_port)
-    # login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # login_socket.connect(login_addr)
+    login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    login_socket.connect(login_addr)
 
     # Unpack the arguments
     screen: pygame.Surface = args[0]
@@ -279,19 +273,19 @@ def run_game(*args) -> None:
         if quit_response:
             pygame.quit()
 
-    # data_to_login = username + " " + str(hash_and_salt(password))
-    # login_socket.send(pack("<H", len(data_to_login)))
-    # login_socket.send(data_to_login.encode())
-    # size = unpack("<H", login_socket.recv(2))[0]
-    # data = login_socket.recv(size)
-    # info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
-    # server_addr = info_to_client.server.addr()
+    data_to_login = username + " " + str(hash_and_salt(password))
+    login_socket.send(pack("<H", len(data_to_login)))
+    login_socket.send(data_to_login.encode())
+    size = unpack("<H", login_socket.recv(2))[0]
+    data = login_socket.recv(size)
+    info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
+    server_addr = info_to_client.server.addr()
 
     # Initialize the connection with the server
-    server_addr: (str, int) = ('127.0.0.1', 34861)  # TEMPORARY
+    # server_addr: (str, int) = ('127.0.0.1', 34861)  # TEMPORARY
     update_queue: Queue
     client_id: int
-    update_queue, client_id = initialize_connection(server_addr)
+    update_queue, client_id = initialize_connection(server_addr, info_to_client.encrypted_client_id)
     world.player.entity_id = client_id
 
     # The main game loop
@@ -341,7 +335,8 @@ def close_game(server_socket: socket.socket) -> None:
 
 
 def main():
-    login_host, login_port = sys.argv[1], sys.argv[2]
+    #login_host, login_port = sys.argv[1], sys.argv[2]
+    login_host, login_port = '127.0.0.1', 17561
     global login_host, login_port
     # Initialize the game
     screen, clock, world = initialize_game()

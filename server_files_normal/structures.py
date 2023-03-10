@@ -1,5 +1,6 @@
 from typing import Tuple, List
 
+from server_files_normal.game.item import Item
 from server_files_normal.serializable import Serializable
 from server_files_normal.game.settings import Server
 
@@ -322,9 +323,18 @@ class HelloMsg(Serializable):
 class InfoMsgToNormal(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser)
+        super().__init__(ser=ser)
         if ser != b'':
             return
 
         self.client_id: int = kwargs['client_id']
         self.info_list: list = kwargs['info_list']
+
+class ItemsList(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser=ser)
+        if ser != b'':
+            return
+
+        self.items_list: list[Item] = kwargs['items_list']

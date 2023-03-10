@@ -268,6 +268,16 @@ class InventorySlot:
         self.count -= 1
         return self.item_ids.pop()
 
+class LoginResponseToClient(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser)
+        if ser != b'':
+            return
+
+        self.encrypted_client_id: bytes = kwargs['encrypted_id']
+        self.server: ServerSer = kwargs['server']
+
 class HelloMsg(Serializable):
     def __init__(self, encrypted_client_id: bytes, src_server_index: int):
         super().__init__(ser=b'')
@@ -283,4 +293,5 @@ class HelloMsg2(Serializable):
 
         self.encrypted_client_id: bytes = kwargs['encrypted_id']
         self.src_server_index: int = kwargs['src_server_index']
+
 

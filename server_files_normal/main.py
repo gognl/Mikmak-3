@@ -37,10 +37,10 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
         if hello_msg.src_server_index == -1:  # login
             key = game_manager.DH_login_key
             client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
+            client_sock.send(client_id.to_bytes(6, 'little'))
         else:
             key = game_manager.DH_keys[hello_msg.src_server_index]
             client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
-            client_sock.send(client_id.to_bytes(6, 'little'))
 
         for player in game_manager.read_only_players:
             if player.entity_id == client_id:

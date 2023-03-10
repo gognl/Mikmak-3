@@ -161,6 +161,32 @@ class GameManager(threading.Thread):
             self.center.x = center.x
             self.center.y = center.y
 
+            items_to_servers: list[list[Item]] = [[], [], [], []]
+            for item in self.items:
+                pos: Point = item.get_pos()
+                if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
+                                                             self.center.y + OVERLAPPING_AREA_T):
+                    items_to_servers[0].append(item)
+
+                if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
+                                                             self.center.y + OVERLAPPING_AREA_T):
+                    items_to_servers[1].append(item)
+
+                if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T,
+                                                             self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
+                    items_to_servers[2].append(item)
+
+                if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T,
+                                                             self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
+                    items_to_servers[3].append(item)
+
+            for i in self.other_server_indices:
+                if len(items_to_servers) != 0:
+                    self.send_to_normal_server(i, b'\x02' + ItemsList(items_list=items_to_servers[i]).serialize())
+
+
+
+
     def get_free_item_id(self):
         self.next_item_id += 1
         return self.next_item_id
@@ -278,6 +304,14 @@ class GameManager(threading.Thread):
 
                     elif prefix == 1:  # enemy control transfer
                         pass
+                    elif prefix == 2:  # item in my region
+                        items_list = ItemsList(ser=data).items_list
+                        for item in items_list:
+                            self.items.add(item)
+                            if not item.actions:
+                                item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+
+
 
     def add_overlapped_update(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
         pos = update.pos if isinstance(update, Client.Output.PlayerUpdate) or isinstance(update, Client.Output.EnemyUpdate) else update.actions[0].pos
@@ -398,16 +432,17 @@ class GameManager(threading.Thread):
             if tick_count % (FPS // OVERLAPPED_UPDATE_FREQUENCY) == 0:
 
                 for i in self.other_server_indices:
-                    state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
-                        player_changes=tuple(self.output_overlapped_players_updates[i].values()),
-                        enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
-                        item_changes=tuple(self.output_overlapped_items_updates[i].values())
-                    )
+                    if len(self.output_overlapped_players_updates[i]) + len(self.output_overlapped_enemies_updates[i]) + len(self.output_overlapped_items_updates[i]) != 0:
+                        state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
+                            player_changes=tuple(self.output_overlapped_players_updates[i].values()),
+                            enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
+                            item_changes=tuple(self.output_overlapped_items_updates[i].values())
+                        )
 
-                    self.output_overlapped_players_updates[i] = {}
-                    self.output_overlapped_enemies_updates[i] = {}
+                        self.output_overlapped_players_updates[i] = {}
+                        self.output_overlapped_enemies_updates[i] = {}
 
-                    self.send_to_normal_server(i, b'\x00' + state_update.serialize())
+                        self.send_to_normal_server(i, b'\x00' + state_update.serialize())
 
             # if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
             #     player_central_list = PlayerCentralList(
