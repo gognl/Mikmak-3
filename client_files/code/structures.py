@@ -127,7 +127,8 @@ class Server:
 								 5: 'spawn_green',
 								 6: 'spawn_red',
 								 7: 'spawn_yellow',
-								 8: 'xp'
+								 8: 'xp',
+								 9: 'grave_player'
 								 }.get(self.name)
 					return
 
@@ -190,15 +191,27 @@ class Server:
 
 				changes = kwargs.pop('changes')
 				self.pos = changes['pos']
+				self._pos_x = self.pos[0]
+				self._pos_y = self.pos[1]
 				self.attacks = changes['attacks']
 				self.status = changes['status']
+				self._status_int: int = {'up': 0,
+									'down': 1,
+									'left': 2,
+									'right': 3,
+									'up_idle': 4,
+									'down_idle': 5,
+									'left_idle': 6,
+									'right_idle': 7,
+									'dead': 8
+									}.get(self.status)
 				self.item_actions = changes['item_actions']
 
 			def _get_attr(self) -> dict:
 				return {'id': (int, 'u_2'),
-						'pos': (tuple, (int, 'u_8')),
+						'_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
 						'attacks': (tuple, (Server.Input.AttackUpdate, 'o')),
-						'status': (str, 'str'),
+						'_status_int': (int, 'u_1'),
 						'item_actions': (tuple, (Server.Output.ItemActionUpdate, 'o'))}
 
 		class AttackUpdate(Serializable):
@@ -210,10 +223,12 @@ class Server:
 
 				self.weapon_id = kwargs.pop('weapon_id')  # 0 = sword, 1 = rifle, 2 = kettle
 				self.attack_type = kwargs.pop('attack_type')  # switch=0, attack=1
-				self.direction = kwargs.pop('direction')
+				direction = kwargs.pop('direction')
+				self._direction_x = direction[0]
+				self._direction_y = direction[1]
 
 			def _get_attr(self) -> dict:
-				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (int, 's_2'))}
+				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), '_direction_x': (int, 's_2'), '_direction_y': (int, 's_2')}
 
 		class ItemActionUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -222,12 +237,24 @@ class Server:
 				if s != b'':
 					return
 
-				self.item_name = kwargs.pop('item_name')
-				self.action_type = kwargs.pop('action_type')  # 'drop' or 'use' or 'skill'
+				item_name = kwargs.pop('item_name')
+				self.item_name = {'heal': 0,
+							 'strength': 1,
+							 'kettle': 2,
+							 'shield': 3,
+							 'spawn_white': 4,
+							 'spawn_green': 5,
+							 'spawn_red': 6,
+							 'spawn_yellow': 7,
+							 'xp': 8,
+							 'grave_player': 9
+							 }.get(item_name, 10)
+				action_type = kwargs.pop('action_type')  # 'drop' or 'use' or 'skill'
+				self.action_type = {'drop': 0, 'use': 1, 'skill': 2}.get(action_type)
 				self.item_id = kwargs.pop('item_id')  # if skill, then 1=speed, 2=magnet, 3=damage
 
 			def _get_attr(self) -> dict:
-				return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}
+				return {'item_name': (int, 'u_1'), 'action_type': (int, 'u_1'), 'item_id': (int, 'u_3')}
 
 class EnemyUpdate:
 	def __init__(self, entity_id: int, pos: (int, int)):

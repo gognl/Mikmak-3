@@ -137,7 +137,8 @@ class Client:
                              'spawn_green': 5,
                              'spawn_red': 6,
                              'spawn_yellow': 7,
-                             'xp': 8
+                             'xp': 8,
+                             'grave_player': 9
                              }.get(name)
                 self.actions = kwargs.pop('actions')
 
@@ -197,13 +198,16 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.status: str = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle',
+                                        6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(self.status)
+                    self.pos = (self._pos_x, self._pos_y)
                     return
 
             def _get_attr(self) -> dict:
                 return {'id': (int, 'u_2'),
-                        'pos': (tuple, (int, 'u_8')),
+                        '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
                         'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
-                        'status': (str, 'str'),
+                        'status': (int, 'u_1'),
                         'item_actions': (tuple, (Client.Input.ItemActionUpdate, 'o'))}
 
         class AttackUpdate(Serializable):
@@ -215,24 +219,37 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.direction = (self._direction_x, self._direction_y)
                     return
 
             def _get_attr(self) -> dict:
-                return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (int, 's_2'))}
+                return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), '_direction_x': (int, 's_2'), '_direction_y': (int, 's_2')}
 
         class ItemActionUpdate(Serializable):
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.action_type = {0: 'drop', 1: 'use', 2: 'skill'}.get(self.action_type)
+                    self.item_name = {0: 'heal',
+                                 1: 'strength',
+                                 2: 'kettle',
+                                 3: 'shield',
+                                 4: 'spawn_white',
+                                 5: 'spawn_green',
+                                 6: 'spawn_red',
+                                 7: 'spawn_yellow',
+                                 8: 'xp',
+                                 9: 'grave_player'
+                                 }.get(self.item_name)
                     return
 
                 self.item_name: str = None
-                self.action_type: str = None  # 'drop' or 'use'
+                self.action_type: str = None  # 'drop' or 'use' or 'skill
                 self.item_id: int = None
 
             def _get_attr(self) -> dict:
-                return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}
+                return {'item_name': (int, 'u_1'), 'action_type': (int, 'u_1'), 'item_id': (int, 'u_3')}
 
 
 class Login:
