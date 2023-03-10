@@ -150,13 +150,13 @@ class Player(pygame.sprite.Sprite):
 				elif item_name == "shield":
 					self.resistance += 1
 				elif item_name == "spawn_white":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
+					self.spawn_enemy_from_egg(self.rect.topleft, "white_cow")
 				elif item_name == "spawn_green":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
+					self.spawn_enemy_from_egg(self.rect.topleft, "green_cow")
 				elif item_name == "spawn_red":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+					self.spawn_enemy_from_egg(self.rect.topleft, "red_cow")
 				elif item_name == "spawn_yellow":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
+					self.spawn_enemy_from_egg(self.rect.topleft, "yellow_cow")
 
 				if used:
 					# remove the item from the player's inventory

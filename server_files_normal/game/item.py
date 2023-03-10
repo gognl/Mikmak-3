@@ -36,6 +36,8 @@ class Item(pygame.sprite.Sprite):
 
         self.previous_pos = ()
 
+        self.dt = 1
+
     def update_movement(self, magnetic_players):
         if len(magnetic_players) != 0:
             minvalue = 0
@@ -46,14 +48,14 @@ class Item(pygame.sprite.Sprite):
                     min_distance_player = player
             if min_distance_player is not None:
                 if self.rect.x > min_distance_player.rect.x:
-                    self.xpos -= abs(self.rect.x - player.rect.x) / (minvalue ** (1 / 2))
+                    self.xpos -= self.dt * abs(self.rect.x - player.rect.x) / (minvalue ** (1 / 2))
                 elif self.rect.x < min_distance_player.rect.x:
-                    self.xpos += abs(self.rect.x - player.rect.x) / (minvalue ** (1 / 2))
+                    self.xpos += self.dt * abs(self.rect.x - player.rect.x) / (minvalue ** (1 / 2))
 
                 if self.rect.y > min_distance_player.rect.y:
-                    self.ypos -= abs(self.rect.y - player.rect.y) / (minvalue ** (1 / 2))
+                    self.ypos -= self.dt * abs(self.rect.y - player.rect.y) / (minvalue ** (1 / 2))
                 elif self.rect.y < min_distance_player.rect.y:
-                    self.ypos += abs(self.rect.y - player.rect.y) / (minvalue ** (1 / 2))
+                    self.ypos += self.dt * abs(self.rect.y - player.rect.y) / (minvalue ** (1 / 2))
 
                 self.rect.x = int(self.xpos)
                 self.rect.y = int(self.ypos)

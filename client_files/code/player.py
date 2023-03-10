@@ -67,7 +67,7 @@ class Player(Entity):
 
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 200}  # TODO - make energy actually do something
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.xp = 0
@@ -143,6 +143,8 @@ class Player(Entity):
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
+
+        self.dt = 1
 
     def import_player_assets(self) -> None:
         """
@@ -492,7 +494,7 @@ class Player(Entity):
         self.animate()
 
         # Apply keyboard inputs
-        self.move(self.speed)
+        self.move(self.speed*self.dt)
 
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status,
                         'item_actions': tuple(self.item_actions)}

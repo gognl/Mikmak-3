@@ -68,6 +68,8 @@ class Enemy(pygame.sprite.Sprite):
 
 		self.get_free_item_id = get_free_item_id
 
+		self.dt = 1
+
 	def import_graphics(self, name: str):
 		self.animations = {'move': []}
 		path = f'./graphics/monsters/{name}/move/'
@@ -192,7 +194,7 @@ class Enemy(pygame.sprite.Sprite):
 			return
 
 		if self.status == 'move':
-			self.move(self.speed)
+			self.move(self.speed*self.dt)
 
 		if self.health <= 0:
 			self.die()
