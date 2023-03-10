@@ -143,7 +143,6 @@ class Player(Entity):
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
-        self.pets = 0
 
     def import_player_assets(self) -> None:
         """
@@ -321,12 +320,6 @@ class Player(Entity):
                         pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
                     elif item == "spawn_yellow":
                         pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
-                    elif item == "spawn_pet":
-                        if self.pets < MAX_PETS_PER_PLAYER:
-                            self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
-                            self.pets += 1
-                        else:
-                            used = False
 
                     if used:
                         item_id = self.inventory_items[item].remove_item()
