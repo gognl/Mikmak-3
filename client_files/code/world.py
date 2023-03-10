@@ -1,14 +1,9 @@
 import random
-import pygame
-from math import floor, ceil
 from typing import Dict, Union, List
 
 from client_files.code.interpolator import Interpolator
-from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
-from client_files.code.settings import *
 from client_files.code.tile import Tile
-from client_files.code.player import Player
 from client_files.code.support import *
 from client_files.code.weapon import Weapon
 from client_files.code.enemy import Enemy

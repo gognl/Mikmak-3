@@ -1,7 +1,5 @@
 import pygame
-import random
 from client_files.code.projectile import Projectile
-from client_files.code.settings import *
 
 
 class Entity(pygame.sprite.Sprite):

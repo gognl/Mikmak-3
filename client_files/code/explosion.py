@@ -1,7 +1,6 @@
 import pygame
 from client_files.code.settings import *
 from client_files.code.item import Item
-from client_files.code.player import Player
 
 
 class Explosion(pygame.sprite.Sprite):

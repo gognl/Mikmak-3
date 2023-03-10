@@ -2,7 +2,6 @@ from typing import List
 
 import pygame
 import random
-#  from client_files.code.tile import Tile
 
 
 class Projectile(pygame.sprite.Sprite):
