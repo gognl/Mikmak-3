@@ -69,9 +69,9 @@ class GameManager(threading.Thread):
             self.sock_to_other_normals[i].settimeout(0.02)
 
         self.sock_to_login.connect(LOGIN_SERVER.addr())
-        self.sock_to_login.send(NORMAL_SERVERS[self.my_server_index].port.to_bytes(2, 'little'))
+        self.sock_to_login.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_index].port.to_bytes(2, 'little'))
         self.sock_to_LB.connect(LB_SERVER.addr())
-        self.sock_to_LB.send(NORMAL_SERVERS[self.my_server_index].port.to_bytes(2, 'little'))
+        self.sock_to_LB.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_index].port.to_bytes(2, 'little'))
 
         self.DH_keys: list[bytes] = [bytes(0) for _ in range(4)]
         self.DH_login_key: bytes = bytes(0)
@@ -86,12 +86,9 @@ class GameManager(threading.Thread):
             while not Server(addr[0], addr[1] - my_server_index) == NORMAL_SERVERS[server_index]:
                 try:
                     y, addr = self.sock_to_other_normals[server_index].recvfrom(1024)
-                    self.sock_to_other_normals[server_index].sendto(b'ok', other_server_addr)
+                    print('y:', y)
                 except socket.timeout:
                     continue
-            data = b''
-            while data != b'ok':
-                data = self.sock_to_other_normals[server_index].recvfrom(2)
 
 
             keys_list[server_index] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
@@ -110,6 +107,7 @@ class GameManager(threading.Thread):
 
         DH_threads.append(threading.Thread(target=DH_with_login))
 
+        input("Press Enter to start the server")
         for thread in DH_threads:
             thread.start()
         for thread in DH_threads:
@@ -389,7 +387,7 @@ class GameManager(threading.Thread):
                                          xp=player.xp, inventory=player.inventory_items)
                 self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
 
-                client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS[suitable_server_index], encrypted_id, self.my_server_index))
+                client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id, self.my_server_index))
                 self.players.remove(player)
                 self.alive_entities.remove(player)
                 self.obstacle_sprites.remove(player)

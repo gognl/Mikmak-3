@@ -60,7 +60,7 @@ def initialize_conn_with_normals(sock_to_normals: socket.socket):
         normal_sock, addr = sock_to_normals.accept()
         port = int.from_bytes(normal_sock.recv(2), 'little')
         server = Server(addr[0], port)
-        if server not in NORMAL_SERVERS:
+        if server not in NORMAL_SERVERS_FOR_CLIENT:
             normal_sock.close()
             continue
 
