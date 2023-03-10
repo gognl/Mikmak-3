@@ -133,7 +133,7 @@ class World:
             damage = source.damage
 
         Projectile(source, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.all_obstacles, 4, 200, 5,
+                                            self.projectile_sprites), self.all_obstacles, 4, 500, 5,
                    '../graphics/weapons/bullet.png', damage)
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):

@@ -67,7 +67,7 @@ class Player(Entity):
 
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 200}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}  # TODO - make energy actually do something
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.xp = 0

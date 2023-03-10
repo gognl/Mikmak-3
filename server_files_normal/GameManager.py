@@ -263,7 +263,7 @@ class GameManager(threading.Thread):
 			damage = source.damage
 
 		Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 4, 200, 5, './graphics/weapons/bullet.png', damage)
+				   self.all_obstacles, 4, 500, 5, './graphics/weapons/bullet.png', damage)
 
 	def create_kettle(self, player: Player, pos, mouse):
 		direction = pygame.math.Vector2(mouse)

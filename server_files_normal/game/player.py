@@ -55,7 +55,7 @@ class Player(pygame.sprite.Sprite):
 		self.update_queue: deque = deque()
 
 		# Stats
-		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}
+		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 400}
 		self.health = self.stats['health']
 		self.energy = self.stats['energy']
 		self.xp = 0

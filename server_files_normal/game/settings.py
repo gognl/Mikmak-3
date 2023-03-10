@@ -23,13 +23,11 @@ enemy_data = {
     'white_cow': {'health': 100, 'damage': 1, 'speed': 200, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white'], 'xp': 15},
     'yellow_cow': {'health': 100, 'damage': 1, 'speed': 150, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
-                   'move_cooldown': 24, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30},
-    'pet_cow': {'health': 100, 'damage': 0, 'speed': 10, 'resistance': 50, 'attack_radius': 0, 'notice_radius': 400,
-                'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_pet'], 'xp': 5}
+                   'move_cooldown': 1, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30}
 }
 
-ITEM_PICK_UP_COOLDOWN = 60
-ITEM_DESPAWN_TIME = 36000
+ITEM_PICK_UP_COOLDOWN = 2
+ITEM_DESPAWN_TIME = 240
 item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
               'spawn_red', 'spawn_yellow', 'xp']  # TODO - keep only items that need to be naturally spawned
 
@@ -43,4 +41,4 @@ SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36, 66,
 EXPLOSION_SPEED = 1.3
 EXPLOSION_RADIUS = 150
 
-ENEMY_ATTACK_COOLDOWN: int = 100
+ENEMY_ATTACK_COOLDOWN = 1.5

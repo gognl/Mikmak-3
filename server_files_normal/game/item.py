@@ -3,6 +3,7 @@ from collections import deque
 import pygame
 import re
 from server_files_normal.game.settings import *
+from server_files_normal.structures import Client
 
 
 class Item(pygame.sprite.Sprite):
@@ -68,9 +69,10 @@ class Item(pygame.sprite.Sprite):
             self.can_pick_up = True
 
         if self.spawn_time > self.despawn_time:
-            del self  # TODO do something about this
-
-        self.spawn_time += 1
+            self.actions.append(Client.Output.ItemActionUpdate(action_type='despawn'))
+            self.die = True
+        else:
+            self.spawn_time += self.dt
 
     def reset_actions(self):
         self.actions: deque = deque()

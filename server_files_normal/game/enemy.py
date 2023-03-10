@@ -179,14 +179,14 @@ class Enemy(pygame.sprite.Sprite):
 				self.can_attack = True
 				self.attack_time = 0
 			else:
-				self.attack_time += 1
+				self.attack_time += self.dt
 
 		if not self.can_move:
 			if self.move_time >= self.move_cooldown:
 				self.can_move = True
 				self.move_time = 0
 			else:
-				self.move_time += 1
+				self.move_time += self.dt
 
 	def update(self):
 
