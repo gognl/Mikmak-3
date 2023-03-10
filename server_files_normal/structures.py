@@ -76,7 +76,7 @@ class Client:
                 self.health = changes['health']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')),
+                return {'id': (int, 'u_6'), 'pos': (tuple, (int, 'u_8')),
                         'attacks': (tuple, (Client.Output.AttackUpdate, 'o')), 'status': (str, 'str'),
                         'health': (int, 'u_1')}
 
@@ -110,7 +110,7 @@ class Client:
                 self.attacks = changes['attacks']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'),
+                return {'id': (int, 'u_6'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'),
                         'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'),
                         'attacks': (tuple, (Client.Output.EnemyAttackUpdate, 'o'))}
 
@@ -156,7 +156,7 @@ class Client:
                 self.pos = kwargs.pop('pos', (0, 0))  # tuple of item position
 
             def _get_attr(self) -> dict:
-                return {'player_id': (int, 'u_2'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
+                return {'player_id': (int, 'u_6'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
 
     class Input:
         class ClientCMD(Serializable):
@@ -194,7 +194,7 @@ class Client:
                     return
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'),
+                return {'id': (int, 'u_6'),
                         'pos': (tuple, (int, 'u_8')),
                         'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
                         'status': (str, 'str'),
@@ -243,7 +243,7 @@ class NormalServer:
 
         def _get_attr(self) -> dict:
             return {'id': (int, 'u_3'), 'name': (str, 'str'),
-                    'pos': (tuple, (int, 'u_2'))}
+                    'pos': (tuple, (int, 'u_6'))}
 
     class ItemDetailsList(Serializable):
         def __init__(self, **kwargs):
@@ -270,7 +270,7 @@ class NormalServer:
             self.item_actions: Tuple[Client.Input.ItemActionUpdate] = kwargs['item_actions']
 
         def _get_attr(self) -> dict:
-            return {'id': (int, 'u_2'),
+            return {'id': (int, 'u_6'),
                     'pos': (tuple, (int, 'u_8')),
                     'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
                     'status': (str, 'str'),
@@ -340,16 +340,16 @@ class HelloMsg(Serializable):
 class InfoMsgToNormal(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser=ser)
+        super().__init__(ser)
         if ser != b'':
             return
 
         self.client_id: int = kwargs['client_id']
-        self.info_list: list = kwargs['info_list']
+        self.info: list = kwargs['info_list']
 
     def _get_attr(self) -> dict:
-        return {'client_id': (int, 'u_2'),
-                'info_list': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'),
+        return {'client_id': (int, 'u_6'),
+                'info': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'),
                               (dict, (tuple, (str, 'str'), (int, 'u_2'))))
                 }
 
@@ -372,7 +372,7 @@ class PlayerData(Serializable):
         self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
 
     def _get_attr(self) -> dict:
-        return {'entity_id': (int, 'u_2'),
+        return {'entity_id': (int, 'u_6'),
                 'pos': (tuple, 'u_2'),
                 'health': (int, 'u_1'),
                 'strength': (int, 'u_1'),

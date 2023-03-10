@@ -95,7 +95,7 @@ class NormalServer:
                     return
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')),
+                return {'id': (int, 'u_6'), 'pos': (tuple, (int, 'u_8')),
                         'attacks': (tuple, (NormalServer.Output.AttackUpdate, 'o')),
                         'status': (str, 'str'), 'health': (int, 'u_1')}
 
@@ -127,7 +127,7 @@ class NormalServer:
                     return
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'),
+                return {'id': (int, 'u_6'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'),
                         'direction': (tuple, (float, 'f_8')), 'status': (str, 'str'),
                         'attacks': (tuple, (NormalServer.Input.EnemyAttackUpdate, 'o'))}
 
@@ -173,7 +173,7 @@ class NormalServer:
                 self.pos = kwargs.pop('pos')  # tuple of item position
 
             def _get_attr(self) -> dict:
-                return {'player_id': (int, 'u_2'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
+                return {'player_id': (int, 'u_6'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
 
     class Output:
         class StateUpdate(Serializable):
@@ -214,7 +214,7 @@ class NormalServer:
                 self.item_actions = changes['item_actions']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'),
+                return {'id': (int, 'u_6'),
                         'pos': (tuple, (int, 'u_8')),
                         'attacks': (tuple, (NormalServer.Input.AttackUpdate, 'o')),
                         'status': (str, 'str'),

@@ -138,10 +138,7 @@ class InfoMsgToNormal(Serializable):
         self.info: list = kwargs['info_list']
 
     def _get_attr(self) -> dict:
-        return {'client_id': (int, 'u_2'),
-                'info_list': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'),
-                              (dict, (tuple, (str, 'str'), (int, 'u_2'))))
-                }
+        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o')}
 
 
 class Rect:
@@ -176,7 +173,7 @@ class PlayerData(Serializable):
     # max item count: 255
 
     def _get_attr(self) -> dict:
-        return {'entity_id': (int, 'u_2'),
+        return {'entity_id': (int, 'u_6'),
                 'pos': (tuple, 'u_2'),
                 'health': (int, 'u_1'),
                 'strength': (int, 'u_1'),

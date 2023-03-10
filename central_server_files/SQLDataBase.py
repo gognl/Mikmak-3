@@ -31,7 +31,7 @@ class SQLDataBase:
 		                                Column("inventory", JSON)
 		                                )
 
-		self.id_counter: Table = Table(COUNTER_NAME, self.metadata, Column("id", INT, primary_key=True))
+		self.id_counter: Table = Table(COUNTER_NAME, self.metadata, Column("current_id", INT, primary_key=True))
 
 		self.connection: Connection = self.engine.connect()
 

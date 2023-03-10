@@ -259,12 +259,14 @@ def run_game(*args) -> None:
     # Opening screen loop
     running: bool = True
     title: Title = Title()
+
+
     while running:
         # Reset screen to black - delete last frame from screen
         screen.fill('black')
 
         quit_response, running, username, password = title.run()  # TODO - add ip and port (if needed - @goni?)
-        if username != '' and password != '':
+        if not running:
             login_socket.connect(login_addr)
             data_to_login = username + " " + str(hash_and_salt(password))
             login_socket.send(pack("<H", len(data_to_login)))
@@ -281,6 +283,7 @@ def run_game(*args) -> None:
 
         if quit_response:
             pygame.quit()
+
 
     data = login_socket.recv(size)
     info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
@@ -343,7 +346,7 @@ login_port: int
 def main():
     global login_host, login_port
     #login_host, login_port = sys.argv[1], sys.argv[2]
-    login_host, login_port = '127.0.0.1', 17561
+    login_host, login_port = '192.168.1.47', LOGIN_PORT_TO_CLIENT
     # Initialize the game
     screen, clock, world = initialize_game()
 

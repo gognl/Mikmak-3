@@ -8,10 +8,9 @@ from SQLDataBase import SQLDataBase
 from server_files_normal.game.settings import *
 from encryption import *
 from _struct import unpack, pack
-from Constant import MAX_ENTITY_ID_SIZE, DH_p, DH_g
+from Constant import MAX_ENTITY_ID_SIZE, DH_p, DH_g, LOGIN_PORT_TO_CLIENT
 from base64 import urlsafe_b64encode as b64
 
-PORT = 12402
 PROTOCOL_LEN = 2
 DATA_MAX_LENGTH = 510
 id_socket_dict = {}
@@ -21,9 +20,9 @@ active_players_username: list[str] = []
 
 server_indices = [i for i in range(4)]
 
-def login_main(sock_to_normals: socket.socket, new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg], db: SQLDataBase) -> None:
+def login_main(new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg], db: SQLDataBase) -> None:
     sock: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('0.0.0.0', PORT))
+    sock.bind(('0.0.0.0', LOGIN_PORT_TO_CLIENT))
 
     threads = []
 
@@ -48,7 +47,6 @@ def DH_with_normal(normal_sock: socket.socket, server: Server):
     normal_sock.send(x.to_bytes(128, 'little'))
     y = normal_sock.recv(1024)
     DH_normal_keys[server] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
-    print(456)
 
 def find_normal_server(ip: str):
     for server in NORMAL_SERVERS:
@@ -60,7 +58,6 @@ def initialize_conn_with_normals(sock_to_normals: socket.socket):
     amount_connected = 0
     while amount_connected < 2:
         normal_sock, addr = sock_to_normals.accept()
-        print(123)
         port = int.from_bytes(normal_sock.recv(2), 'little')
         server = Server(addr[0], port)
         if server not in NORMAL_SERVERS:
@@ -79,7 +76,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
     sock.listen()
     while True:
         client_sock, addr = sock.accept()
-        length = unpack("<H", sock.recv(PROTOCOL_LEN))[0]
+        length = unpack("<H", client_sock.recv(PROTOCOL_LEN))[0]
         data = client_sock.recv(length).decode()
         username = data.split(" ")[0]
         password = hash_and_salt(data.split(" ")[1])
@@ -87,9 +84,9 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
             new_id = get_current_id(db) + 1
             add_new_to_db(db, new_id, username, password)
             update_id_table(db)
-            list_user_info = load_info(db, username)
+            list_user_info = load_info(db, new_id)
         else:
-            list_user_info = load_info(db, username)
+            list_user_info = load_info(db, new_id)
             if not list_user_info[0][2] == password or list_user_info[0][1] in active_players_username:
                 x = -1
                 error_code = pack("<H", x.to_bytes(2, 'little'))

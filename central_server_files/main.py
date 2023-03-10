@@ -42,7 +42,7 @@ def main():
 	LB_Thread = threading.Thread(target=LB.LB_main, args=(new_players_q, LB_to_login_q))
 	threads.append(LB_Thread)
 
-	login_Thread = threading.Thread(target=login.login_main, args=(login_sock_to_normals, new_players_q, LB_to_login_q, SQLDataBase(DB_HOST, DB_PASSWORD)))
+	login_Thread = threading.Thread(target=login.login_main, args=(new_players_q, LB_to_login_q, SQLDataBase(DB_HOST, DB_PASSWORD)))
 	threads.append(login_Thread)
 
 	for thread in threads:

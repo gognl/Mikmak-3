@@ -15,12 +15,15 @@ SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36, 66,
 MAX_DIVERGENCE_SQUARED: int = 80 ** 2
 MAX_PETS_PER_PLAYER: int = 5
 ENEMY_ATTACK_COOLDOWN: int = 100
+LOGIN_PORT_TO_CLIENT = 12402
 
 weapon_data = {
     'sword': {'damage': 100, 'graphic': '../graphics/weapons/sword/full.png'},
     'nerf': {'damage': 20, 'graphic': '../graphics/weapons/nerf/full.png'},
     'kettle': {'damage': 40, 'graphic': '../graphics/weapons/kettle/full.png'}
 }
+
+SALT = "WfLc6hyf"
 
 # UI
 UI_FONT = '../graphics/font/joystix.ttf'

@@ -152,7 +152,7 @@ class GameManager(threading.Thread):
             size = unpack('<H', self.sock_to_login.recv(2))[0]
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
-            self.id_info_dict[info_from_login.client_id] = info_from_login.info_list
+            self.id_info_dict[info_from_login.client_id] = info_from_login.info
 
     def recv_from_LB(self):
         while True:

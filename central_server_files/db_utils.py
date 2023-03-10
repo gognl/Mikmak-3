@@ -72,16 +72,16 @@ def add_new_to_db(db: SQLDataBase, ID: int, username: str, password: str):
 	return db.exec(statement)
 
 def is_user_in_db(db: SQLDataBase, username: str) -> bool:
-	statement = (select(db.users_table.c.username))
+	statement = select(db.users_table.c.username)
 	columns = [row[1] for row in db.exec(statement)]
 	return username in columns
 
 def get_current_id(db: SQLDataBase) -> int:
-	statement = (select(db.id_counter.c.id))
-	return db.exec(statement)[0][0]
+	statement = select(db.id_counter.c.current_id)
+	return db.exec(statement).fetchall()[0][0]
 
 def update_id_table(db: SQLDataBase):
 	to_update = get_current_id(db) + 1
-	statement = (insert(db.id_counter).values(id=to_update))
-	on_duplicate_key = statement.on_duplicate_key_update(id=statement.inserted.id)
+	statement = (insert(db.id_counter).values(current_id=to_update))
+	on_duplicate_key = statement.on_duplicate_key_update(current_id=statement.inserted.current_id)
 	return db.exec(on_duplicate_key)
