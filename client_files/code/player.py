@@ -65,7 +65,6 @@ class Player(Entity):
         self.item_actions: deque = deque()  # also used as skills update
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
-
         # Stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
         self.health = self.stats['health']

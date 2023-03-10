@@ -147,7 +147,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                    self.projectile_sprites), self.obstacle_sprites, 4, 5, 45,
+                                            self.projectile_sprites), self.obstacle_sprites, 4, 5, 45,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)),
                    'explode', self.create_explosion, True)
 
@@ -219,9 +219,9 @@ class World:
 
     def run(self) -> (TickUpdate, Server.Output.StateUpdate):
         """
-        Run one world frame
-        :return: None
-        """
+            Run one world frame
+            :return: None
+            """
 
         # Run the interpolation
         self.interpolator.interpolate()
@@ -266,14 +266,6 @@ class World:
         for projectile in self.projectile_sprites:
             projectile.update_obstacles(self.obstacle_sprites)
 
-        # Run update() function in all visible sprites' classes
-        self.visible_sprites.update()
-
-        # Delete all tiles
-        for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
-            if type(sprite) is Tile:
-                sprite.kill()
-
         # UI
         for nametag in self.nametags:
             if nametag.kill:
@@ -282,6 +274,14 @@ class World:
                 nametag.display()
         if not self.zen_active:
             self.ui.display(self.player)
+
+        # Run update() function in all visible sprites' classes
+        self.visible_sprites.update()
+
+        # Delete all tiles
+        for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
+            if type(sprite) is Tile:
+                sprite.kill()
 
         # Get info about changes made in this tick (used for server synchronization)
         if self.player.changes is None:
