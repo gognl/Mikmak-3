@@ -47,8 +47,11 @@ class Server:
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
+					self.status: str = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle', 6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(self.status)
+					self.pos: Tuple[int, int] = (self._pos_x, self._pos_y)
 					return
 
+				# For interpolation
 				data: dict = kwargs.pop('data')
 				self.id: int = data.pop('id')
 				self.pos: Tuple[int, int] = data.pop('pos')
@@ -57,11 +60,8 @@ class Server:
 				self.health: int = data.pop('health')
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'attacks': (tuple, (Server.Output.AttackUpdate, 'o')),
-						'status': (str, 'str'), 'health': (int, 'u_1')}
-
-			def __repr__(self):
-				return f'id={self.id};'
+				return {'id': (int, 'u_2'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'), 'attacks': (tuple, (Server.Input.AttackUpdate, 'o')),
+						'status': (int, 'u_1'), 'health': (int, 'u_1')}
 
 		class AttackUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -72,10 +72,11 @@ class Server:
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
+					self.direction = (self._direction_x, self._direction_y)
 					return
 
 			def _get_attr(self) -> dict:
-				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
+				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), '_direction_x': (int, 's_2'), '_direction_y': (int, 's_2')}
 
 		class EnemyUpdate(Serializable):
 			def __init__(self, **kwargs):
@@ -83,8 +84,12 @@ class Server:
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
+					self.pos = (self._pos_x, self._pos_y)
+					self.type = {0: 'white_cow', 1: 'green_cow', 2: 'red_cow', 3: 'yellow_cow'}.get(self.type)
+					self.status = 'dead' if self._is_dead else ''
 					return
 
+				# For interpolation
 				data = kwargs.pop('data')
 				self.id: int = data.pop('id')
 				self.pos: (int, int) = data.pop('pos')
@@ -93,19 +98,20 @@ class Server:
 				self.attacks: Tuple[Server.Input.EnemyAttackUpdate] = data.pop('attacks')
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_2'), 'pos': (tuple, (int, 'u_8')), 'type': (str, 'str'), 'status': (str, 'str'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o'))}
+				return {'id': (int, 'u_2'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'), 'type': (int, 'u_1'), 'attacks': (tuple, (Server.Input.EnemyAttackUpdate, 'o')), '_is_dead': (bool, 'b')}
 
 		class EnemyAttackUpdate(Serializable):
 			def __init__(self, **kwargs):
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
+					self.direction = (self._direction_x, self._direction_y)
 					return
 
 				self.direction = None  # if it's (0, 0) then it's an exploding red cow
 
 			def _get_attr(self) -> dict:
-				return {'direction': (tuple, (float, 'f_8'))}
+				return {'_direction_x': (int, 's_2'), '_direction_y': (int, 's_2')}
 
 		class ItemUpdate(Serializable):
 
@@ -113,6 +119,16 @@ class Server:
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
+					self.name = {0: 'heal',
+								 1: 'strength',
+								 2: 'kettle',
+								 3: 'shield',
+								 4: 'spawn_white',
+								 5: 'spawn_green',
+								 6: 'spawn_red',
+								 7: 'spawn_yellow',
+								 8: 'xp'
+								 }.get(self.name)
 					return
 
 				self.id = kwargs.pop('id')
@@ -120,7 +136,7 @@ class Server:
 				self.actions = kwargs.pop('actions')
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_3'), 'name': (str, 'str'),
+				return {'id': (int, 'u_3'), 'name': (int, 'u_1'),
 						'actions': (tuple, (Server.Input.ItemActionUpdate, 'o'))}
 
 		class ItemActionUpdate(Serializable):
@@ -129,6 +145,8 @@ class Server:
 				s: bytes = kwargs.pop('ser', b'')
 				super().__init__(ser=s)
 				if s != b'':
+					self.action_type = {0: 'spawn', 1: 'despawn', 2: 'pickup', 3: 'drop', 4: 'move', 5: 'use'}.get(self.action_type)
+					self.pos = (self._pos_x, self._pos_y)
 					return
 
 				self.player_id = kwargs.pop('player_id')  # id of player
@@ -136,7 +154,7 @@ class Server:
 				self.pos = kwargs.pop('pos')  # tuple of item position
 
 			def _get_attr(self) -> dict:
-				return {'player_id': (int, 'u_2'), 'action_type': (str, 'str'), 'pos': (tuple, (int, 'u_8'))}
+				return {'player_id': (int, 'u_2'), 'action_type': (int, 'u_1'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2')}
 
 	class Output:
 		class StateUpdate(Serializable):
@@ -195,7 +213,7 @@ class Server:
 				self.direction = kwargs.pop('direction')
 
 			def _get_attr(self) -> dict:
-				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (float, 'f_8'))}
+				return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), 'direction': (tuple, (int, 's_2'))}
 
 		class ItemActionUpdate(Serializable):
 			def __init__(self, **kwargs):
