@@ -205,15 +205,15 @@ class Player(Entity):
 
     def start_auto_walk(self) -> None:
         self.stop_auto_walk()
+        self.is_auto_walk = True
         directions = [(-1, 0), (0, -1), (1, 0), (0, 1)]
         if self.rand_walk:
             self.rand_walk = False
             i = random.randint(0, 3)
             self.path_to_tile = directions[i]
             for j in range(0, 5):
-                self.moves_auto_walk(directions[i])
+                self.moves_auto_walk.append(directions[i])
             return
-        self.is_auto_walk = True
         x = self.rect.x
         y = self.rect.y
         self.last_x = x
@@ -430,6 +430,13 @@ class Player(Entity):
         self.collision('vertical')  # Check collisions in the vertical axis
 
         self.rect.center = self.hitbox.center
+        if self.hitbox.x == self.last_x and self.hitbox.y == self.last_y:
+            self.auto_count += 1
+        else:
+            self.last_x = self.hitbox.x
+            self.last_y = self.hitbox.y
+            self.auto_count = 0
+
         if self.hitbox.x == self.desired_x and self.hitbox.y == self.desired_y:
             del (self.moves_auto_walk[-1])
             self.is_done_x = False
@@ -438,12 +445,6 @@ class Player(Entity):
             self.y_value = self.desired_y
         if self.is_on_tile and len(self.moves_auto_walk) == 0:
             self.start_auto_walk()
-        if self.hitbox.x == self.last_x and self.hitbox.y == self.last_y:
-            self.auto_count += 1
-        else:
-            self.last_x = self.hitbox.x
-            self.last_y = self.hitbox.y
-            self.auto_count = 0
         if self.auto_count == 3:
             self.rand_walk = True
             self.start_auto_walk()
