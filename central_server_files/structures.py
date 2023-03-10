@@ -46,8 +46,8 @@ class PlayerCentral(Serializable):
         self.id: int = kwargs['player_id']
 
     def _get_attr(self) -> dict:
-        return {'pos': (PointSer, '0'),
-                'id': (int, 'u_2')}
+        return {'pos': (PointSer, 'o'),
+                'id': (int, 'u_6')}
 
 
 class PlayerCentralList(Serializable):

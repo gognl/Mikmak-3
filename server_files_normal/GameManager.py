@@ -20,7 +20,7 @@ from server_files_normal.game.player import Player
 from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.settings import *
-from central_server_files.structures import PlayerCentral, PlayerCentralList
+from server_files_normal.structures import PlayerCentral, PlayerCentralList
 import pygame
 from encryption import encrypt, decrypt
 
@@ -473,7 +473,7 @@ class GameManager(threading.Thread):
 
             if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
                 player_central_list = PlayerCentralList(
-                    players=[PlayerCentral(pos=player.get_pos(), player_id=player.entity_id) for player in
+                    players=[PlayerCentral(pos=PointSer(x=player.get_pos().x, y=player.get_pos().y), player_id=player.entity_id) for player in
                              self.players])
                 self.sock_to_LB.send(player_central_list.serialize())
 

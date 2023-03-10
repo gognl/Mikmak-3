@@ -53,7 +53,7 @@ def delete_user_info(db: SQLDataBase, username: str) -> None:
 
 def add_new_to_db(db: SQLDataBase, ID: int, username: str, password: str):
 	password = hash_and_salt(password)
-	statement = insert(db.users_table).values(id=ID, username=username, password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, strength=DEFAULT_STRENGTH, resistance=DEFAULT_RESISTANCE, xp=DEFAULT_XP, inventory=DEFAULT_INVENTORY)
+	statement = insert(db.users_table).values(id=ID, username=username.lower(), password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, strength=DEFAULT_STRENGTH, resistance=DEFAULT_RESISTANCE, xp=DEFAULT_XP, inventory=DEFAULT_INVENTORY)
 
 	#TODO: change to random spawn location
 	return db.exec(statement)
@@ -62,7 +62,7 @@ def is_user_in_db(db: SQLDataBase, username: str) -> bool:
 	statement = select(db.users_table.c.username)
 	print(db.exec(statement).fetchall())
 	columns = [row[0] for row in db.exec(statement).fetchall()]
-	return username in columns
+	return username.lower() in columns
 
 def get_current_id(db: SQLDataBase) -> int:
 	statement = select(db.id_counter.c.current_id)

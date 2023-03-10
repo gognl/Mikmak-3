@@ -322,6 +322,32 @@ class PointSer(Serializable):
         return {'x': (int, 'u_2'),
                 'y': (int, 'u_2')}
 
+class PlayerCentral(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser)
+        if ser != b'':
+            return
+
+        self.pos: PointSer = kwargs['pos']
+        self.id: int = kwargs['player_id']
+
+    def _get_attr(self) -> dict:
+        return {'pos': (PointSer, 'o'),
+                'id': (int, 'u_6')}
+
+
+class PlayerCentralList(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser)
+        if ser != b'':
+            return
+
+        self.players: list[PlayerCentral] = kwargs['players']
+
+    def _get_attr(self) -> dict:
+        return {'players': (list, (PlayerCentral, 'o'))}
 
 class HelloMsg(Serializable):
     def __init__(self, **kwargs):
