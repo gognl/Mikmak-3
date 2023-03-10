@@ -3,7 +3,6 @@ from collections import deque
 import pygame
 import re
 from server_files_normal.game.settings import *
-from server_files_normal.structures import Client, Point
 
 
 class Item(pygame.sprite.Sprite):
@@ -73,4 +72,4 @@ class Item(pygame.sprite.Sprite):
         self.actions: deque = deque()
 
     def get_pos(self):
-        return Point(self.rect.x, self.rect.y)
+        return self.rect.x, self.rect.y

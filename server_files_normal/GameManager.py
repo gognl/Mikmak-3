@@ -9,7 +9,6 @@ from typing import Union, Dict
 from struct import unpack, pack
 from base64 import urlsafe_b64encode as b64
 
-import client_files.code.main
 from server_files_normal.game.explosion import Explosion
 from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
@@ -163,7 +162,8 @@ class GameManager(threading.Thread):
 
             items_to_servers: list[list[Item]] = [[], [], [], []]
             for item in self.items:
-                pos: Point = item.get_pos()
+                pos: Tuple[int] = item.get_pos()
+                pos: Point = Point(pos[0], pos[1])
                 if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                              self.center.y + OVERLAPPING_AREA_T):
                     items_to_servers[0].append(item)
