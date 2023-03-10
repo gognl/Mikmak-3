@@ -3,7 +3,7 @@ import threading
 from collections import deque
 import socket
 from structures import *
-from db_utils import load_info, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data
+from db_utils import load_info, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data, get_id_by_name
 from SQLDataBase import SQLDataBase
 from server_files_normal.game.settings import *
 from encryption import *
@@ -86,6 +86,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
             update_id_table(db)
             list_user_info = load_info(db, new_id)
         else:
+            new_id = get_id_by_name(username)
             list_user_info = load_info(db, new_id)
             if not list_user_info[0][2] == password or list_user_info[0][1] in active_players_username:
                 x = -1

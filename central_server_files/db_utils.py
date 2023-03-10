@@ -64,6 +64,10 @@ def is_user_in_db(db: SQLDataBase, username: str) -> bool:
 	columns = [row[0] for row in db.exec(statement).fetchall()]
 	return username.lower() in columns
 
+def get_id_by_name(db: SQLDataBase, username: str) -> int:
+	statement = select(db.users_table.c.id).where(db.users_table.c.username == username)
+	return db.exec(statement)
+
 def get_current_id(db: SQLDataBase) -> int:
 	statement = select(db.id_counter.c.current_id)
 	return db.exec(statement).fetchall()[0][0]
