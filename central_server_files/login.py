@@ -80,8 +80,9 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         else:
             list_user_info = load_info(db, username)
             if not list_user_info[0][2] == password or list_user_info[0][1] in active_players_username:
-                #client_sock.send("incorrect password".encode())
-                client_sock.send("unable to enter".encode())
+                x = -1
+                error_code = pack("<H", x.to_bytes(2, 'little'))
+                client_sock.send(error_code)
                 client_sock.close()
                 continue
 
