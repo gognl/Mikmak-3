@@ -138,8 +138,9 @@ class Client:
                              'spawn_red': 6,
                              'spawn_yellow': 7,
                              'xp': 8,
-                             'grave_player': 9
-                             }.get(name)
+                             }.get(name, 9)
+                if 'grave_player' in name:
+                    self.name = 10 + int(name[13:-1])
                 self.actions = kwargs.pop('actions')
 
             def _get_attr(self) -> dict:
@@ -240,8 +241,10 @@ class Client:
                                  6: 'spawn_red',
                                  7: 'spawn_yellow',
                                  8: 'xp',
-                                 9: 'grave_player'
-                                 }.get(self.item_name)
+                                 9: ''
+                                 }.get(self.item_name_int)
+                    if self.item_name is None:
+                        self.item_name = f'grave_player({self.item_name_int-10})'
                     return
 
                 self.item_name: str = None
@@ -249,7 +252,7 @@ class Client:
                 self.item_id: int = None
 
             def _get_attr(self) -> dict:
-                return {'item_name': (int, 'u_1'), 'action_type': (int, 'u_1'), 'item_id': (int, 'u_3')}
+                return {'item_name_int': (int, 'u_1'), 'action_type': (int, 'u_1'), 'item_id': (int, 'u_3')}
 
 
 class Login:

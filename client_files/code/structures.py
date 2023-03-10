@@ -128,8 +128,9 @@ class Server:
 								 6: 'spawn_red',
 								 7: 'spawn_yellow',
 								 8: 'xp',
-								 9: 'grave_player'
-								 }.get(self.name)
+								 }.get(self.name_int)
+					if self.name is None:
+						self.name = f'grave_player({self.name_int-10})'
 					return
 
 				self.id = kwargs.pop('id')
@@ -137,7 +138,7 @@ class Server:
 				self.actions = kwargs.pop('actions')
 
 			def _get_attr(self) -> dict:
-				return {'id': (int, 'u_3'), 'name': (int, 'u_1'),
+				return {'id': (int, 'u_3'), 'name_int': (int, 'u_1'),
 						'actions': (tuple, (Server.Input.ItemActionUpdate, 'o'))}
 
 		class ItemActionUpdate(Serializable):
@@ -247,8 +248,9 @@ class Server:
 							 'spawn_red': 6,
 							 'spawn_yellow': 7,
 							 'xp': 8,
-							 'grave_player': 9
-							 }.get(item_name, 10)
+							 }.get(item_name, 9)
+				if 'grave_player' in item_name:
+					self.item_name = 10 + int(item_name[13:-1])
 				action_type = kwargs.pop('action_type')  # 'drop' or 'use' or 'skill'
 				self.action_type = {'drop': 0, 'use': 1, 'skill': 2}.get(action_type)
 				self.item_id = kwargs.pop('item_id')  # if skill, then 1=speed, 2=magnet, 3=damage

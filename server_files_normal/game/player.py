@@ -216,7 +216,7 @@ class Player(pygame.sprite.Sprite):
 			self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
 
 		# drop grave
-		self.create_dropped_item("grave_player", self.rect.center, self.get_free_item_id())
+		self.create_dropped_item("grave_player(0)", self.rect.center, self.get_free_item_id())
 
 		# reset stats
 		self.xp = 0
