@@ -65,7 +65,6 @@ class Player(Entity):
         self.item_actions: deque = deque()  # also used as skills update
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
-
         # Stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}  # TODO - make energy actually do something
         self.health = self.stats['health']
@@ -145,6 +144,8 @@ class Player(Entity):
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
 
         self.dt = 1
+
+        self.inputs_disabled: bool = False
 
     def import_player_assets(self) -> None:
         """
@@ -484,7 +485,8 @@ class Player(Entity):
                                 'item_actions': self.item_actions}
 
         # Get keyboard inputs
-        self.input()
+        if not self.inputs_disabled:
+            self.input()
 
         # Process cooldowns
         self.cooldowns()

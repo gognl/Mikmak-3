@@ -211,9 +211,9 @@ class World:
 
     def run(self) -> (TickUpdate, Server.Output.StateUpdate):
         """
-        Run one world frame
-        :return: None
-        """
+            Run one world frame
+            :return: None
+            """
 
         # Run the interpolation
         self.interpolator.interpolate()
@@ -259,14 +259,6 @@ class World:
         for proj in self.projectile_sprites.sprites():
             proj.dt = self.dt
 
-        # Run update() function in all visible sprites' classes
-        self.visible_sprites.update()
-
-        # Delete all tiles
-        for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
-            if type(sprite) is Tile:
-                sprite.kill()
-
         # UI
         for nametag in self.nametags:
             if nametag.kill:
@@ -275,6 +267,14 @@ class World:
                 nametag.display()
         if not self.zen_active:
             self.ui.display(self.player)
+
+        # Run update() function in all visible sprites' classes
+        self.visible_sprites.update()
+
+        # Delete all tiles
+        for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
+            if type(sprite) is Tile:
+                sprite.kill()
 
         # Get info about changes made in this tick (used for server synchronization)
         if self.player.changes is None:

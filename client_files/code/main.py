@@ -224,7 +224,7 @@ def run_game(*args) -> None:
 			elif event.type == pygame.QUIT:
 				running = False
 			elif event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_RETURN:
+				if event.key == pygame.K_RSHIFT:
 					running = False
 
 		# Run game according to user inputs - prediction before getting update from server
