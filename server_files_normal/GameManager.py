@@ -98,6 +98,8 @@ class GameManager(threading.Thread):
 
         DH_threads: list[threading.Thread] = []
         for i in self.other_server_indices:
+            if i > 1:
+                continue
             DH_threads.append(threading.Thread(target=DH_with_normal, args=(i, self.DH_keys)))
 
         DH_threads.append(threading.Thread(target=DH_with_login))

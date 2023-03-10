@@ -59,7 +59,7 @@ def look_for_new_client(new_players_q: deque[PlayerCentral], LB_to_login_q: dequ
         if len(new_players_q) == 0:
             continue
         new_player: PlayerCentral = new_players_q.pop()
-        suitable_server = NORMAL_SERVERS[find_suitable_server_index(new_player)]
+        suitable_server = NORMAL_SERVERS_FOR_CLIENT[find_suitable_server_index(new_player)]
         msg: LB_to_login_msg = LB_to_login_msg(new_player.id, suitable_server)
         LB_to_login_q.append(msg)
 
