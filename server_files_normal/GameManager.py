@@ -79,17 +79,23 @@ class GameManager(threading.Thread):
 
         def DH_with_normal(server_index: int, keys_list: list[bytes]):
             x = pow(DH_g, a, DH_p)
-            self.sock_to_other_normals[server_index].sendto(x.to_bytes(128, 'little'),
-                                                            (NORMAL_SERVERS[server_index] + my_server_index).addr())
+            other_server_addr = (NORMAL_SERVERS[server_index] + my_server_index).addr()
+            self.sock_to_other_normals[server_index].sendto(x.to_bytes(128, 'little'), other_server_addr)
+            print('x:', x.to_bytes(128, 'little'))
             y, addr = 0, ('0.0.0.0', 0)
             while not Server(addr[0], addr[1] - my_server_index) == NORMAL_SERVERS[server_index]:
                 try:
                     y, addr = self.sock_to_other_normals[server_index].recvfrom(1024)
+                    self.sock_to_other_normals[server_index].sendto(b'ok', other_server_addr)
                 except socket.timeout:
                     continue
+            data = b''
+            while data != b'ok':
+                data = self.sock_to_other_normals[server_index].recvfrom(2)
 
-            keys_list[server_index] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
-)
+
+            keys_list[server_index] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
+
         def DH_with_login():
             x = pow(DH_g, a, DH_p)
             self.sock_to_login.send(x.to_bytes(128, 'little'))
