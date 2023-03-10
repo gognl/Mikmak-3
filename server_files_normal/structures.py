@@ -230,6 +230,36 @@ class Client:
 
 
 class NormalServer:
+    class EnemyDetails(Serializable):
+        def __init__(self, **kwargs):
+            s: bytes = kwargs.pop('ser', b'')
+            super().__init__(ser=s)
+            if s != b'':
+                return
+
+            self.entity_id = kwargs.get('entity_id')
+            self.pos = kwargs.get('pos')
+            self.enemy_name = kwargs.get('enemy_name')
+
+            self.health = kwargs.get('health')
+            self.xp = kwargs.get('xp')
+            self.speed = kwargs.get('speed')
+            self.damage = kwargs.get('damage')
+            self.resistance = kwargs.get('resistance')
+            self.attack_radius = kwargs.get('attack_radius')
+            self.notice_radius = kwargs.get('notice_radius')
+            self.death_items = kwargs.get('death_items')
+            self.move_cooldown = kwargs.get('move_cooldown')
+
+
+
+        def _get_attr(self) -> dict:
+            return {'entity_id': (int, 'u_6'), 'pos': (tuple, (int, 'u_2')), 'enemy_name': (str, 'str'), 'health': (int, 'u_1'), 'xp': (int, 'u_1'),
+                    'speed': (int, 'u_1'), 'damage': (int, 'u_1'), 'resistance': (int, 'u_1'),  'attack_radius': (int, 'u_2'), 'notice_radius': (int, 'u_2'),
+                    'death_items': (list, (str, 'str')), 'move_cooldown': (int, 'u_1')
+                    }
+
+
     class ItemDetails(Serializable):
         def __init__(self, **kwargs):
             s: bytes = kwargs.pop('ser', b'')

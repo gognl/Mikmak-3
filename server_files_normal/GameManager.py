@@ -281,12 +281,10 @@ class GameManager(threading.Thread):
                       self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
 
         # Update the player
-        player_update = NormalServer.PlayerUpdate(player_id=player_update.id, pos=player_update.pos,
-                                                  attacks=player_update.attacks, status=player_update.status,
-                                                  item_actions=tuple())
-        player.process_client_updates(player_update)
+        player.update_pos(player_update.pos)
+        player.status = player_update.status
+        player.health = player_update.health
 
-        player.reset_attacks()
 
     def receive_from_another_normal_servers(self):
         while True:
@@ -312,12 +310,27 @@ class GameManager(threading.Thread):
                             self.handle_read_only_player_update(player_update)
 
                     elif prefix == 1:  # enemy control transfer
-                        pass
+                        enemy_details: NormalServer.EnemyDetails = NormalServer.EnemyDetails(ser=data)
+                        enemy_info = {enemy_details.enemy_name: {'health': enemy_details.health, 'xp': enemy_details.xp, 'speed': enemy_details.speed,
+                                                         'damage': enemy_details.damage,
+                                                         'resistance': enemy_details.resistance,
+                                                         'attack_radius': enemy_details.attack_radius, 'notice_radius':
+                                                             enemy_details.notice_radius, 'death_items': enemy_details.death_items,
+                                                         'move_cooldown': enemy_details.move_cooldown}}
+
+                        Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
+                              groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                              entity_id=enemy_details.entity_id, obstacle_sprites=self.all_obstacles,
+                              item_sprites=self.items,
+                              create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                              get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
+
                     elif prefix == 2:  # item in my region
                         item_details_list = NormalServer.ItemDetailsList(ser=data).item_details_list
                         for item_details in item_details_list:
                             item = Item(item_details.name, (self.items,), item_details.pos, item_details.id)
                             item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+
                     elif prefix == 3:  # details about player moving to my region
                         player_data = PlayerData(ser=data)
                         for player in self.read_only_players:
@@ -431,11 +444,14 @@ class GameManager(threading.Thread):
                 if enemy.previous_state != current_enemy_state:
                     enemy_pos: Point = enemy.get_pos()
                     suitable_server_index = self.find_suitable_server_index(enemy_pos)
-                    # if suitable_server_index != self.my_server_index:
-                    #     self.send_to_normal_server(suitable_server_index,
-                    #                                b'\x01' + enemy.serialize())  # TODO: add serialize to enemy
-                    #     enemy.kill()
-                    #     continue
+                    if suitable_server_index != self.my_server_index:
+                        enemy_pos: Point = enemy.get_pos()
+                        enemy_details = NormalServer.EnemyDetails(entity_id=enemy.entity_id, pos=(enemy_pos.x, enemy_pos.y), enemy_name=enemy.enemy_name, health=enemy.health,
+                                                                  xp=enemy.xp, speed=enemy.speed, damage=enemy.damage, resistance=enemy.resistance, attack_radius=enemy.attack_radius,
+                                                                  notice_radius=enemy.notice_radius, death_items=enemy.death_items, move_cooldown=enemy.move_cooldown)
+                        self.send_to_normal_server(suitable_server_index, b'\x01' + enemy_details.serialize())
+                        enemy.kill()
+                        continue
 
                     enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name,
                                                              changes=current_enemy_state)
