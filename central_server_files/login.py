@@ -93,7 +93,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 
 def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]) -> None:
     msg: LB_to_login_msg = LB_to_login_q.pop()
-    info_to_normals = InfoData(info=load_player_data(db, msg.client_id)[0])  # list of the info
+    info_to_normals = InfoData(info=load_player_data(db, msg.client_id))  # list of the info
     client_id_bytes = msg.client_id.to_bytes(6, 'little')
     encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_to_normals).serialize(), DH_normal_keys[msg.server])
     size = pack("<H", encrypted_package_info)

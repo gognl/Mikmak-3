@@ -47,10 +47,11 @@ def load_player_data(db: SQLDataBase, ID: int) -> list:
 		select(db.users_table).where(db.users_table.c.id == ID)
 	)
 	player_data = db.exec(statement).fetchall()[0]
-	indeces: list[int] = [3,4,5,6,7,8,9]
+	indeces: list[int] = [3,4,5,6,7,8]
 	list_to_send = []
 	for i in indeces:
 		list_to_send.append(player_data[i])
+	list_to_send.append(json.loads(str(player_data[9])))
 	return list_to_send
 
 
