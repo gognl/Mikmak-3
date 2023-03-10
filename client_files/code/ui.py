@@ -1,5 +1,6 @@
 from typing import Sequence
 import pygame
+import random
 from client_files.code.settings import *
 from client_files.code.item import Item
 from client_files.code.player import Player
@@ -35,6 +36,7 @@ class UI:
 
         # Chat
         self.chat_active: bool = False
+        self.user_color_dict = {}
 
         # Minimap
         self.minimap_active = False
@@ -238,19 +240,22 @@ class UI:
         pygame.draw.rect(self.display_surface, color, input_box, 0, 4)
 
         last_lines = 0
-        for i, (user, raw_message, lines) in enumerate(self.messages):
+        for i, (user, raw_message) in enumerate(self.messages):
             i += 1
 
-            username_surface = font.render(f'{user}:', False, pygame.Color('green'))  # TODO: make each player name a diff color
-            self.display_surface.blit(username_surface, (input_box.x, 100 + i * UI_FONT_SIZE + last_lines * 8))
+            if user not in self.user_color_dict:
+                self.user_color_dict[user] = random.choice(['aqua', 'aquamarine3', 'blueviolet', 'blue', 'chocolate1', 'crimson', 'gold1', 'green'])
 
-            chunk_length = CHAT_TEXT_LENGTH - len(user)
-            message = [raw_message[i: i+chunk_length] for i in range(0, len(raw_message), chunk_length)]
+            message = f'{user}: {raw_message}'
+            message = [message[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(message), CHAT_TEXT_LENGTH)]
             for l, line in enumerate(message):
                 self.txt_surface = font.render(line, False, pygame.Color('white'))
-                self.display_surface.blit(self.txt_surface, (len(user) * UI_FONT_SIZE // 2 + input_box.x + 10, 100 + i * UI_FONT_SIZE + l * 8 + last_lines * 8))
+                self.display_surface.blit(self.txt_surface, (input_box.x, 100 + i * UI_FONT_SIZE + last_lines * 8 + l * 8))
 
-            last_lines += lines - 1
+            username_surface = font.render(f'{user}:', False, pygame.Color(self.user_color_dict[user]))
+            self.display_surface.blit(username_surface, (input_box.x, 100 + i * UI_FONT_SIZE + last_lines * 8))
+
+            last_lines += len(message) - 1
 
         if self.text_active and not self.text_done:
             if pygame.mouse.get_pressed()[0]:
@@ -262,26 +267,30 @@ class UI:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                if event.type == pygame.KEYDOWN and event.key != pygame.K_TAB and event.key != pygame.K_BACKSLASH:
+                if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.text_done = True
                         self.text_active = False
                     elif event.key == pygame.K_BACKSPACE:
                         self.raw_text = self.raw_text[:-1]
                         self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
-                    elif event.key == pygame.K_LSHIFT and self.raw_text is not r'':  # TODO - change this to K_RETURN and make it the only usable input when active
-                        self.messages.append((player.name, self.raw_text, len(self.text)))
-                        self.raw_text = r''
-                        self.text = r''
+                    elif event.key == pygame.K_RETURN:
+                        if self.raw_text != r'':
+                            self.messages.append((player.name, self.raw_text))
+                            self.raw_text = r''
+                            self.text = r''
                     elif sum([len(line) for line in self.raw_text]) < CHAT_TEXT_TOTAL_LENGTH:
-                        self.raw_text += event.unicode
-                        self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
+                        if 'a' < event.unicode < 'z' or 'A' < event.unicode < 'Z':
+                            self.raw_text += event.unicode
+                            self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
 
             pygame.draw.rect(self.display_surface, color, input_box, 0, 4)
             for l, line in enumerate(self.text):
                 self.txt_surface = font.render(line, False, pygame.Color('white'))
                 self.display_surface.blit(self.txt_surface, (input_box.x + 5, input_box.y + 5 + l * 8))
             pygame.display.flip()
+
+        player.inputs_disabled = self.text_active
 
     def show_minimap(self, player):
         x = 128

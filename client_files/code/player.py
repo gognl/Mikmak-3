@@ -144,6 +144,8 @@ class Player(Entity):
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
         self.pets = 0
 
+        self.inputs_disabled: bool = False
+
     def import_player_assets(self) -> None:
         """
         Import all player assets
@@ -488,7 +490,8 @@ class Player(Entity):
                                 'item_actions': self.item_actions}
 
         # Get keyboard inputs
-        self.input()
+        if not self.inputs_disabled:
+            self.input()
 
         # Process cooldowns
         self.cooldowns()
