@@ -1,17 +1,12 @@
 import random
-import pygame
-from math import floor, ceil
 from typing import Dict, Union, List
 
 from client_files.code.interpolator import Interpolator
-from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
-from client_files.code.settings import *
 from client_files.code.tile import Tile
-from client_files.code.player import Player
 from client_files.code.support import *
 from client_files.code.weapon import Weapon
-from client_files.code.enemy import Enemy, Pet
+from client_files.code.enemy import Enemy
 from client_files.code.projectile import Projectile
 from client_files.code.ui import *
 from client_files.code.structures import *
@@ -84,6 +79,8 @@ class World:
 
         self.interpolator: Interpolator = Interpolator(self)
 
+        self.dt = 0
+
     def create_map(self) -> None:
         """
         Place movable tiles on the map
@@ -100,7 +97,7 @@ class World:
                 break
         pos = (900, 900)
         self.player = Player("gognl", pos, (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
-                             self.obstacle_sprites, 2, self.create_attack, self.destroy_attack, self.create_bullet,
+                             self.all_obstacles, 2, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
@@ -124,7 +121,7 @@ class World:
         if isinstance(source, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (source.rect.center - self.camera + self.screen_center)
-            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple(direction)))
+            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
         elif isinstance(source, Enemy):
             direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
         else:
@@ -136,18 +133,18 @@ class World:
             damage = source.damage
 
         Projectile(source, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
+                                            self.projectile_sprites), self.all_obstacles, 4, 500, 5,
                    '../graphics/weapons/bullet.png', damage)
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
         if isinstance(player, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
-            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 4, 5, 45,
+                    self.projectile_sprites), self.all_obstacles, 4, 75, 3,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)),
                    'explode', self.create_explosion, True)
 
@@ -194,19 +191,14 @@ class World:
     def get_inventory_box_pressed(self, mouse):
         return self.ui.get_inventory_box_pressed(mouse)
 
-    def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
+    def spawn_enemy_from_egg(self, pos, name):
         while True:
             random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
             random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                if is_pet:
-                    Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                        self.obstacle_sprites, player, self.create_dropped_item, self.create_explosion, self.create_bullet, safe=[player], nametag=True, name="random", create_nametag=self.create_nametag,
-                        nametag_update=self.nametag_update)
-                else:
-                    Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                          self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet, safe=[])
+                Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
+                        self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
                 break
 
     def create_explosion(self, pos, damage):
@@ -252,19 +244,20 @@ class World:
                                     Tile((x, y), (self.visible_sprites,), 'floor', col in SPAWNABLE_TILES, 0, surface)
                                 elif style == 'objects':
                                     surface: pygame.Surface = self.graphics['objects'][col]
-                                    Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', False, 1,
+                                    Tile((x, y), (self.visible_sprites, self.obstacle_sprites, self.all_obstacles), 'object', False, 1,
                                          surface)
                                 elif style == 'boundary':
-                                    Tile((x, y), (self.obstacle_sprites,), 'barrier', False)
+                                    Tile((x, y), (self.obstacle_sprites, self.all_obstacles), 'barrier', False)
 
         # Display all visible sprites
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
 
         # Update the obstacle sprites for the player
-        self.player.update_obstacles(self.obstacle_sprites)
         self.player.update_items(self.item_sprites)
-        for projectile in self.projectile_sprites:
-            projectile.update_obstacles(self.obstacle_sprites)
+
+        self.player.dt = self.dt
+        for proj in self.projectile_sprites.sprites():
+            proj.dt = self.dt
 
         # UI
         for nametag in self.nametags:
@@ -341,7 +334,7 @@ class World:
         if item.name == "xp":
             self.player.xp += 1
             item.kill()
-        elif item.name == "grave_player" or item.name == "grave_pet":
+        elif item.name == "grave_player":
             self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = InventorySlot(item.item_id)
             del self.items[item.item_id]
             item.kill()

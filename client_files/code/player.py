@@ -51,7 +51,7 @@ class Player(Entity):
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
         self.weapon_switch_time = 0
-        self.switch_duration_cooldown = 24
+        self.switch_duration_cooldown = 1.5
         # attack sprites
         self.current_weapon = None
 
@@ -66,7 +66,7 @@ class Player(Entity):
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}  # TODO - make energy actually do something
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.xp = 0
@@ -80,7 +80,7 @@ class Player(Entity):
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = 0
-        self.shoot_cooldown = 24
+        self.shoot_cooldown = 1
 
         # Mouse press
         self.release_mouse = [False, False]
@@ -142,7 +142,8 @@ class Player(Entity):
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
-        self.pets = 0
+
+        self.dt = 1
 
         self.inputs_disabled: bool = False
 
@@ -322,12 +323,6 @@ class Player(Entity):
                         pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
                     elif item == "spawn_yellow":
                         pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
-                    elif item == "spawn_pet":
-                        if self.pets < MAX_PETS_PER_PLAYER:
-                            self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
-                            self.pets += 1
-                        else:
-                            used = False
 
                     if used:
                         item_id = self.inventory_items[item].remove_item()
@@ -434,14 +429,14 @@ class Player(Entity):
                 self.can_switch_weapon = True
                 self.weapon_switch_time = 0
             else:
-                self.weapon_switch_time += 1
+                self.weapon_switch_time += self.dt
 
         if not self.can_shoot:
             if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
                 self.shoot_time = 0
             else:
-                self.shoot_time += 1
+                self.shoot_time += self.dt
 
         if not self.can_change_inventory:
             if self.inventory_time >= self.inventory_cooldown:
@@ -501,7 +496,7 @@ class Player(Entity):
         self.animate()
 
         # Apply keyboard inputs
-        self.move(self.speed)
+        self.move(self.speed*self.dt)
 
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status,
                         'item_actions': tuple(self.item_actions)}
@@ -514,13 +509,6 @@ class Player(Entity):
         if self.current_weapon is not None:
             self.current_weapon.kill()
         self.kill()  # TODO - add death screen
-
-    def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
-        """
-        update the obstacle_sprite group
-        :return: None
-        """
-        self.obstacle_sprites = obstacle_sprites
 
     def update_items(self, item_sprites: pygame.sprite.Group) -> None:
         self.item_sprites = item_sprites

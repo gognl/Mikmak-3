@@ -11,9 +11,7 @@ from client_files.code.item import Item
 from client_files.code.structures import *
 from client_files.code.settings import *
 from client_files.code.world import World
-from client_files.code.enemy import Enemy
 from client_files.code.title import Title
-from client_files.code.other_player import OtherPlayer
 
 
 def initialize_connection(server_addr: (str, int)) -> (socket.socket, Queue, int):
@@ -156,6 +154,9 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
 	:return: updated screen, clock, and world
 	"""
 
+	# Wait for one tick
+	world.dt = clock.tick(FPS)/1000
+
 	# Reset screen to black - delete last frame from screen
 	screen.fill('black')
 
@@ -164,9 +165,6 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
 	state_update: Server.Output.StateUpdate
 	tick_update, state_update = world.run()
 	pygame.display.update()
-
-	# Wait for one tick
-	clock.tick(FPS)
 
 	return screen, clock, world, tick_update, state_update
 

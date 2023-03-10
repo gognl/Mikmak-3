@@ -26,16 +26,16 @@ class Player(pygame.sprite.Sprite):
 		# Shooting cooldown
 		self.can_shoot = True
 		self.shoot_time = None
-		self.shoot_cooldown = 18  # less than client cooldown, because of the possible latency
+		self.shoot_cooldown = 1
 
 		# Switch cooldown
 		self.can_switch_weapon = True
 		self.weapon_switch_time = None
-		self.switch_duration_cooldown = 18  # less than client cooldown, because of the possible latency
+		self.switch_duration_cooldown = 1.5
 
 		# violence
 		self.attacking: bool = False
-		self.attack_cooldown: int = 18  # less than client cooldown, because of the possible latency
+		self.attack_cooldown: int = 400
 		self.attack_time: int = 0
 
 		# Projectiles
@@ -55,7 +55,7 @@ class Player(pygame.sprite.Sprite):
 		self.update_queue: deque = deque()
 
 		# Stats
-		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}
+		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 400}
 		self.health = self.stats['health']
 		self.energy = self.stats['energy']
 		self.xp = 0
@@ -69,8 +69,6 @@ class Player(pygame.sprite.Sprite):
 
 		self.item_sprites = item_sprites
 		self.inventory_items = {}
-
-		self.pets_count = 0
 
 		self.get_free_item_id = get_free_item_id
 
@@ -95,6 +93,8 @@ class Player(pygame.sprite.Sprite):
 		self.magnetic_players = magnetic_players
 
 		self.disconnected = False
+
+		self.dt = 1
 
 		super().__init__(groups)
 
@@ -152,20 +152,13 @@ class Player(pygame.sprite.Sprite):
 				elif item_name == "shield":
 					self.resistance += 1
 				elif item_name == "spawn_white":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
+					self.spawn_enemy_from_egg(self.rect.topleft, "white_cow")
 				elif item_name == "spawn_green":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
+					self.spawn_enemy_from_egg(self.rect.topleft, "green_cow")
 				elif item_name == "spawn_red":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+					self.spawn_enemy_from_egg(self.rect.topleft, "red_cow")
 				elif item_name == "spawn_yellow":
-					self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
-				elif item_name == "spawn_pet":
-					if self.pets_count < MAX_PETS_PER_PLAYER:
-						pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
-						#  TODO add pets
-						self.pets_count += 1
-					else:
-						used = False
+					self.spawn_enemy_from_egg(self.rect.topleft, "yellow_cow")
 
 				if used:
 					# remove the item from the player's inventory
@@ -216,7 +209,7 @@ class Player(pygame.sprite.Sprite):
 			self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
 
 		# drop grave
-		self.create_dropped_item("grave_player", self.rect.center, self.get_free_item_id())
+		self.create_dropped_item("grave_player(0)", self.rect.center, self.get_free_item_id())
 
 		# reset stats
 		self.xp = 0
@@ -267,14 +260,14 @@ class Player(pygame.sprite.Sprite):
 				self.can_switch_weapon = True
 				self.weapon_switch_time = 0
 			else:
-				self.weapon_switch_time += 1
+				self.weapon_switch_time += self.dt
 
 		if not self.can_shoot:
 			if self.shoot_time >= self.shoot_cooldown:
 				self.can_shoot = True
 				self.shoot_time = 0
 			else:
-				self.shoot_time += 1
+				self.shoot_time += self.dt
 
 	def switch_weapon(self, weapon_id: int) -> None:
 		"""
