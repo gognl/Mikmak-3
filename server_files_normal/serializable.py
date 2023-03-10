@@ -216,6 +216,9 @@ class BaseDeserializer:
 		if tsid[1] == 'b':
 			return BaseDeserializer.deserialize_boolean(ser, length)
 
+		if tsid[1] == 'by':
+			return BaseDeserializer.deserialize_bytes(ser, length)
+
 		if tsid[1] == 'str':
 			return BaseDeserializer.deserialize_string(ser, length)
 
@@ -313,6 +316,24 @@ class BaseDeserializer:
 
 		# A list/iterable
 		return struct.unpack(f"<{length}{BaseDeserializer.KEYS['b']}", ser[:length]), -1
+
+	@staticmethod
+	def deserialize_bytes(ser: bytes, length: int) -> Tuple[Union[bytes, Sequence[bytes]], int]:
+
+		# A single bytes object
+		if length == -1:
+			size: int = struct.unpack(f'<H', ser[:2])[0]
+			return ser[2:size + 2], size + 2
+
+		# A list of bytes
+		output = []
+		offset: int = 0
+		while offset < length:
+			size: int = struct.unpack(f'<H', ser[offset:offset + 2])[0]
+			output.append(ser[offset + 2: offset + 2 + size])
+			offset += size + 2
+		return tuple(output), -1
+
 
 	@staticmethod
 	def deserialize_string(ser: bytes, length: int) -> Tuple[Union[str, Sequence[str]], int]:
@@ -487,6 +508,8 @@ class ClassA(Serializable):
 			self.d = {'one': 1, 'two': 2, 'three': 3, 'four': 4}
 			self.bo = False
 			self.lis4 = [1]
+			self.byte_attr = b'hello!!'
+			self.list_bytes = [b'hello', b'world', b'yes', b'\n\n\t']
 
 			self.dont_serialize = 'secret'  # Doesn't show up in serialized bytes object,
 											# since it is not in the _get_attr dict.
@@ -501,7 +524,9 @@ class ClassA(Serializable):
 				'lis3': (list, (int, 'u_1'), (str, 'str'), (float, 'f_8'), (int, 's_3'), (ClassB, 'o')),
 				'd': (dict, (tuple, (str, 'str'), (int, 'u_1'))),
 				'bo': (bool, 'b'),
-				'lis4': (list, (int, 'u_1'))
+				'lis4': (list, (int, 'u_1')),
+				'byte_attr': (bytes, 'by'),
+				'list_bytes': (list, (bytes, 'by'))
 				}
 
 class ClassB(Serializable):
@@ -515,24 +540,10 @@ class ClassB(Serializable):
 	def _get_attr(self) -> dict:
 		return {'var': (int, 'u_1')}
 
-class ClassC(Serializable):
-	def __init__(self, **kwargs):
-		s = kwargs.pop('ser', b'')
-		super().__init__(ser=s)
-		if s != b'':
-			return
-
-		self.var = [b'hello', b'world!!']
-
-	def _get_attr(self) -> dict:
-		return {'var': (list, (bytes, 'by'))}
-
 
 if __name__ == '__main__':
-	# e1 = ClassA()
-	# serial: bytes = e1.serialize()
-	# print(serial)
-	# e2 = ClassA(ser=serial)
-	# print(e2.__dict__)
-	obj = ClassC()
-	print(obj.serialize())
+	e1 = ClassA()
+	serial: bytes = e1.serialize()
+	print(serial)
+	e2 = ClassA(ser=serial)
+	print(e2.__dict__)
