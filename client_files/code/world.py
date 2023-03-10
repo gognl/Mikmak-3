@@ -124,7 +124,7 @@ class World:
         if isinstance(source, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (source.rect.center - self.camera + self.screen_center)
-            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple(direction)))
+            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
         elif isinstance(source, Enemy):
             direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
         else:
@@ -143,7 +143,7 @@ class World:
         if isinstance(player, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
-            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
