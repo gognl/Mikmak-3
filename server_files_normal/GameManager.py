@@ -160,31 +160,31 @@ class GameManager(threading.Thread):
             self.center.x = center.x
             self.center.y = center.y
 
-            items_to_servers: list[list[Item]] = [[], [], [], []]
+            item_details_to_servers: list[list[NormalServer.ItemDetails]] = [[], [], [], []]
             for item in self.items:
                 pos: Tuple[int] = item.get_pos()
+                item_details = NormalServer.ItemDetails(id=item.item_id, name=item.str_name, pos=pos)
                 pos: Point = Point(pos[0], pos[1])
                 if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                              self.center.y + OVERLAPPING_AREA_T):
-                    items_to_servers[0].append(item)
+
+                    item_details_to_servers[0].append(item_details)
 
                 if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
                                                              self.center.y + OVERLAPPING_AREA_T):
-                    items_to_servers[1].append(item)
+                    item_details_to_servers[1].append(item_details)
 
                 if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T,
                                                              self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
-                    items_to_servers[2].append(item)
+                    item_details_to_servers[2].append(item_details)
 
                 if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T,
                                                              self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
-                    items_to_servers[3].append(item)
+                    item_details_to_servers[3].append(item_details)
 
             for i in self.other_server_indices:
-                if len(items_to_servers) != 0:
-                    self.send_to_normal_server(i, b'\x02' + ItemsList(items_list=items_to_servers[i]).serialize())
-
-
+                if len(item_details_to_servers) != 0:
+                    self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(item_details_list=item_details_to_servers[i]).serialize())
 
 
     def get_free_item_id(self):
@@ -267,8 +267,8 @@ class GameManager(threading.Thread):
                 player = p
                 break
         else:
-            player = Player((self.read_only_players,), player_update.id, player_update.pos,
-                      self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
+            player = Player((self.read_only_players,), player_update.id, player_update.pos, player_update.health, None,
+                            None, None, None,  self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
                       self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
 
         # Update the player
@@ -305,11 +305,25 @@ class GameManager(threading.Thread):
                     elif prefix == 1:  # enemy control transfer
                         pass
                     elif prefix == 2:  # item in my region
-                        items_list = ItemsList(ser=data).items_list
-                        for item in items_list:
-                            self.items.add(item)
-                            if not item.actions:
-                                item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                        item_details_list = NormalServer.ItemDetailsList(ser=data).item_details_list
+                        for item_details in item_details_list:
+                            item = Item(item_details.name, (self.items,), item_details.pos, item_details.id)
+                            item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                    elif prefix == 3:
+                        player_data = PlayerData(ser=data)
+                        for player in self.read_only_players:
+                            if player_data.entity_id == player.id:
+                                player: Player
+                                player.health = player_data.health
+                                player.strength = player_data.strength
+                                player.resistance = player_data.resistance
+                                player.xp = player_data.xp
+                                player.inventory_items = player_data.inventory
+                                break
+                        else:
+                            Player((self.read_only_players,), player_data.entity_id, player_data.pos, player_data.health, player_data.resistance,
+                                   player_data.strength, player_data.xp, player_data.inventory, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
+                                   self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
 
 
 
@@ -361,6 +375,10 @@ class GameManager(threading.Thread):
             suitable_server_index = self.find_suitable_server_index(player_pos)
             if suitable_server_index != self.my_server_index:
                 encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'), self.DH_keys[suitable_server_index])
+                player_data = PlayerData(entity_id=player.entity_id, pos=player.get_pos(), health=player.health, strength=player.strength, resistance=player.resistance,
+                                         xp=player.xp, inventory=player.inventory_items)
+                self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
+
                 client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS[suitable_server_index], encrypted_id, self.my_server_index))
                 self.players.remove(player)
                 self.alive_entities.remove(player)

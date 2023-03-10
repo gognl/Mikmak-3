@@ -23,6 +23,10 @@ class Client:
                 self.encrypted_client_id: bytes = encrypted_client_id
                 self.src_server_index: int = src_server_index
 
+            def _get_attr(self) -> dict:
+                return {'server': (ServerSer, 'o'), 'encrypted_client_id': (bytes, 'by'),
+                        'src_server_index': (int, 'u_1')}
+
 
         class StateUpdate(Serializable):
             """Like StateUpdate but with an acknowledgement number"""
@@ -220,35 +224,34 @@ class Client:
             def _get_attr(self) -> dict:
                 return {'item_name': (str, 'str'), 'action_type': (str, 'str'), 'item_id': (int, 'u_3')}
 
-
-class Login:
-    class Output:
-        class PlayerData(Serializable):
-            def __init__(self, **kwargs):
-                super().__init__(ser=b'')
-                self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
-
-                self.pos = kwargs.pop('pos')
-
-                self.health = kwargs.pop('health')  # 1 byte unsigned integer
-                self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
-                self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
-                self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
-
-                self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
-                # max item count: 255
-
-            def _get_attr(self) -> dict:
-                return {'entity_id': (int, 'u_2'),
-                        'pos': (tuple, 'u_2'),
-                        'health': (int, 'u_1'),
-                        'strength': (int, 'u_1'),
-                        'resistance': (int, 'u_1'),
-                        'xp': (int, 'u_2'),
-                        'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1')))}
-
-
 class NormalServer:
+    class ItemDetails(Serializable):
+        def __init__(self, **kwargs):
+            s: bytes = kwargs.pop('ser', b'')
+            super().__init__(ser=s)
+            if s != b'':
+                return
+
+            self.id = kwargs.pop('id')
+            self.name = kwargs.pop('name')
+            self.pos = kwargs.pop('actions')
+
+        def _get_attr(self) -> dict:
+            return {'id': (int, 'u_3'), 'name': (str, 'str'),
+                    'pos': (tuple, (int, 'u_2'))}
+
+    class ItemDetailsList(Serializable):
+        def __init__(self, **kwargs):
+            ser = kwargs.get('ser', b'')
+            super().__init__(ser=ser)
+            if ser != b'':
+                return
+
+            self.item_details_list: list[NormalServer.ItemDetails] = kwargs['item_details_list']
+
+        def _get_attr(self) -> dict:
+            return {'item_details_list': (list, (NormalServer.ItemDetails, 'o'))}
+
     class PlayerUpdate(Serializable):
         def __init__(self, **kwargs):
             s: bytes = kwargs.pop('ser', b'')
@@ -320,6 +323,9 @@ class HelloMsg(Serializable):
         self.encrypted_client_id: bytes = kwargs['encrypted_id']
         self.src_server_index: int = kwargs['src_server_index']
 
+    def _get_attr(self) -> dict:
+        return {'encrypted_client_id': (bytes, 'by'), 'src_server_index': (int, 'u_1')}
+
 class InfoMsgToNormal(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
@@ -330,11 +336,28 @@ class InfoMsgToNormal(Serializable):
         self.client_id: int = kwargs['client_id']
         self.info_list: list = kwargs['info_list']
 
-class ItemsList(Serializable):
+class PlayerData(Serializable):
     def __init__(self, **kwargs):
-        ser = kwargs.get('ser', b'')
-        super().__init__(ser=ser)
-        if ser != b'':
+        s: bytes = kwargs.pop('ser', b'')
+        super().__init__(ser=s)
+        if s != b'':
             return
+        self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
 
-        self.items_list: list[Item] = kwargs['items_list']
+        self.pos = kwargs.pop('pos')
+
+        self.health = kwargs.pop('health')  # 1 byte unsigned integer
+        self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
+        self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
+        self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
+
+        self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
+
+    def _get_attr(self) -> dict:
+        return {'entity_id': (int, 'u_2'),
+                'pos': (tuple, 'u_2'),
+                'health': (int, 'u_1'),
+                'strength': (int, 'u_1'),
+                'resistance': (int, 'u_1'),
+                'xp': (int, 'u_2'),
+                'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1')))}

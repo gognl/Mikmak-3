@@ -39,7 +39,7 @@ class PlayerCentral(Serializable):
         if ser != b'':
             return
 
-        self.pos: Point = kwargs['pos']
+        self.pos: PointSer = kwargs['pos']
         self.id: ID = kwargs['player_id']
 
 class PlayerCentralList(Serializable):
