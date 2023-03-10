@@ -338,11 +338,12 @@ def close_game(server_socket: socket.socket) -> None:
     """Closes the game"""
     server_socket.close()
 
-
+login_host: str
+login_port: int
 def main():
+    global login_host, login_port
     #login_host, login_port = sys.argv[1], sys.argv[2]
     login_host, login_port = '127.0.0.1', 17561
-    global login_host, login_port
     # Initialize the game
     screen, clock, world = initialize_game()
 
