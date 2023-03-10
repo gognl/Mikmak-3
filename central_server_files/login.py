@@ -30,7 +30,7 @@ def login_main(sock_to_normals: socket.socket, new_players_q: deque[PlayerCentra
     look_for_new_clients_Thread = threading.Thread(target=look_for_new, args=(new_players_q, db, sock))
     threads.append(look_for_new_clients_Thread)
 
-    send_server_ip_to_client_Thread = threading.Thread(target=send_server_ip_to_client, args=(db, LB_to_login_q, sock_to_normals))
+    send_server_ip_to_client_Thread = threading.Thread(target=send_server_ip_to_client, args=(db, LB_to_login_q))
     threads.append(send_server_ip_to_client_Thread)
 
     handle_disconnect_Thread = threading.Thread(target=handle_disconnect, args=(db,))
@@ -48,21 +48,32 @@ def DH_with_normal(normal_sock: socket.socket, server: Server):
     normal_sock.send(x.to_bytes(128, 'little'))
     y = normal_sock.recv(1024)
     DH_normal_keys[server] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
+    print(456)
+
+def find_normal_server(ip: str):
+    for server in NORMAL_SERVERS:
+        if server.ip == ip:
+            return server
+    return None
 
 def initialize_conn_with_normals(sock_to_normals: socket.socket):
     amount_connected = 0
-    while amount_connected < 4:
+    while amount_connected < 2:
         normal_sock, addr = sock_to_normals.accept()
-        server = Server(addr[0], addr[1])
+        print(123)
+        port = int.from_bytes(normal_sock.recv(2), 'little')
+        server = Server(addr[0], port)
         if server not in NORMAL_SERVERS:
             normal_sock.close()
             continue
 
-        normal_sock.settimeout(0.02)
         server_serverSocket_dict[server] = normal_sock
+
         DH_with_normal(normal_sock, server)
+        normal_sock.settimeout(0.02)
 
         amount_connected += 1
+    print(123)
 
 def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: socket.socket) -> None:
     sock.listen()
@@ -91,28 +102,31 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         id_socket_dict[info_tuple[0]] = client_sock
         new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
-def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]) -> None:
-    msg: LB_to_login_msg = LB_to_login_q.pop()
-    info_to_normals = InfoData(info=load_player_data(db, msg.client_id))  # list of the info
-    client_id_bytes = msg.client_id.to_bytes(6, 'little')
-    encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_to_normals).serialize(), DH_normal_keys[msg.server])
-    size = pack("<H", encrypted_package_info)
+def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]):
+    while True:
+        if len(LB_to_login_q) == 0:
+            continue
+        msg: LB_to_login_msg = LB_to_login_q.pop()
+        info_to_normals = InfoData(info=load_player_data(db, msg.client_id))  # list of the info
+        client_id_bytes = msg.client_id.to_bytes(6, 'little')
+        encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_to_normals).serialize(), DH_normal_keys[msg.server])
+        size = pack("<H", encrypted_package_info)
 
-    server_serverSocket_dict[msg.server].send(size)
-    server_serverSocket_dict[msg.server].send(encrypted_package_info)
+        server_serverSocket_dict[msg.server].send(size)
+        server_serverSocket_dict[msg.server].send(encrypted_package_info)
 
-    client_sock: socket.socket = id_socket_dict[msg.client_id]
-    resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server))
-    resp_to_client_bytes = resp_to_client.serialize()
-    client_sock.send(pack("<H", len(resp_to_client_bytes)))
-    client_sock.send(resp_to_client_bytes)
+        client_sock: socket.socket = id_socket_dict[msg.client_id]
+        resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(server=msg.server))
+        resp_to_client_bytes = resp_to_client.serialize()
+        client_sock.send(pack("<H", len(resp_to_client_bytes)))
+        client_sock.send(resp_to_client_bytes)
 
 def handle_disconnect(db: SQLDataBase):
     while True:
         for server in server_serverSocket_dict:
             normal_sock: socket.socket = server_serverSocket_dict[server]
             try:
-                size = unpack('<H',normal_sock.recv(2))[0]
+                size = unpack('<H', normal_sock.recv(2))[0]
             except socket.timeout:
                 continue
 

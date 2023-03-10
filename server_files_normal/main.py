@@ -23,7 +23,7 @@ from server_files_normal.encryption import encrypt
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.GameManager import GameManager
 from server_files_normal.game.player import Player
-from server_files_normal.structures import Login, HelloMsg
+from server_files_normal.structures import HelloMsg, PlayerData
 from server_files_normal.game.settings import LOGIN_SERVER
 from server_files_normal.encryption import decrypt
 
@@ -63,7 +63,7 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
 
 
 def disconnect_client_manager(client_manager: ClientManager, DH_key):
-    player_data = Login.Output.PlayerData(**game_manager.get_player_data(client_manager.player))
+    player_data = PlayerData(**game_manager.get_player_data(client_manager.player))
     print(f'disconnected client. data:\n\t{player_data.__dict__}')
     # TODO send to login @bar
     login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

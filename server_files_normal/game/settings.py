@@ -33,12 +33,15 @@ class Server:
         assert isinstance(other, int)
         return Server(self.ip, self.port + other)
 
+    def __hash__(self):
+        return hash(self.addr())
+
 
 # TODO: get this list in the starting of the server
 NORMAL_SERVERS = [Server('192.168.1.49', 14760), Server('192.168.1.47', 14760), Server('192.168.172.117', 14769),
                   Server('192.168.172.117', 14769)]
-LOGIN_SERVER = Server('192.168.171.117', 12304)
-LB_SERVER = Server('192.168.171.117', 12328)
+LOGIN_SERVER = Server('192.168.1.47', 12304)
+LB_SERVER = Server('192.168.1.47', 12328)
 
 weapon_data = {
     'sword': {'damage': 100, 'graphic': './graphics/weapons/sword/full.png'},

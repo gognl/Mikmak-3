@@ -68,8 +68,10 @@ class GameManager(threading.Thread):
             self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_index].port + i))
             self.sock_to_other_normals[i].settimeout(0.02)
 
-        # self.sock_to_login.connect(LOGIN_SERVER.addr())
-        # self.sock_to_LB.connect(LB_SERVER.addr())
+        self.sock_to_login.connect(LOGIN_SERVER.addr())
+        self.sock_to_login.send(NORMAL_SERVERS[self.my_server_index].port.to_bytes(2, 'little'))
+        self.sock_to_LB.connect(LB_SERVER.addr())
+        self.sock_to_LB.send(NORMAL_SERVERS[self.my_server_index].port.to_bytes(2, 'little'))
 
         self.DH_keys: list[bytes] = [bytes(0) for _ in range(4)]
         self.DH_login_key: bytes = bytes(0)
@@ -100,10 +102,10 @@ class GameManager(threading.Thread):
 
         DH_threads.append(threading.Thread(target=DH_with_login))
 
-        # for thread in DH_threads:
-        # 	thread.start()
-        # for thread in DH_threads:
-        # 	thread.join()
+        for thread in DH_threads:
+            thread.start()
+        for thread in DH_threads:
+            thread.join()
 
         self.read_only_players = pygame.sprite.Group()
         self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]  # in index i are the (id, update) pairs to server i
@@ -111,7 +113,7 @@ class GameManager(threading.Thread):
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
-        # threading.Thread(target=self.recv_from_login).start()
+        threading.Thread(target=self.recv_from_login).start()
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):

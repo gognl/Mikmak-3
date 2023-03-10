@@ -75,6 +75,9 @@ class Server:
         assert isinstance(other, Server)
         return self.ip == other.ip and self.port == other.port
 
+    def __hash__(self):
+        return hash(self.addr())
+
 
 class ServerSer(Serializable, Server):
     def __init__(self, **kwargs):
