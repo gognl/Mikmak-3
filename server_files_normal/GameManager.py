@@ -182,6 +182,8 @@ class GameManager(threading.Thread):
 
 			for proj in self.projectiles.sprites():
 				proj.dt = dt
+			for player in self.players.sprites():
+				player.dt = dt
 
 			for i in range(CLIENT_FPS // FPS):
 				self.projectiles.update()
@@ -269,7 +271,7 @@ class GameManager(threading.Thread):
 		direction = pygame.math.Vector2(mouse)
 		player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
 		Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
-				   self.all_obstacles, 4, 5, 45, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
+				   self.all_obstacles, 4, 75, 3, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
 
 	def create_explosion(self, pos, damage):
 		Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites()+self.items.sprites()))

@@ -144,7 +144,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                    self.projectile_sprites), self.all_obstacles, 4, 5, 45,
+                    self.projectile_sprites), self.all_obstacles, 4, 75, 3,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)),
                    'explode', self.create_explosion, True)
 

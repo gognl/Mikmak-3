@@ -26,16 +26,16 @@ class Player(pygame.sprite.Sprite):
 		# Shooting cooldown
 		self.can_shoot = True
 		self.shoot_time = None
-		self.shoot_cooldown = 18  # less than client cooldown, because of the possible latency
+		self.shoot_cooldown = 1
 
 		# Switch cooldown
 		self.can_switch_weapon = True
 		self.weapon_switch_time = None
-		self.switch_duration_cooldown = 18  # less than client cooldown, because of the possible latency
+		self.switch_duration_cooldown = 1.5
 
 		# violence
 		self.attacking: bool = False
-		self.attack_cooldown: int = 18  # less than client cooldown, because of the possible latency
+		self.attack_cooldown: int = 400
 		self.attack_time: int = 0
 
 		# Projectiles
@@ -93,6 +93,8 @@ class Player(pygame.sprite.Sprite):
 		self.magnetic_players = magnetic_players
 
 		self.disconnected = False
+
+		self.dt = 1
 
 		super().__init__(groups)
 
@@ -258,14 +260,14 @@ class Player(pygame.sprite.Sprite):
 				self.can_switch_weapon = True
 				self.weapon_switch_time = 0
 			else:
-				self.weapon_switch_time += 1
+				self.weapon_switch_time += self.dt
 
 		if not self.can_shoot:
 			if self.shoot_time >= self.shoot_cooldown:
 				self.can_shoot = True
 				self.shoot_time = 0
 			else:
-				self.shoot_time += 1
+				self.shoot_time += self.dt
 
 	def switch_weapon(self, weapon_id: int) -> None:
 		"""

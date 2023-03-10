@@ -51,7 +51,7 @@ class Player(Entity):
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
         self.weapon_switch_time = 0
-        self.switch_duration_cooldown = 24
+        self.switch_duration_cooldown = 1.5
         # attack sprites
         self.current_weapon = None
 
@@ -81,7 +81,7 @@ class Player(Entity):
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = 0
-        self.shoot_cooldown = 24
+        self.shoot_cooldown = 1
 
         # Mouse press
         self.release_mouse = [False, False]
@@ -428,14 +428,14 @@ class Player(Entity):
                 self.can_switch_weapon = True
                 self.weapon_switch_time = 0
             else:
-                self.weapon_switch_time += 1
+                self.weapon_switch_time += self.dt
 
         if not self.can_shoot:
             if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
                 self.shoot_time = 0
             else:
-                self.shoot_time += 1
+                self.shoot_time += self.dt
 
         if not self.can_change_inventory:
             if self.inventory_time >= self.inventory_cooldown:
