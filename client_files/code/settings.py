@@ -86,5 +86,5 @@ enemy_data = {
 item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
               'spawn_red', 'spawn_yellow', 'xp']  # TODO - keep only items that need to be naturally spawned
 
-INTERPOLATION_PERIOD = 100_000_000  # ns
+INTERPOLATION_PERIOD = 250_000_000  # ns
 INTERPOLATION_ACTIVE = False

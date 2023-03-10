@@ -2,7 +2,7 @@ from typing import List
 
 FPS: int = 120
 CLIENT_FPS: int = 120
-UPDATE_FREQUENCY: int = 10
+UPDATE_FREQUENCY = 10
 TILESIZE = 64
 ROW_TILES: int = 450
 COL_TILES: int = 800

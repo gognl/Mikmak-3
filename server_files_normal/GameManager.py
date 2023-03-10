@@ -165,9 +165,8 @@ class GameManager(threading.Thread):
 			# Run enemies simulation
 			for enemy in self.enemies.sprites():
 				enemy.dt = dt
-				for i in range(CLIENT_FPS//FPS):
-					enemy.update()
-					enemy.enemy_update(self.players)
+				enemy.update()
+				enemy.enemy_update(self.players)
 
 				if enemy.dead:
 					enemy.status = 'dead'
@@ -185,15 +184,14 @@ class GameManager(threading.Thread):
 			for player in self.players.sprites():
 				player.dt = dt
 
-			for i in range(CLIENT_FPS // FPS):
-				self.projectiles.update()
-				self.weapons.update()
-				self.players.update()
-				self.items.update()
+			self.projectiles.update()
+			self.weapons.update()
+			self.players.update()
+			self.items.update()
 
-				for item in self.items.sprites():
-					item.dt = dt
-					item.update_movement(self.magnetic_players)
+			for item in self.items.sprites():
+				item.dt = dt
+				item.update_movement(self.magnetic_players)
 
 			if tick_count % (FPS/UPDATE_FREQUENCY) == 0:
 				player_changes = []
