@@ -100,7 +100,7 @@ class World:
                 break
         pos = (900, 900)
         self.player = Player("gognl", pos, (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
-                             self.obstacle_sprites, 2, self.create_attack, self.destroy_attack, self.create_bullet,
+                             self.all_obstacles, 2, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
@@ -136,7 +136,7 @@ class World:
             damage = source.damage
 
         Projectile(source, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                            self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
+                                            self.projectile_sprites), self.all_obstacles, 4, 15, 120,
                    '../graphics/weapons/bullet.png', damage)
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
@@ -147,7 +147,7 @@ class World:
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                    self.projectile_sprites), self.obstacle_sprites, 4, 5, 45,
+                    self.projectile_sprites), self.all_obstacles, 4, 5, 45,
                    '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)),
                    'explode', self.create_explosion, True)
 
@@ -252,19 +252,16 @@ class World:
                                     Tile((x, y), (self.visible_sprites,), 'floor', col in SPAWNABLE_TILES, 0, surface)
                                 elif style == 'objects':
                                     surface: pygame.Surface = self.graphics['objects'][col]
-                                    Tile((x, y), (self.visible_sprites, self.obstacle_sprites), 'object', False, 1,
+                                    Tile((x, y), (self.visible_sprites, self.obstacle_sprites, self.all_obstacles), 'object', False, 1,
                                          surface)
                                 elif style == 'boundary':
-                                    Tile((x, y), (self.obstacle_sprites,), 'barrier', False)
+                                    Tile((x, y), (self.obstacle_sprites, self.all_obstacles), 'barrier', False)
 
         # Display all visible sprites
         self.visible_sprites.custom_draw(self.camera, self.screen_center)
 
         # Update the obstacle sprites for the player
-        self.player.update_obstacles(self.obstacle_sprites)
         self.player.update_items(self.item_sprites)
-        for projectile in self.projectile_sprites:
-            projectile.update_obstacles(self.obstacle_sprites)
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()

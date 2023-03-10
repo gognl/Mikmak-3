@@ -74,13 +74,6 @@ class Projectile(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect(center=self.pos)
 		self.hitbox.center = self.rect.center
 
-	def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
-		"""
-		Update obstacle sprites
-		:return: None
-		"""
-		self.obstacle_sprites = obstacle_sprites
-
 	def collision(self) -> None:
 		"""
 		Check for collisions

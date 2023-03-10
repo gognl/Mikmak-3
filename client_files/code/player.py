@@ -513,13 +513,6 @@ class Player(Entity):
             self.current_weapon.kill()
         self.kill()  # TODO - add death screen
 
-    def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
-        """
-        update the obstacle_sprite group
-        :return: None
-        """
-        self.obstacle_sprites = obstacle_sprites
-
     def update_items(self, item_sprites: pygame.sprite.Group) -> None:
         self.item_sprites = item_sprites
 
