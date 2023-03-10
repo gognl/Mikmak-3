@@ -73,9 +73,16 @@ class UI:
             x -= INVENTORY_WIDTH
         text_rect = text_surf.get_rect(bottomright=(x, y))
 
-        pygame.draw.rect(self.display_surface, UI_BG_COLOR, text_rect.inflate(20, 20))
+        star = pygame.image.load('../graphics/items/xp.png').convert_alpha()
+        star_rect = star.get_rect(center=text_rect.center)
+        star_rect.x -= 45
+
+        # bg, text, star, border
+        j = pygame.Rect.union(text_rect.inflate(20, 20), star_rect.inflate(10, 0))
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, j)
         self.display_surface.blit(text_surf, text_rect)
-        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, text_rect.inflate(20, 20), 3)
+        self.display_surface.blit(star, star_rect)
+        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, j, 3)
 
     def selection_box(self, left, top, has_switched):
         bg_rect = pygame.Rect(left, top, ITEM_BOX_SIZE, ITEM_BOX_SIZE)
@@ -95,7 +102,7 @@ class UI:
         self.display_surface.blit(weapon_surf, weapon_rect)
 
         if weapon_index == 2:
-            item_amount = inventory_items['kettle']
+            item_amount = inventory_items['kettle'].count
             if item_amount > 1:
                 font = pygame.font.Font(UI_FONT, INVENTORY_FONT_SIZE)
                 item_text = font.render(f'{item_amount}', False, TEXT_COLOR)
@@ -145,9 +152,9 @@ class UI:
                 number = y * INVENTORY_SIZE[0] + x
                 if len(inventory_items) > number:
                     item_name = list(inventory_items)[number]
-                    item_amount = inventory_items[item_name]
+                    item_amount = inventory_items[item_name].count
 
-                    item = Item(item_name, (), rect.center)
+                    item = Item(-1, item_name, (), rect.center)
                     self.display_surface.blit(item.image, item.rect)
 
                     if item_amount > 1:
@@ -276,7 +283,6 @@ class UI:
 
         # Background
         rect = pygame.Rect(x, y, self.display_surface.get_size()[0] - (2 * x), self.display_surface.get_size()[1] - (2 * y))
-        pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
 
         # Show image
         map_image = pygame.image.load('../graphics/minimap/map.png').convert_alpha()

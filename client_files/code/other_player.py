@@ -1,13 +1,15 @@
 from collections import deque
+from typing import Union
 
 from client_files.code.entity import Entity
+from client_files.code.explosion import Explosion
 from client_files.code.settings import weapon_data
 from client_files.code.structures import Server
 from client_files.code.support import *
 
 class OtherPlayer(Entity):
 	def __init__(self, pos, groups, entity_id, obstacle_sprites, create_attack, destroy_attack,
-                 create_bullet, create_kettle, create_dropped_item):
+				 create_bullet, create_kettle, create_dropped_item, visible_sprites):
 		super().__init__(groups, entity_id)
 
 		self.status = None
@@ -37,20 +39,23 @@ class OtherPlayer(Entity):
 		self.weapon_index = 0
 		self.on_screen = (1, 2)  # Indices of weapons that stay on screen
 		self.weapon = list(weapon_data.keys())[self.weapon_index]
+		self.current_weapon = None
 
 		# updates queue
 		self.update_queue: deque = deque()
 
 		# Stats
-		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 10}  # TODO - is magic needed?
+		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}  # TODO - make energy actually do something
 		self.health = self.stats['health']
 		self.energy = self.stats['energy']
 		self.xp = 0
 		self.speed = self.stats['speed']
-		self.strength = self.stats['attack']  # TODO - make this stat actually matter and change the damage amount
-		self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
+		self.strength = self.stats['attack']
+		self.resistance = 0
 
 		self.create_dropped_item = create_dropped_item
+
+		self.visible_sprites = visible_sprites
 
 	def import_graphics(self):
 		path: str = '../graphics/player/'
@@ -76,8 +81,16 @@ class OtherPlayer(Entity):
 		self.image = animation[int(self.frame_index)]
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 
-	def process_server_update(self, update: Server.Input.PlayerUpdate):
+	def process_server_update(self, update: Server.Input.PlayerUpdate) -> Union[str, None]:
 		self.status = update.status
+
+		if update.status == 'dead':
+			self.xp = 0
+			if self.current_weapon is not None:
+				self.current_weapon.kill()
+			Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26, radius=50)
+			self.kill()
+			return 'dead'
 
 		if not self.attacking:
 			for attack in update.attacks:
@@ -96,15 +109,9 @@ class OtherPlayer(Entity):
 						self.attack_time = pygame.time.get_ticks()
 					else:
 						if self.weapon_index == 1:
-							self.create_bullet(self, attack.direction)
+							self.create_bullet(self, self.current_weapon.rect.center, attack.direction)
 						elif self.weapon_index == 2:
-							self.create_kettle(self, attack.direction)
-
-							# switch to sword
-							self.destroy_attack(self)
-							self.weapon_index = 0
-							self.weapon = list(weapon_data.keys())[self.weapon_index]
-							self.attacking = False
+							self.create_kettle(self, self.current_weapon.rect.center, attack.direction)
 
 		self.update_pos(update.pos)
 
@@ -112,20 +119,16 @@ class OtherPlayer(Entity):
 
 		# inputs
 		while self.update_queue:
-			self.process_server_update(self.update_queue.popleft())
+			if self.process_server_update(self.update_queue.popleft()) == 'dead':
+				return
 
 		self.cooldowns()
 		self.animate()
 
-		# Death
-		if self.health <= 0:
-			self.xp = 0
-			self.create_dropped_item("grave_player", self.rect.center)
-			self.kill()  # TODO - add death screen
-
 	def cooldowns(self):
 		current_time: int = pygame.time.get_ticks()
-		if self.attacking:
+
+		if self.attacking:  # TODO - change to be based on ticks, not time
 			if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:
 				self.attacking = False
 				self.destroy_attack(self)

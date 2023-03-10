@@ -2,11 +2,11 @@ from typing import List
 
 import pygame
 import random
-from client_files.code.tile import Tile
+#  from client_files.code.tile import Tile
 
 
 class Projectile(pygame.sprite.Sprite):
-	def __init__(self, player, weapon, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, action=None, spin=False):
+	def __init__(self, player, pos, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
 		super().__init__(groups)
 		self.player = player
 		self.height: int = height
@@ -22,13 +22,13 @@ class Projectile(pygame.sprite.Sprite):
 		self.degree: float = -self.direction.as_polar()[1]
 		self.image: pygame.Surface = pygame.transform.rotate(self.original_image, self.degree)
 
-		self.rect: pygame.Rect = self.image.get_rect(center=weapon.rect.center)
+		self.rect: pygame.Rect = self.image.get_rect(center=pos)
 		self.hitbox = self.rect
 		self.pos: List[int, int] = list(self.rect.center)
 		self.speed: int = speed
 
 		# Kill time
-		self.spawn_time: int = pygame.time.get_ticks()
+		self.spawn_time: int = 0
 		self.despawn_time: int = despawn_time
 
 		self.action: str = action
@@ -37,32 +37,29 @@ class Projectile(pygame.sprite.Sprite):
 			self.spin = random.randint(8, 15) * (random.randrange(-1, 2, 2))
 
 		# Action
-		self.kill_cooldown: int = 200
-		self.to_kill: bool = False
-		self.kill_time = None
+		self.damage = damage
+		self.create_explosion = create_explosion
+		self.exploded = False
 
 	def update(self) -> None:
 		"""
 		Move forwards
 		:return: None
 		"""
-		if self.to_kill:
-			current_time: int = pygame.time.get_ticks()
 
-			if current_time - self.kill_time >= self.kill_cooldown:
+		self.move()
+
+		# Check if despawn
+		if self.spawn_time >= self.despawn_time:
+			if self.action == 'explode':
+				self.explode()
+			else:
 				self.kill()
+			self.spawn_time = 0
 		else:
-			self.move()
+			self.spawn_time += 1
 
-			# Check if despawn
-			current_time: int = pygame.time.get_ticks()
-			if current_time - self.spawn_time >= self.despawn_time:
-				if self.action == 'explode':
-					self.do_action()
-				else:
-					self.kill()
-
-			self.collision()
+		self.collision()
 
 	def move(self) -> None:
 		"""
@@ -92,19 +89,20 @@ class Projectile(pygame.sprite.Sprite):
 		"""
 		for sprite in self.obstacle_sprites:
 			if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and sprite is not self.player:  # Do not collide with own player
-				if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers
-					if self.action == 'explode':
-						self.do_action()
-					else:
-						self.kill()
+				#  if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers
+				if self.action == 'explode':
+					self.explode()
+				else:
+					if hasattr(sprite, "health"):
+						sprite.deal_damage(self.damage)
+					self.kill()
 
-	def do_action(self) -> None:
+	def explode(self) -> None:
 		"""
-		Do action based on self.action
+		Explode.
 		:return: None
 		"""
-		if self.action == 'explode':
-			self.direction = 0  # TODO - add explosion
-
-		self.to_kill = True
-		self.kill_time = pygame.time.get_ticks()
+		if not self.exploded:
+			self.exploded = True
+			self.create_explosion(self.rect.center, self.damage)
+			self.kill()

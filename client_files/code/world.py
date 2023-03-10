@@ -2,6 +2,8 @@ import random
 import pygame
 from math import floor, ceil
 from typing import Dict, Union, List
+
+from client_files.code.interpolator import Interpolator
 from client_files.code.item import Item
 from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import *
@@ -53,9 +55,10 @@ class World:
 
         # enemies dict
         self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
-
         # other players
         self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
+        # items
+        self.items: Dict[int, Item] = {}
 
         # all players
         self.all_players: List[Union[Player, OtherPlayer]] = []
@@ -79,6 +82,8 @@ class World:
         # Zen
         self.zen_active = False
 
+        self.interpolator: Interpolator = Interpolator(self)
+
     def create_map(self) -> None:
         """
         Place movable tiles on the map
@@ -86,16 +91,15 @@ class World:
         """
         # Create player with starting position
 
-        # Semi-random player starting position generator
-        random_x = random.randint(0, 1280 * 40 // 64 - 1)
-        random_y = random.randint(0, 720 * 40 // 64 - 1)
-        pos = (2048, 2048)
+        # Random player starting position generator
         while True:
+            random_x = random.randint(0, 1280 * 40 // 64 - 1)
+            random_y = random.randint(0, 720 * 40 // 64 - 1)
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
                 pos = (random_x * 64, random_y * 64)
                 break
-
-        self.player = Player("gognl", (1024, 1024), (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
+        pos = (900, 900)
+        self.player = Player("gognl", pos, (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.obstacle_sprites, 2, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
@@ -108,9 +112,6 @@ class World:
         self.camera.x = self.player.rect.centerx
         self.camera.y = self.player.rect.centery
 
-        # Spawn items
-        self.spawn_items(1000)
-
     def create_attack(self, player: Union[Player, OtherPlayer]) -> None:
         player.current_weapon = Weapon(player, (self.visible_sprites,), self.obstacle_sprites, 3)
 
@@ -119,16 +120,24 @@ class World:
             player.current_weapon.kill()
         player.current_weapon = None
 
-    def create_bullet(self, player: Union[Player, OtherPlayer], pos, mouse=None):
-        if isinstance(player, Player):
+    def create_bullet(self, source: Union[Player, OtherPlayer, Enemy], pos, mouse=None):
+        if isinstance(source, Player):
             mouse = pygame.mouse.get_pos()
-            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
-            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple(direction)))
+            direction = pygame.math.Vector2(mouse[0], mouse[1]) - (source.rect.center - self.camera + self.screen_center)
+            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple(direction)))
+        elif isinstance(source, Enemy):
+            direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
         else:
-            direction = pygame.math.Vector2(mouse[0] - player.rect.center[0], mouse[1] - player.rect.center[1])
-        Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
-                                                              self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
-                   '../graphics/weapons/bullet.png', int(weapon_data['nerf']['damage'] + (0.1 * self.player.strength)))
+            direction = pygame.math.Vector2(mouse)
+
+        if not isinstance(source, Enemy):
+            damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
+        else:
+            damage = source.damage
+
+        Projectile(source, pos, direction, (self.visible_sprites, self.obstacle_sprites,
+                                            self.projectile_sprites), self.obstacle_sprites, 4, 15, 120,
+                   '../graphics/weapons/bullet.png', damage)
 
     def create_kettle(self, player: Union[Player, OtherPlayer], pos, mouse=None):
         if isinstance(player, Player):
@@ -139,7 +148,7 @@ class World:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
                     self.projectile_sprites), self.obstacle_sprites, 4, 5, 45,
-                   '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * self.player.strength)),
+                   '../graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)),
                    'explode', self.create_explosion, True)
 
     def create_inventory(self):
@@ -176,21 +185,8 @@ class World:
 
         return nametag
 
-    def create_dropped_item(self, name, pos, fixed_place=False):
-        count = 5
-        while count > 0:
-            random_x = pos[0] // 64
-            random_y = pos[1] // 64
-
-            if not fixed_place:
-                random_x += random.randrange(-1, 2)
-                random_y += random.randrange(-1, 2)
-
-            if int(self.layout['floor'][random_x][random_y]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
-                break
-            else:
-                count -= 1
+    def create_dropped_item(self, name, pos, item_id):
+        self.items[item_id] = Item(item_id, name, (self.visible_sprites, self.item_sprites), pos, self.item_despawn, self.item_pickup, self.item_drop, self.item_use)
 
     def nametag_update(self, nametag):
         nametag.update(self.camera, self.screen_center)
@@ -216,15 +212,19 @@ class World:
     def create_explosion(self, pos, damage):
         Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)
 
+    def kill_enemy(self, enemy: Enemy):
+        Explosion(enemy.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26, radius=50)
+        del self.enemies[enemy.entity_id]
+        enemy.kill()
+
     def run(self) -> (TickUpdate, Server.Output.StateUpdate):
         """
         Run one world frame
         :return: None
         """
 
-        # Update the items positions based on magnetic players
-        for item in self.item_sprites:
-            item.update_movement(self.magnetic_players)
+        # Run the interpolation
+        self.interpolator.interpolate()
 
         # Update the camera position
         self.update_camera()
@@ -268,7 +268,6 @@ class World:
 
         # Run update() function in all visible sprites' classes
         self.visible_sprites.update()
-        self.visible_sprites.enemy_update(self.all_players)
 
         # Delete all tiles
         for sprite in self.visible_sprites.sprites() + self.obstacle_sprites.sprites():
@@ -285,19 +284,12 @@ class World:
             self.ui.display(self.player)
 
         # Get info about changes made in this tick (used for server synchronization)
-        local_changes = [None, []]  # A list of changes made in this tick. player, enemies
-        state_update: Server.Output.StateUpdate = None
-        for sprite in self.server_sprites.sprites():
-            if sprite.changes is None:  # If no new changes were made
-                continue
-            if type(sprite) is Player:
-                player_changes = Server.Output.PlayerUpdate(id=sprite.entity_id, changes=sprite.changes)
-                state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)
-                local_changes[0] = player_changes
-            elif type(sprite) is Enemy:
-                local_changes[1].append(EnemyUpdate(sprite.entity_id, sprite.changes['pos']))
+        if self.player.changes is None:
+            return None, None  # no changes
+        player_changes = Server.Output.PlayerUpdate(id=self.player.entity_id, changes=self.player.changes)
+        state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)  # sent to server
+        tick_update: TickUpdate = TickUpdate(player_changes)  # kept for synchronization
 
-        tick_update: TickUpdate = TickUpdate(*local_changes)
         return tick_update, state_update
 
     def update_camera(self) -> None:
@@ -333,17 +325,44 @@ class World:
                           self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
                     break
 
-    def spawn_items(self, amount: int) -> None:
-        for item in range(amount):
-            while True:
-                random_x = random.randint(20, 30)
-                random_y = random.randint(20, 30)
-                name = item_names[int(random.randint(0, len(item_names) - 1))]
+    def item_despawn(self, item: Item):
+        """Remove the item from the game"""
+        item.kill()
 
-                if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
-                    Item(name, (self.visible_sprites, self.item_sprites), (random_x * 64 + 32, random_y * 64 + 32))
-                    break
+    def item_pickup(self, item: Item, player_id: int) -> None:
+        """Add the item to the player's inventory and remove it from the floor"""
 
+        # other players' inventories don't matter to this client
+        if self.player.entity_id != player_id:
+            del self.items[item.item_id]
+            item.kill()
+            return
+
+        if item.name == "xp":
+            self.player.xp += 1
+            item.kill()
+        elif item.name == "grave_player" or item.name == "grave_pet":
+            self.player.inventory_items[item.name + f'({len(self.player.inventory_items)})'] = InventorySlot(item.item_id)
+            del self.items[item.item_id]
+            item.kill()
+        else:
+            if item.name in self.player.inventory_items:
+                self.player.inventory_items[item.name].add_item(item.item_id)
+                del self.items[item.item_id]
+                item.kill()
+            else:
+                self.player.inventory_items[item.name] = InventorySlot(item.item_id)
+                del self.items[item.item_id]
+                item.kill()
+
+    def item_drop(self, item: Item, player_id: int, pos: (int, int)) -> None:
+        """Remove the item from the player's inventory and drop it on the floor"""
+        if player_id == self.player.entity_id:
+            return  # already dropped
+        self.create_dropped_item(item.name, pos, item.item_id)
+
+    def item_use(self, item: Item, player_id: int, pos: (int, int)) -> None:
+        """Remove the item from the player's inventory and use it"""
 
 class GroupYSort(pygame.sprite.Group):
     def __init__(self) -> None:
@@ -359,8 +378,3 @@ class GroupYSort(pygame.sprite.Group):
         for sprite in sorted(self.sprites(), key=lambda x: (x.height, x.rect.centery)):
             # Display the sprite on screen, moving it by the calculated offset
             self.display_surface.blit(sprite.image, sprite.rect.topleft - camera + screen_center)
-
-    def enemy_update(self, players):
-        enemy_sprites = [sprite for sprite in self.sprites() if hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy' and sprite.enemy_name != 'other_player']
-        for enemy in enemy_sprites:
-            enemy.enemy_update(players)
