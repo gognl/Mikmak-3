@@ -1,7 +1,9 @@
 from typing import Sequence
 import pygame
+import random
 from client_files.code.settings import *
 from client_files.code.item import Item
+from client_files.code.player import Player
 
 
 class UI:
@@ -34,12 +36,23 @@ class UI:
 
         # Chat
         self.chat_active: bool = False
+        self.user_color_dict = {}
 
         # Minimap
         self.minimap_active = False
 
         # Mouse
         self.release_mouse: bool = False
+
+        # Messages
+        self.messages = []
+
+        # Chat activity
+        self.text_active = False
+        self.text_done = False
+        self.raw_text = r''
+        self.text = r''
+        self.txt_surface = None
 
     def show_bar(self, current, max_amount, bg_rect, color):
         # Draw background
@@ -96,7 +109,8 @@ class UI:
             if item_amount > 1:
                 font = pygame.font.Font(UI_FONT, INVENTORY_FONT_SIZE)
                 item_text = font.render(f'{item_amount}', False, TEXT_COLOR)
-                item_text_rect = item_text.get_rect(bottomright=(bg_rect.bottomright[0] - 4, bg_rect.bottomright[1] - 4))
+                item_text_rect = item_text.get_rect(
+                    bottomright=(bg_rect.bottomright[0] - 4, bg_rect.bottomright[1] - 4))
                 self.display_surface.blit(item_text, item_text_rect)
 
     def setup_inventory(self):
@@ -126,7 +140,8 @@ class UI:
 
         for i, entry in enumerate(text):
             inventory_ui_text = self.font.render(entry, False, TITLE_TEXT_COLOR)
-            inventory_ui_text_rect = inventory_ui_text.get_rect(topleft=(self.inventory_ui_starting_position[0], self.inventory_ui_starting_position[1] + i * 20))
+            inventory_ui_text_rect = inventory_ui_text.get_rect(
+                topleft=(self.inventory_ui_starting_position[0], self.inventory_ui_starting_position[1] + i * 20))
 
             self.display_surface.blit(inventory_ui_text, inventory_ui_text_rect)
 
@@ -148,7 +163,8 @@ class UI:
                     if item_amount > 1:
                         font = pygame.font.Font(UI_FONT, INVENTORY_FONT_SIZE)
                         item_text = font.render(f'{item_amount}', False, TEXT_COLOR)
-                        item_text_rect = item_text.get_rect(bottomright=(rect.bottomright[0] - 2, rect.bottomright[1] - 2))
+                        item_text_rect = item_text.get_rect(
+                            bottomright=(rect.bottomright[0] - 2, rect.bottomright[1] - 2))
                         self.display_surface.blit(item_text, item_text_rect)
 
     def get_inventory_box_pressed(self, mouse):
@@ -173,7 +189,7 @@ class UI:
             self.show_inventory(player, player.inventory_items)
 
         if self.chat_active:
-            self.show_chat()
+            self.show_chat(player)
 
         if self.minimap_active:
             self.show_minimap(player)
@@ -189,6 +205,8 @@ class UI:
 
     def destroy_chat(self):
         self.chat_active = False
+        self.raw_text = r''
+        self.text = r''
 
     def create_minimap(self):
         self.minimap_active = True
@@ -196,7 +214,7 @@ class UI:
     def destroy_minimap(self):
         self.minimap_active = False
 
-    def show_chat(self):
+    def show_chat(self, player):  # TODO BUG- after closing the chat, exiting game using [return] doesnt work
         x = 10
         y = 95
 
@@ -205,6 +223,74 @@ class UI:
         transparent.set_alpha(128)
         transparent.fill(UI_BG_COLOR)
         self.display_surface.blit(transparent, (x, y))
+
+        # Textbox
+        font = pygame.font.Font(UI_FONT, UI_FONT_SIZE//2)
+        input_box = pygame.Rect(x + 20, 550, 260, 32)
+        color_inactive = pygame.Color(43, 43, 41)
+        color_active = pygame.Color(173, 173, 166)
+
+        if pygame.mouse.get_pressed()[0]:
+            pos = pygame.mouse.get_pos()
+            if input_box.collidepoint(pos[0], pos[1]):
+                self.text_active = True
+                self.text_done = False
+
+        color = color_active if self.text_active else color_inactive
+        pygame.draw.rect(self.display_surface, color, input_box, 0, 4)
+
+        last_lines = 0
+        for i, (user, raw_message) in enumerate(self.messages):
+            i += 1
+
+            if user not in self.user_color_dict:
+                self.user_color_dict[user] = random.choice(['aqua', 'aquamarine3', 'blueviolet', 'blue', 'chocolate1', 'crimson', 'gold1', 'green'])
+
+            message = f'{user}: {raw_message}'
+            message = [message[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(message), CHAT_TEXT_LENGTH)]
+            for l, line in enumerate(message):
+                self.txt_surface = font.render(line, False, pygame.Color('white'))
+                self.display_surface.blit(self.txt_surface, (input_box.x, 100 + i * UI_FONT_SIZE + last_lines * 8 + l * 8))
+
+            username_surface = font.render(f'{user}:', False, pygame.Color(self.user_color_dict[user]))
+            self.display_surface.blit(username_surface, (input_box.x, 100 + i * UI_FONT_SIZE + last_lines * 8))
+
+            last_lines += len(message) - 1
+
+        if self.text_active and not self.text_done:
+            if pygame.mouse.get_pressed()[0]:
+                pos = pygame.mouse.get_pos()
+                if not input_box.collidepoint(pos[0], pos[1]):
+                    self.text_done = True
+                    self.text_active = False
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.text_done = True
+                        self.text_active = False
+                    elif event.key == pygame.K_BACKSPACE:
+                        self.raw_text = self.raw_text[:-1]
+                        self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
+                    elif event.key == pygame.K_RETURN:
+                        if self.raw_text != r'':
+                            self.messages.append((player.name, self.raw_text))
+                            self.raw_text = r''
+                            self.text = r''
+                    elif sum([len(line) for line in self.raw_text]) < CHAT_TEXT_TOTAL_LENGTH:
+                        if 'a' < event.unicode < 'z' or 'A' < event.unicode < 'Z':
+                            self.raw_text += event.unicode
+                            self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
+
+            pygame.draw.rect(self.display_surface, color, input_box, 0, 4)
+            for l, line in enumerate(self.text):
+                self.txt_surface = font.render(line, False, pygame.Color('white'))
+                self.display_surface.blit(self.txt_surface, (input_box.x + 5, input_box.y + 5 + l * 8))
+            pygame.display.flip()
+
+        player.inputs_disabled = self.text_active
 
     def show_minimap(self, player):
         x = 128
@@ -221,9 +307,15 @@ class UI:
         # Show player head
         head_image = pygame.image.load('../graphics/minimap/head.png').convert_alpha()
         head_rect = head_image.get_rect(center=rect.center)
-        head_rect.x = x + player.rect.x/50 - head_rect.height/2
-        head_rect.y = y + player.rect.y/50 - head_rect.width/2
+        head_rect.x = x + player.rect.x / 50 - head_rect.height / 2
+        head_rect.y = y + player.rect.y / 50 - head_rect.width / 2
         self.display_surface.blit(head_image, head_rect)
+
+    def add_msg(self, msg):
+        self.messages.append(msg)
+
+    def send_msg(self, msg):  # TODO GONI
+        self.add_msg(msg)
 
 
 class NameTag:

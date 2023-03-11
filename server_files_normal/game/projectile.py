@@ -2,7 +2,7 @@ from typing import List
 
 import pygame
 import random
-#  from client_files.code.tile import Tile
+from time import time_ns
 
 
 class Projectile(pygame.sprite.Sprite):
@@ -41,13 +41,17 @@ class Projectile(pygame.sprite.Sprite):
 		self.create_explosion = create_explosion
 		self.exploded = False
 
+		self.start_time = time_ns()*10**(-6)
+
+		self.dt = 1
+
 	def update(self) -> None:
 		"""
 		Move forwards
 		:return: None
 		"""
 
-		self.move()
+		self.move(self.dt)
 
 		# Check if despawn
 		if self.spawn_time >= self.despawn_time:
@@ -57,17 +61,17 @@ class Projectile(pygame.sprite.Sprite):
 				self.kill()
 			self.spawn_time = 0
 		else:
-			self.spawn_time += 1
+			self.spawn_time += self.dt
 
 		self.collision()
 
-	def move(self) -> None:
+	def move(self, dt) -> None:
 		"""
 		Move the projectile towards the direction it is going
 		:return: None
 		"""
-		self.pos[0] += self.direction[0] * self.speed
-		self.pos[1] += self.direction[1] * self.speed
+		self.pos[0] += self.direction[0] * self.speed * dt
+		self.pos[1] += self.direction[1] * self.speed * dt
 
 		self.degree += self.spin
 
