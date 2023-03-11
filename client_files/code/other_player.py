@@ -29,7 +29,7 @@ class OtherPlayer(Entity):
 
         # violence
         self.attacking: bool = False
-        self.attack_cooldown: int = 400
+        self.attack_cooldown: int = 24
         self.attack_time: int = 0
 
         self.create_attack = create_attack
@@ -45,9 +45,10 @@ class OtherPlayer(Entity):
         self.update_queue: deque = deque()
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 10}
         self.health = self.stats['health']
         self.energy = self.stats['energy']
+        self.max_energy = self.stats['energy']
         self.xp = 0
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']
@@ -106,7 +107,6 @@ class OtherPlayer(Entity):
                     if self.weapon_index not in self.on_screen:
                         self.create_attack(self)
                         self.attacking = True
-                        self.attack_time = pygame.time.get_ticks()
                     else:
                         if self.weapon_index == 1:
                             self.create_bullet(self, self.current_weapon.rect.center, attack.direction)
@@ -131,9 +131,11 @@ class OtherPlayer(Entity):
         self.animate()
 
     def cooldowns(self):
-        current_time: int = pygame.time.get_ticks()
-
-        if self.attacking:  # TODO - change to be based on ticks, not time
-            if current_time - self.attack_time >= self.attack_cooldown and self.weapon_index not in self.on_screen:
+        if self.attacking:
+            if self.attack_time >= self.attack_cooldown:
                 self.attacking = False
-                self.destroy_attack(self)
+                self.attack_time = 0
+                if self.weapon_index not in self.on_screen:
+                    self.destroy_attack(self)
+            else:
+                self.attack_time += self.dt
