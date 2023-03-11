@@ -69,7 +69,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
     :return: None
     """
     while True:
-        # Get a packet from the server; convert it to a ServerMessage object.
+        # Get a packet from the server; convert it to a NormalServerMessage object.
         data: bytes = get_server_pkt()
         if data == b'':
             print('got empty msg')
@@ -79,7 +79,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             msg: NormalServer.Input.StateUpdate = NormalServer.Input.StateUpdate(ser=ser)
             updates_queue.put(msg)
         elif prefix == 1:
-            msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
+            msg: NormalServer.Input.ChangeNormalServerMsg = NormalServer.Input.ChangeNormalServerMsg(ser=ser)
             print(msg.server.addr())
             global server_socket
             server_socket.close()
@@ -91,7 +91,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             server_socket.send(hello_msg.serialize())
 
 
-def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
+def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
     """
     Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
     :param world: The pygame world.
@@ -138,7 +138,7 @@ def update_game(update_msg: Server.Input.StateUpdate, changes: deque[TickUpdate]
 
     # Apply the changes
     for tick_update in changes:
-        player_change: Server.Output.PlayerUpdate = tick_update.player_update
+        player_change: NormalServer.Output.PlayerUpdate = tick_update.player_update
         world.player.update_pos(player_change.pos)
         world.player.status = player_change.status
 
@@ -159,7 +159,7 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
 
 
 def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (
-        pygame.Surface, pygame.time.Clock, World, TickUpdate, Server.Output.StateUpdate):
+        pygame.Surface, pygame.time.Clock, World, TickUpdate, NormalServer.Output.StateUpdate):
     """
     Run game according to user inputs - prediction before getting update from server
     :return: updated screen, clock, and world
@@ -173,7 +173,7 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
 
     # Update the world state and then the screen
     tick_update: TickUpdate
-    state_update: Server.Output.StateUpdate
+    state_update: NormalServer.Output.StateUpdate
     tick_update, state_update = world.run()
     pygame.display.update()
 
@@ -220,14 +220,20 @@ def run_game(*args) -> None:
 
         quit_response, running, username, password = title.run()  # TODO - add ip and port (if needed - @goni?)
         if not running:
-            login_socket.connect(login_addr)
-            data_to_login = username + " " + str(hash_and_salt(password))
-            login_socket.send(pack("<H", len(data_to_login)))
-            login_socket.send(data_to_login.encode())
-            size = unpack("<H", login_socket.recv(2))[0]
-            if size == -1:
+            size = 0
+            if password != '' and username != '':
+                login_socket.connect(login_addr)
+                data_to_login = username + " " + str(hash_and_salt(password))
+                login_socket.send(pack("<H", len(data_to_login)))
+                login_socket.send(data_to_login.encode())
+                size = int.from_bytes(login_socket.recv(2), 'little')
+
+            if size == 0:
                 running = True
+                title = Title()
                 quit_response = False
+                login_socket.close()
+                login_socket = socket.socket()
 
         pygame.display.update()
 

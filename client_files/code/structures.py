@@ -99,7 +99,7 @@ class NormalServer:
                 self.health: int = data.pop('health')
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_6'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'), 'attacks': (tuple, (Server.Input.AttackUpdate, 'o')),
+                return {'id': (int, 'u_6'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'), 'attacks': (tuple, (NormalServer.Input.AttackUpdate, 'o')),
                         'status': (int, 'u_1'), 'health': (int, 'u_1')}
 
         class AttackUpdate(Serializable):
@@ -302,9 +302,8 @@ class EnemyUpdate:
         self.pos = pos
 
 class TickUpdate:
-    def __init__(self, player_update: NormalServer.Output.PlayerUpdate, enemies_update: List[EnemyUpdate]):
+    def __init__(self, player_update: NormalServer.Output.PlayerUpdate):
         self.player_update: NormalServer.Output.PlayerUpdate = player_update
-        self.enemies_update: List[EnemyUpdate] = enemies_update
         self.seq: int = NormalServer.Output.StateUpdate.seq_count
 
 class InventorySlot:

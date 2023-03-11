@@ -60,7 +60,8 @@ class Player(pygame.sprite.Sprite):
         # Stats
         self.stats = {'health': health, 'energy': 60, 'attack': strength, 'speed': 10}
         self.health = self.stats['health']
-        self.energy = self.stats['energy']
+        self.max_energy = self.stats['energy']
+        self.energy = self.max_energy
         self.xp = xp
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']

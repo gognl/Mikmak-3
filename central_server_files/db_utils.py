@@ -60,13 +60,12 @@ def add_new_to_db(db: SQLDataBase, ID: int, username: str, password: str):
 
 def is_user_in_db(db: SQLDataBase, username: str) -> bool:
 	statement = select(db.users_table.c.username)
-	print(db.exec(statement).fetchall())
 	columns = [row[0] for row in db.exec(statement).fetchall()]
 	return username.lower() in columns
 
 def get_id_by_name(db: SQLDataBase, username: str) -> int:
 	statement = select(db.users_table.c.id).where(db.users_table.c.username == username)
-	return db.exec(statement)
+	return db.exec(statement).fetchall()[0][0]
 
 def get_current_id(db: SQLDataBase) -> int:
 	statement = select(db.id_counter.c.current_id)

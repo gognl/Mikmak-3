@@ -341,24 +341,27 @@ class NormalServer:
         def _get_attr(self) -> dict:
             return {'item_details_list': (list, (NormalServer.ItemDetails, 'o'))}
 
-    class PlayerUpdate(Serializable):
-        def __init__(self, **kwargs):
-            s: bytes = kwargs.pop('ser', b'')
-            super().__init__(ser=s)
-            if s != b'':
-                return
-            self.id: int = kwargs['player_id']
-            self.pos: Tuple[int, int] = kwargs['pos']
-            self.attacks: Tuple[Client.Input.AttackUpdate] = kwargs['attacks']
-            self.status: str = kwargs['status']
-            self.item_actions: Tuple[Client.Input.ItemActionUpdate] = kwargs['item_actions']
+    class Input:
+        class PlayerUpdate(Serializable):
+            """
+            A class of messages from the server - input
+            """
 
-        def _get_attr(self) -> dict:
-            return {'id': (int, 'u_6'),
-                    'pos': (tuple, (int, 'u_8')),
-                    'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
-                    'status': (str, 'str'),
-                    'item_actions': (tuple, (Client.Input.ItemActionUpdate, 'o'))}
+            def __init__(self, **kwargs):
+                s: bytes = kwargs.pop('ser', b'')
+                super().__init__(ser=s)
+                if s != b'':
+                    self.status: str = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle', 6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(self.status)
+                    self.pos: Tuple[int, int] = (self._pos_x, self._pos_y)
+                    return
+
+                # For interpolation
+                data: dict = kwargs.pop('data')
+                self.id: int = data.pop('id')
+                self.pos: Tuple[int, int] = data.pop('pos')
+                self.attacks: Tuple[Client.Output.AttackUpdate] = data.pop('attacks')
+                self.status: str = data.pop('status')
+                self.health: int = data.pop('health')
 
     class StateUpdateNoAck(Serializable):
         def __init__(self, **kwargs):

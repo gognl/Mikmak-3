@@ -86,11 +86,13 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
             update_id_table(db)
             list_user_info = load_info(db, new_id)
         else:
-            new_id = get_id_by_name(username)
+            new_id = get_id_by_name(db, username)
+            print(new_id)
             list_user_info = load_info(db, new_id)
+            print(list_user_info)
             if not list_user_info[0][2] == password or list_user_info[0][1] in active_players_username:
-                x = -1
-                error_code = pack("<H", x.to_bytes(2, 'little'))
+                x = 0
+                error_code = x.to_bytes(2, 'little')
                 client_sock.send(error_code)
                 client_sock.close()
                 continue

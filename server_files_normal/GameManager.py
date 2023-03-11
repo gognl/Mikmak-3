@@ -231,7 +231,7 @@ class GameManager(threading.Thread):
                       self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4], self.id_info_dict[entity_id].info[3],
                       self.id_info_dict[entity_id].info[5], self.id_info_dict[entity_id].info[6],
                       self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
-                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
+                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
 
     @staticmethod
     def get_player_data(player: Player):
@@ -272,7 +272,7 @@ class GameManager(threading.Thread):
         else:
             player = Player((self.read_only_players,), player_update.id, player_update.pos, player_update.health, None,
                             None, None, None,  self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
-                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
+                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
 
         # Update the player
         player.update_pos(player_update.pos)
