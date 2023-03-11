@@ -29,7 +29,7 @@ class OtherPlayer(Entity):
 
         # violence
         self.attacking: bool = False
-        self.attack_cooldown: int = 24
+        self.attack_cooldown: int = 0.5
         self.attack_time: int = 0
 
         self.create_attack = create_attack
@@ -57,6 +57,8 @@ class OtherPlayer(Entity):
         self.create_dropped_item = create_dropped_item
 
         self.visible_sprites = visible_sprites
+
+        self.dt = 1
 
     def import_graphics(self):
         path: str = '../graphics/player/'

@@ -261,6 +261,8 @@ class World:
         self.player.dt = self.dt
         for proj in self.projectile_sprites.sprites():
             proj.dt = self.dt
+        for player in self.other_players.values():
+            player.dt = self.dt
 
         # UI
         for nametag in self.nametags:
