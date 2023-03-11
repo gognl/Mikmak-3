@@ -1,6 +1,8 @@
 import random
 from collections import deque
 from typing import Dict, Sequence, Tuple
+
+from client_files.code.explosion import Explosion
 from client_files.code.settings import *
 from client_files.code.structures import Server, InventorySlot
 from client_files.code.support import *
@@ -12,7 +14,7 @@ class Player(Entity):
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_chat,
                  destroy_chat, activate_zen, deactivate_zen, create_minimap, destroy_minimap, create_nametag,
                  nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
-                 magnetic_players, layout) -> None:
+                 magnetic_players, layout, create_lightning) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
         # Player name TODO: might be temporary
@@ -38,7 +40,7 @@ class Player(Entity):
 
         # Attacking
         self.attacking: bool = False
-        self.attack_cooldown: int = 24
+        self.attack_cooldown = 0.5
         self.attack_time: int = 0
 
         # layout
@@ -109,25 +111,25 @@ class Player(Entity):
         self.can_magnet = True
         self.is_magnet = False
         self.magnet_start = 0
-        self.magnet_time = 600
-        self.magnet_skill_cooldown = 1200
+        self.magnet_time = 10
+        self.magnet_skill_cooldown = 40
         self.magnet_cost = 20
 
         # Speed skill
         self.can_speed = True
         self.is_fast = False
         self.speed_start = 0
-        self.speed_time = 120
-        self.speed_skill_cooldown = 220
+        self.speed_time = 3
+        self.speed_skill_cooldown = 20
         self.speed_skill_factor = 2
         self.speed_cost = 40
 
         # Lightning skill
         self.can_lightning = True
         self.lightning_start = 0
-        self.lightning_skill_cooldown = 120
-        self.lightning_radius = 256
+        self.lightning_skill_cooldown = 30
         self.lightning_cost = 30
+        self.create_lightning = create_lightning
 
         # Inventory
         self.create_inventory = create_inventory
@@ -174,9 +176,9 @@ class Player(Entity):
 
         # Energy
         self.can_energy = True
-        self.energy_cooldown = 60
+        self.energy_cooldown = 6
         self.energy_time = 0
-        self.energy_point_cooldown = 10
+        self.energy_point_cooldown = 5
         self.energy_point_time = 0
 
         self.dt = 1
@@ -542,10 +544,8 @@ class Player(Entity):
             self.can_lightning = False
             self.energy -= self.lightning_cost
             self.can_energy = False
-            for entity in []:  # TODO - @goni search through all entities
-                if entity.rect.distance(pygame.math.Vector2(self.rect.x, self.rect.y)) < self.lightning_radius:
-                    entity.deal_damage(self.strength // 10 + 25)
             self.lightning_start = 0
+            self.create_lightning()
             self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
 
         # Move nametag right after moving
@@ -753,7 +753,7 @@ class Player(Entity):
                 self.can_energy = True
                 self.energy_time = 0
             else:
-                self.energy_time += 1
+                self.energy_time += self.dt
         elif self.energy < self.max_energy:
             if self.energy_point_time >= self.energy_point_cooldown:
                 self.energy += 1
@@ -770,7 +770,7 @@ class Player(Entity):
                 self.can_speed = True
                 self.speed_start = 0
             else:
-                self.speed_start += 1
+                self.speed_start += self.dt
 
         # Magnet skill timers
         if not self.can_magnet:
@@ -781,7 +781,7 @@ class Player(Entity):
                 self.can_magnet = True
                 self.magnet_start = 0
             else:
-                self.magnet_start += 1
+                self.magnet_start += self.dt
 
         # Lightning skill timers
         if not self.can_lightning:
@@ -789,7 +789,7 @@ class Player(Entity):
                 self.can_lightning = True
                 self.lightning_start = 0
             else:
-                self.lightning_start += 1
+                self.lightning_start += self.dt
 
         if self.attacking:
             if self.attack_time >= self.attack_cooldown:
@@ -798,21 +798,21 @@ class Player(Entity):
                 if self.weapon_index not in self.on_screen:
                     self.destroy_attack(self)
             else:
-                self.attack_time += 1
+                self.attack_time += self.dt
 
         if not self.can_switch_weapon:
             if self.weapon_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_weapon = True
                 self.weapon_switch_time = 0
             else:
-                self.weapon_switch_time += 1
+                self.weapon_switch_time += self.dt
 
         if not self.can_shoot:
             if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
                 self.shoot_time = 0
             else:
-                self.shoot_time += 1
+                self.shoot_time += self.dt
 
         if not self.can_change_inventory:
             if self.inventory_time >= self.inventory_cooldown:

@@ -9,7 +9,7 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players, activate_lightning):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -57,7 +57,8 @@ class Player(pygame.sprite.Sprite):
 		# Stats
 		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 400}
 		self.health = self.stats['health']
-		self.energy = self.stats['energy']
+		self.max_energy = self.stats['energy']
+		self.energy = self.max_energy
 		self.xp = 0
 		self.speed = self.stats['speed']
 		self.strength = self.stats['attack']
@@ -80,17 +81,33 @@ class Player(pygame.sprite.Sprite):
 		self.can_speed = True
 		self.is_fast = False
 		self.speed_start = None
-		self.speed_time = 1000
-		self.speed_skill_cooldown = 7500  # less than client cooldown, because of the possible latency
+		self.speed_time = 3
+		self.speed_skill_cooldown = 20
 		self.speed_skill_factor = 2
+		self.speed_cost = 40
 
 		# Magnet skill
 		self.can_magnet = True
 		self.is_magnet = False
 		self.magnet_start = None
-		self.magnet_time = 10000
-		self.magnet_skill_cooldown = 49500  # less than client cooldown, because of the possible latency
+		self.magnet_time = 10
+		self.magnet_skill_cooldown = 40
 		self.magnetic_players = magnetic_players
+		self.magnet_cost = 20
+
+		# Lightning skill
+		self.can_lightning = True
+		self.lightning_start = 0
+		self.lightning_skill_cooldown = 30
+		self.activate_lightning = activate_lightning
+		self.lightning_cost = 30
+
+		# Energy
+		self.can_energy = True
+		self.energy_cooldown = 6
+		self.energy_time = 0
+		self.energy_point_cooldown = 5
+		self.energy_point_time = 0
 
 		self.disconnected = False
 
@@ -180,14 +197,23 @@ class Player(pygame.sprite.Sprite):
 					self.can_speed = False
 					self.is_fast = True
 					self.speed *= self.speed_skill_factor
-					self.speed_start = pygame.time.get_ticks()
-				elif item_action.item_id == 2:  # magnet
+					self.speed_start = 0
+					self.energy -= self.speed_cost
+					self.can_energy = False
+				elif item_action.item_id == 2 and self.can_magnet:  # magnet
 					self.can_magnet = False
 					self.add(self.magnetic_players)
 					self.is_magnet = True
-					self.magnet_start = pygame.time.get_ticks()
-				elif item_action.item_id == 3:  # damage
-					pass
+					self.magnet_start = 0
+					self.energy -= self.magnet_cost
+					self.can_energy = False
+				elif item_action.item_id == 3 and self.can_lightning:  # damage
+					self.can_lightning = False
+					self.lightning_start = 0
+					self.activate_lightning(self)
+					self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=2, direction=(0, 0)))
+					self.energy -= self.lightning_cost
+					self.can_energy = False
 
 		self.update_pos(update.pos)
 
@@ -231,29 +257,59 @@ class Player(pygame.sprite.Sprite):
 		self.item_collision()
 
 	def cooldowns(self):
-		current_time: int = pygame.time.get_ticks()
+
+		# Energy
+		if not self.can_energy:
+			if self.energy_time >= self.energy_cooldown:
+				self.can_energy = True
+				self.energy_time = 0
+			else:
+				self.energy_time += self.dt
+		elif self.energy < self.max_energy:
+			if self.energy_point_time >= self.energy_point_cooldown:
+				self.energy += 1
+				self.energy_point_time = 0
+			else:
+				self.energy_point_time += 1
 
 		# Speed skill timers
 		if not self.can_speed:
-			if current_time - self.speed_start >= self.speed_time and self.is_fast:
+			if self.speed_start >= self.speed_time and self.is_fast:
 				self.speed = int(self.speed / self.speed_skill_factor)
 				self.is_fast = False
-			if current_time - self.speed_start >= self.speed_skill_cooldown:
+			elif self.speed_start >= self.speed_skill_cooldown:
 				self.can_speed = True
+				self.speed_start = 0
+			else:
+				self.speed_start += self.dt
 
-		# Magnet skill timers
-		if not self.can_magnet:
-			if current_time - self.magnet_start >= self.magnet_time and self.is_magnet:
-				self.is_magnet = False
-				self.remove(self.magnetic_players)
-			if current_time - self.magnet_start >= self.magnet_skill_cooldown:
-				self.can_magnet = True
+			# Magnet skill timers
+			if not self.can_magnet:
+				if self.magnet_start >= self.magnet_time and self.is_magnet:
+					self.is_magnet = False
+					self.remove(self.magnetic_players)
+				elif self.magnet_start >= self.magnet_skill_cooldown:
+					self.can_magnet = True
+					self.magnet_start = 0
+				else:
+					self.magnet_start += self.dt
 
-		if self.attacking:  # TODO - make this based on ticks not time
-			if current_time - self.attack_time >= self.attack_cooldown:
+		# Lightning skill timers
+		if not self.can_lightning:
+			if self.lightning_start >= self.lightning_skill_cooldown:
+				self.can_lightning = True
+				self.lightning_start = 0
+			else:
+				self.lightning_start += self.dt
+
+		if self.attacking:
+			if self.attack_time >= self.attack_cooldown:
 				self.attacking = False
+				self.attack_time = 0
 				if self.weapon_index not in self.on_screen:
 					self.destroy_attack()
+			else:
+				self.attack_time += self.dt
 
 		if not self.can_switch_weapon:
 			if self.weapon_switch_time >= self.switch_duration_cooldown:

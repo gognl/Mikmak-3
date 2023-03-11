@@ -94,3 +94,5 @@ item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_gree
 
 INTERPOLATION_PERIOD = 50_000_000  # ns
 INTERPOLATION_ACTIVE = False
+
+LIGHTNING_RADIUS = 150

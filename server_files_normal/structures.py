@@ -74,7 +74,7 @@ class Client:
                     return
 
                 self.weapon_id = kwargs.pop('weapon_id')  # 0 = sword, 1 = rifle, 2 = kettle
-                self.attack_type = kwargs.pop('attack_type')  # switch=0, attack=1
+                self.attack_type = kwargs.pop('attack_type')  # switch=0, attack=1, lightning=2
                 direction = kwargs.pop('direction')
                 self._direction_x = direction[0]
                 self._direction_y = direction[1]
