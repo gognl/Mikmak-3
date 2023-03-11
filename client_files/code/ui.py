@@ -214,7 +214,7 @@ class UI:
     def destroy_minimap(self):
         self.minimap_active = False
 
-    def show_chat(self, player):  # TODO BUG- after closing the chat, exiting game using [return] doesnt work
+    def show_chat(self, player):
         x = 10
         y = 95
 

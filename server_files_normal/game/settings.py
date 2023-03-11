@@ -28,8 +28,7 @@ enemy_data = {
 
 ITEM_PICK_UP_COOLDOWN = 2
 ITEM_DESPAWN_TIME = 240
-item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
-              'spawn_red', 'spawn_yellow', 'xp']  # TODO - keep only items that need to be naturally spawned
+item_names = ['heal', 'strength', 'kettle', 'shield']
 
 # Inventory
 INVENTORY_SIZE = (3, 5)
