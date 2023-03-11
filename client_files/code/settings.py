@@ -93,4 +93,4 @@ item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_gree
               'spawn_red', 'spawn_yellow', 'xp']  # TODO - keep only items that need to be naturally spawned
 
 INTERPOLATION_PERIOD = 50_000_000  # ns
-INTERPOLATION_ACTIVE = True
+INTERPOLATION_ACTIVE = False

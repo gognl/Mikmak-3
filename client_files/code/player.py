@@ -386,6 +386,18 @@ class Player(Entity):
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
 
+        # Change animation
+        if abs(self.direction.x) > abs(self.direction.y):
+            if self.direction.x > 0:
+                self.status = 'right'
+            else:
+                self.status = 'left'
+        else:
+            if self.direction.y > 0:
+                self.status = 'down'
+            else:
+                self.status = 'up'
+
         # Move accordingly to the direction
         if not self.is_on_tile:
             if self.direction.x == 0 or self.hitbox.x % 64 == 0:
@@ -725,7 +737,7 @@ class Player(Entity):
         """
 
         # idle
-        if self.direction.x == 0 and self.direction.y == 0:
+        if self.direction.x == 0 and self.direction.y == 0 and not self.is_auto_walk:
             if 'idle' not in self.status:
                 self.status += '_idle'
 
