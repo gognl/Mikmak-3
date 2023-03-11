@@ -4,7 +4,7 @@ import pygame.time
 
 from client_files.code.settings import *
 from client_files.code.entity import Entity
-from client_files.code.structures import Server
+from client_files.code.structures import NormalServer
 from client_files.code.support import *
 
 
@@ -39,7 +39,7 @@ class Enemy(Entity):
 		self.create_explosion = create_explosion
 		self.create_bullet = create_bullet
 
-		self.update_queue: deque[Server.Input.EnemyUpdate] = deque()
+		self.update_queue: deque[NormalServer.Input.EnemyUpdate] = deque()
 
 		self.die = die
 
@@ -64,7 +64,7 @@ class Enemy(Entity):
 		self.image = animation[int(self.frame_index)]
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 
-	def process_server_update(self, update: Server.Input.EnemyUpdate):
+	def process_server_update(self, update: NormalServer.Input.EnemyUpdate):
 
 		self.update_pos(update.pos)
 
