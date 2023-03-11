@@ -240,7 +240,7 @@ class Client:
                     return
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'),
+                return {'id': (int, 'u_6'),
                         '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
                         'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
                         'status': (int, 'u_1'),

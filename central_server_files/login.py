@@ -132,5 +132,7 @@ def handle_disconnect(db: SQLDataBase):
 
             player_data = PlayerData(ser=decrypt(normal_sock.recv(size), DH_normal_keys[server]))
             username = load_info(db, player_data.entity_id)[0][1]
+            disconnected_client_sock = id_socket_dict[player_data.entity_id]
+            disconnected_client_sock.close()
             active_players_username.remove(username)
             update_user_info(db, player_data)
