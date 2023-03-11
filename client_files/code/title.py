@@ -74,13 +74,14 @@ class Title:
         self.enemies.append(TitleEnemy("white_cow", (x, y), (self.visible_sprites,), (-side, 0)))
 
         # mouse = pygame.mouse.get_pos()
+        # mouse_rect = pygame.Rect(mouse[0], mouse[1], TITLE_MOUSE_RADIUS, TITLE_MOUSE_RADIUS)
         for enemy in self.enemies:
             if enemy.rect.x + enemy.direction[0] > SCREEN_WIDTH + TILESIZE or enemy.rect.x + enemy.direction[0] < -TILESIZE:
                 enemy.kill()
 
             enemy.title_move()
 
-            # if pygame.math.Vector2(enemy.rect.x, enemy.rect.y).distance_to(mouse) < TITLE_MOUSE_RADIUS:
+            # if enemy.rect.colliderect(mouse_rect):
             #     if enemy.enemy_name is "white_cow":
             #         enemy.enemy_name = random.choice(TITLE_RANDOM_COW)
             #         enemy.import_graphics(enemy.enemy_name)
@@ -144,7 +145,7 @@ class Title:
             if event.type == pygame.QUIT:
                 self.quit = True
             elif event.type == pygame.KEYDOWN:
-                if event.key != pygame.K_RETURN and event.key != pygame.K_ESCAPE and event.key != pygame.K_TAB and event.key != pygame.K_BACKSLASH:
+                if 'a' < event.unicode < 'z' or 'A' < event.unicode < 'Z':
                     if self.username_selected:
                         if event.key == pygame.K_BACKSPACE:
                             self.username = self.username[:-1]

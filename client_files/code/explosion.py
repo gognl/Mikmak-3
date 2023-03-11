@@ -1,11 +1,10 @@
 import pygame
 from client_files.code.settings import *
 from client_files.code.item import Item
-from client_files.code.player import Player
 
 
 class Explosion(pygame.sprite.Sprite):
-    def __init__(self, pos, damage, groups, sprites):
+    def __init__(self, pos, damage, groups, sprites, speed=EXPLOSION_SPEED, radius=EXPLOSION_RADIUS):
         super().__init__(groups)
 
         # Sprite
@@ -15,8 +14,8 @@ class Explosion(pygame.sprite.Sprite):
         self.height = 5
 
         # Explosion stats
-        self.speed = EXPLOSION_SPEED
-        self.radius = EXPLOSION_RADIUS
+        self.speed = speed
+        self.radius = radius
 
         # Damage
         self.damage = damage
@@ -28,9 +27,11 @@ class Explosion(pygame.sprite.Sprite):
         for sprite in self.sprites:
             if position.distance_to(sprite.rect.center) <= self.radius:
                 if hasattr(sprite, "health"):
-                    sprite.deal_damage(self.damage)
+                    pass
+                    #  sprite.deal_damage(self.damage)
                 elif isinstance(sprite, Item):
-                    sprite.kill()
+                    pass
+                    #  sprite.kill()
 
     def update(self):
         self.image = pygame.transform.scale(self.original_image, (int(self.rect.width * self.speed), int(self.rect.height * self.speed)))

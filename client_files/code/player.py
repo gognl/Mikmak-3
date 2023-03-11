@@ -1,8 +1,8 @@
 import random
 from collections import deque
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Tuple
 from client_files.code.settings import *
-from client_files.code.structures import Server
+from client_files.code.structures import Server, InventorySlot
 from client_files.code.support import *
 from client_files.code.entity import Entity
 
@@ -14,6 +14,9 @@ class Player(Entity):
                  nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
                  magnetic_players, layout) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
+
+        # Player name TODO: might be temporary
+        self.name = name
 
         # sprite group of magnetic players
         self.magnetic_players = magnetic_players
@@ -35,7 +38,7 @@ class Player(Entity):
 
         # Attacking
         self.attacking: bool = False
-        self.attack_cooldown: int = 400
+        self.attack_cooldown: int = 24
         self.attack_time: int = 0
 
         # layout
@@ -51,7 +54,7 @@ class Player(Entity):
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
         self.weapon_switch_time = 0
-        self.switch_duration_cooldown = 24
+        self.switch_duration_cooldown = 1.5
         # attack sprites
         self.current_weapon = None
 
@@ -77,18 +80,19 @@ class Player(Entity):
         self.status = 'down'
 
         # Server
-        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacking': self.attacking, 'weapon': self.weapon,
-                        'status': self.status}  # Changes made in this tick
         self.attacks: deque = deque()
+        self.item_actions: deque = deque()  # also used as skills update
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
         # Stats
-        self.stats = {'health': 100000, 'energy': 60, 'attack': 0, 'speed': 10}  # TODO - make energy actually do something
+        self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}
         self.health = self.stats['health']
         self.energy = self.stats['energy']
+        self.max_energy = self.stats['energy']
         self.xp = 0
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']
-        self.resistance = 0  # TODO - make this stat actually matter and change the damage amount, MAKE ATTACKING THE PLAYER MAKE THIS GO DOWN SLIGHTLY
+        self.resistance = 0
 
         # Nametag
         self.initialize_nametag()
@@ -96,7 +100,7 @@ class Player(Entity):
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = 0
-        self.shoot_cooldown = 24
+        self.shoot_cooldown = 1
 
         # Mouse press
         self.release_mouse = [False, False]
@@ -105,16 +109,25 @@ class Player(Entity):
         self.can_magnet = True
         self.is_magnet = False
         self.magnet_start = 0
-        self.magnet_time = 100
-        self.magnet_skill_cooldown = 400
+        self.magnet_time = 600
+        self.magnet_skill_cooldown = 1200
+        self.magnet_cost = 20
 
         # Speed skill
         self.can_speed = True
         self.is_fast = False
         self.speed_start = 0
-        self.speed_time = 100
-        self.speed_skill_cooldown = 400
+        self.speed_time = 120
+        self.speed_skill_cooldown = 220
         self.speed_skill_factor = 2
+        self.speed_cost = 40
+
+        # Lightning skill
+        self.can_lightning = True
+        self.lightning_start = 0
+        self.lightning_skill_cooldown = 120
+        self.lightning_radius = 256
+        self.lightning_cost = 30
 
         # Inventory
         self.create_inventory = create_inventory
@@ -130,7 +143,7 @@ class Player(Entity):
         self.destroy_chat = destroy_chat
         self.last_chat = True
         self.chat_time = 0
-        self.chat_cooldown = 100
+        self.chat_cooldown = 6
         self.chat_active = False
         self.can_change_chat = True
 
@@ -139,7 +152,7 @@ class Player(Entity):
         self.deactivate_zen = deactivate_zen
         self.last_zen = True
         self.zen_time = 0
-        self.zen_cooldown = 100
+        self.zen_cooldown = 6
         self.zen_active = False
         self.can_change_zen = True
 
@@ -148,18 +161,27 @@ class Player(Entity):
         self.destroy_minimap = destroy_minimap
         self.last_minimap = True
         self.minimap_time = 0
-        self.minimap_cooldown = 100
+        self.minimap_cooldown = 6
         self.minimap_active = False
         self.can_change_minimap = True
 
-
         # Items
         self.item_sprites = None
-        self.inventory_items = {}
+        self.inventory_items: Dict[str, InventorySlot] = {}
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
-        self.pets = 0
+
+        # Energy
+        self.can_energy = True
+        self.energy_cooldown = 60
+        self.energy_time = 0
+        self.energy_point_cooldown = 10
+        self.energy_point_time = 0
+
+        self.dt = 1
+
+        self.inputs_disabled: bool = False
 
     def import_player_assets(self) -> None:
         """
@@ -484,18 +506,35 @@ class Player(Entity):
             self.start_auto_walk()
 
         # Check if using speed skill
-        if self.can_speed and keys[pygame.K_1]:
+        if self.can_speed and keys[pygame.K_1] and self.energy >= self.speed_cost:
             self.can_speed = False
+            self.energy -= self.speed_cost
+            self.can_energy = False
             self.is_fast = True
             self.speed *= self.speed_skill_factor
             self.speed_start = 0
+            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=1, item_name=''))
 
         # Check if using magnet skill
-        if self.can_magnet and keys[pygame.K_2]:
+        if self.can_magnet and keys[pygame.K_2] and self.energy >= self.magnet_cost:
             self.can_magnet = False
+            self.energy -= self.magnet_cost
+            self.can_energy = False
             self.add(self.magnetic_players)
             self.is_magnet = True
             self.magnet_start = 0
+            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
+
+        # Check if using lightning skill
+        if self.can_lightning and keys[pygame.K_3] and self.energy >= self.lightning_cost:
+            self.can_lightning = False
+            self.energy -= self.lightning_cost
+            self.can_energy = False
+            for entity in []:  # TODO - @goni search through all entities
+                if entity.rect.distance(pygame.math.Vector2(self.rect.x, self.rect.y)) < self.lightning_radius:
+                    entity.deal_damage(self.strength // 10 + 25)
+            self.lightning_start = 0
+            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
 
         # Move nametag right after moving
         self.nametag_update(self.nametag)
@@ -522,7 +561,7 @@ class Player(Entity):
 
                 self.chat_active = not self.chat_active
                 self.can_change_chat = False
-                self.chat_time = pygame.time.get_ticks()
+                self.chat_time = 0
             self.last_chat = True
         else:
             self.last_chat = False
@@ -536,7 +575,7 @@ class Player(Entity):
 
                 self.minimap_active = not self.minimap_active
                 self.can_change_minimap = False
-                self.minimap_time = pygame.time.get_ticks()
+                self.minimap_time = 0
             self.last_minimap = True
         else:
             self.last_minimap = False
@@ -550,7 +589,7 @@ class Player(Entity):
 
                 self.zen_active = not self.zen_active
                 self.can_change_zen = False
-                self.zen_time = pygame.time.get_ticks()
+                self.zen_time = 0
             self.last_zen = True
         else:
             self.last_zen = False
@@ -568,7 +607,7 @@ class Player(Entity):
                     self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
-                    self.attack_time = pygame.time.get_ticks()
+                    self.attack_time = 0
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
@@ -577,11 +616,11 @@ class Player(Entity):
                     elif self.weapon_index == 2:
                         self.attacking = True
                         self.release_mouse[0] = True
-                        self.attack_time = pygame.time.get_ticks()
+                        self.attack_time = 0
 
                         self.create_kettle(self, self.current_weapon.rect.center)
-                        self.inventory_items['kettle'] -= 1
-                        if self.inventory_items['kettle'] == 0:
+                        self.inventory_items['kettle'].count -= 1
+                        if self.inventory_items['kettle'].count == 0:
                             del self.inventory_items['kettle']
 
                         if 'kettle' not in self.inventory_items:
@@ -611,38 +650,35 @@ class Player(Entity):
                     elif item == "shield":
                         self.resistance += 1
                     elif item == "spawn_white":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
                     elif item == "spawn_green":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
                     elif item == "spawn_red":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
                     elif item == "spawn_yellow":
-                        self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
-                    elif item == "spawn_pet":
-                        if self.pets < MAX_PETS_PER_PLAYER:
-                            self.spawn_enemy_from_egg(self, self.rect.topleft, "pet_cow", is_pet=True)
-                            self.pets += 1
-                        else:
-                            used = False
+                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
 
                     if used:
-                        self.inventory_items[item] -= 1
+                        item_id = self.inventory_items[item].remove_item()
+                        self.item_actions.append(Server.Output.ItemActionUpdate(item_name=item, action_type='use', item_id=item_id))
 
-                        if self.inventory_items[item] == 0:
+                        if self.inventory_items[item].count == 0:
                             del self.inventory_items[item]
 
                 elif mouse[2] and not self.release_mouse[1]:
                     self.release_mouse[1] = True
 
                     if keys[pygame.K_LSHIFT] or keys[pygame.K_RSHIFT]:
-                        for i in range(self.inventory_items[item]):
-                            self.create_dropped_item(item, (self.rect.centerx, self.rect.centery))
-                        self.inventory_items[item] = 0
+                        for i in range(self.inventory_items[item].count):
+                            item_id = self.inventory_items[item].remove_item()
+                            self.create_dropped_item(item, (self.rect.centerx, self.rect.centery), item_id)
+                            self.item_actions.append(Server.Output.ItemActionUpdate(item_name=item, action_type='drop', item_id=item_id))
                     else:
-                        self.create_dropped_item(item, (self.rect.centerx, self.rect.centery))
-                        self.inventory_items[item] -= 1
+                        item_id = self.inventory_items[item].remove_item()
+                        self.create_dropped_item(item, (self.rect.centerx, self.rect.centery), item_id)
+                        self.item_actions.append(Server.Output.ItemActionUpdate(item_name=item, action_type='drop', item_id=item_id))
 
-                    if self.inventory_items[item] == 0:
+                    if self.inventory_items[item].count == 0:
                         if item == "kettle" and self.weapon_index == 2:
                             self.switch_weapon()
                         del self.inventory_items[item]
@@ -698,15 +734,29 @@ class Player(Entity):
         Manage cooldowns
         :return: None
         """
-        current_time: int = pygame.time.get_ticks()
+
+        # Energy
+        if not self.can_energy:
+            if self.energy_time >= self.energy_cooldown:
+                self.can_energy = True
+                self.energy_time = 0
+            else:
+                self.energy_time += 1
+        elif self.energy < self.max_energy:
+            if self.energy_point_time >= self.energy_point_cooldown:
+                self.energy += 1
+                self.energy_point_time = 0
+            else:
+                self.energy_point_time += 1
 
         # Speed skill timers
         if not self.can_speed:
             if self.speed_start >= self.speed_time and self.is_fast:
                 self.speed = int(self.speed / self.speed_skill_factor)
                 self.is_fast = False
-            if self.speed_start >= self.speed_skill_cooldown:
+            elif self.speed_start >= self.speed_skill_cooldown:
                 self.can_speed = True
+                self.speed_start = 0
             else:
                 self.speed_start += 1
 
@@ -715,17 +765,28 @@ class Player(Entity):
             if self.magnet_start >= self.magnet_time and self.is_magnet:
                 self.is_magnet = False
                 self.remove(self.magnetic_players)
-
-            if self.magnet_start >= self.magnet_skill_cooldown:
+            elif self.magnet_start >= self.magnet_skill_cooldown:
                 self.can_magnet = True
+                self.magnet_start = 0
             else:
                 self.magnet_start += 1
 
+        # Lightning skill timers
+        if not self.can_lightning:
+            if self.lightning_start >= self.lightning_skill_cooldown:
+                self.can_lightning = True
+                self.lightning_start = 0
+            else:
+                self.lightning_start += 1
+
         if self.attacking:
-            if current_time - self.attack_time >= self.attack_cooldown:
+            if self.attack_time >= self.attack_cooldown:
                 self.attacking = False
+                self.attack_time = 0
                 if self.weapon_index not in self.on_screen:
                     self.destroy_attack(self)
+            else:
+                self.attack_time += 1
 
         if not self.can_switch_weapon:
             if self.weapon_switch_time >= self.switch_duration_cooldown:
@@ -749,16 +810,25 @@ class Player(Entity):
                 self.inventory_time += 1
 
         if not self.can_change_chat:
-            if current_time - self.chat_time >= self.chat_cooldown:
+            if self.chat_time >= self.chat_cooldown:
                 self.can_change_chat = True
+                self.chat_time = 0
+            else:
+                self.chat_time += 1
 
         if not self.can_change_zen:
-            if current_time - self.zen_time >= self.zen_cooldown:
+            if self.zen_time >= self.zen_cooldown:
                 self.can_change_zen = True
+                self.zen_time = 0
+            else:
+                self.zen_time += 1
 
         if not self.can_change_minimap:
-            if current_time - self.minimap_time >= self.minimap_cooldown:
+            if self.minimap_time >= self.minimap_cooldown:
                 self.can_change_minimap = True
+                self.minimap_time = 0
+            else:
+                self.minimap_time += 1
 
     def animate(self) -> None:
         """
@@ -783,11 +853,13 @@ class Player(Entity):
 
         # Clear the changes dict
         self.attacks: deque = deque()
-        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks),
-                                'status': self.status}
+        self.item_actions: deque = deque()
+        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status,
+                                'item_actions': self.item_actions}
 
         # Get keyboard inputs
-        self.input()
+        if not self.inputs_disabled:
+            self.input()
 
         # Process cooldowns
         self.cooldowns()
@@ -797,40 +869,22 @@ class Player(Entity):
         self.animate()
 
         # Apply keyboard inputs
-
         if not self.is_auto_walk:
-            self.move(self.speed)
+            self.move(self.speed*self.dt)
         else:
-            self.move_auto(self.speed)
+            self.move_auto(self.speed*self.dt)
 
-        # Pick up items
-        self.item_collision()
-
-        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status}
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status,
+                        'item_actions': tuple(self.item_actions)}
         if self.changes == previous_state:
             self.changes = None
 
     def die(self):
-        for item in list(self.inventory_items.keys()):
-            for i in range(self.inventory_items[item]):
-                self.create_dropped_item(item, self.rect.center)
-        self.inventory_items = {}
-
-        for i in range(self.xp):
-            self.create_dropped_item("xp", self.rect.center)
-        self.xp = 0
-
-        self.create_dropped_item("grave_player", self.rect.center)
 
         self.nametag.kill = True
+        if self.current_weapon is not None:
+            self.current_weapon.kill()
         self.kill()  # TODO - add death screen
-
-    def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
-        """
-        update the obstacle_sprite group
-        :return: None
-        """
-        self.obstacle_sprites = obstacle_sprites
 
     def update_items(self, item_sprites: pygame.sprite.Group) -> None:
         self.item_sprites = item_sprites
@@ -840,22 +894,3 @@ class Player(Entity):
         Returns the player's position
         """
         return self.rect.x, self.rect.y
-
-    def item_collision(self):
-        for item in self.item_sprites:
-            if self.rect.colliderect(item.rect):
-                if item.can_pick_up:
-                    if item.name == "xp":
-                        self.xp += 1
-                        item.kill()
-                    elif item.name == "grave_player" or item.name == "grave_pet":
-                        if len(self.inventory_items) < INVENTORY_ITEMS:
-                            self.inventory_items[item.name + f'({len(self.inventory_items)})'] = 1
-                            item.kill()
-                    else:
-                        if item.name in list(self.inventory_items.keys()):
-                            self.inventory_items[item.name] += 1
-                            item.kill()
-                        elif len(self.inventory_items) < INVENTORY_ITEMS:
-                            self.inventory_items[item.name] = 1
-                            item.kill()

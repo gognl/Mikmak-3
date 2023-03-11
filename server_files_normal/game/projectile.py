@@ -2,11 +2,11 @@ from typing import List
 
 import pygame
 import random
-#  from client_files.code.tile import Tile
+from time import time_ns
 
 
 class Projectile(pygame.sprite.Sprite):
-	def __init__(self, player, weapon, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
+	def __init__(self, player, pos, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
 		super().__init__(groups)
 		self.player = player
 		self.height: int = height
@@ -22,13 +22,13 @@ class Projectile(pygame.sprite.Sprite):
 		self.degree: float = -self.direction.as_polar()[1]
 		self.image: pygame.Surface = pygame.transform.rotate(self.original_image, self.degree)
 
-		self.rect: pygame.Rect = self.image.get_rect(center=weapon.rect.center)
+		self.rect: pygame.Rect = self.image.get_rect(center=pos)
 		self.hitbox = self.rect
 		self.pos: List[int, int] = list(self.rect.center)
 		self.speed: int = speed
 
 		# Kill time
-		self.spawn_time: int = pygame.time.get_ticks()
+		self.spawn_time: int = 0
 		self.despawn_time: int = despawn_time
 
 		self.action: str = action
@@ -41,31 +41,37 @@ class Projectile(pygame.sprite.Sprite):
 		self.create_explosion = create_explosion
 		self.exploded = False
 
+		self.start_time = time_ns()*10**(-6)
+
+		self.dt = 1
+
 	def update(self) -> None:
 		"""
 		Move forwards
 		:return: None
 		"""
 
-		self.move()
+		self.move(self.dt)
 
 		# Check if despawn
-		current_time: int = pygame.time.get_ticks()
-		if current_time - self.spawn_time >= self.despawn_time:
+		if self.spawn_time >= self.despawn_time:
 			if self.action == 'explode':
 				self.explode()
 			else:
 				self.kill()
+			self.spawn_time = 0
+		else:
+			self.spawn_time += self.dt
 
 		self.collision()
 
-	def move(self) -> None:
+	def move(self, dt) -> None:
 		"""
 		Move the projectile towards the direction it is going
 		:return: None
 		"""
-		self.pos[0] += self.direction[0] * self.speed
-		self.pos[1] += self.direction[1] * self.speed
+		self.pos[0] += self.direction[0] * self.speed * dt
+		self.pos[1] += self.direction[1] * self.speed * dt
 
 		self.degree += self.spin
 
@@ -92,7 +98,7 @@ class Projectile(pygame.sprite.Sprite):
 					self.explode()
 				else:
 					if hasattr(sprite, "health"):
-						sprite.health -= self.damage
+						sprite.deal_damage(self.damage)
 					self.kill()
 
 	def explode(self) -> None:
