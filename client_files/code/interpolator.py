@@ -149,6 +149,7 @@ class Interpolator:
             entity_id: int = enemy_update.id
             entity_pos: (int, int) = enemy_update.pos
             enemy_name: str = enemy_update.type
+            print(entity_id, entity_pos, enemy_name)
             if entity_id in self.world.enemies:
                 self.world.enemies[entity_id].update_queue.append(enemy_update)
             else:

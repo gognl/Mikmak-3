@@ -16,8 +16,6 @@ from client_files.code.world import World
 from client_files.code.title import Title
 
 server_socket: socket.socket
-
-
 def initialize_connection(server_addr: (str, int), encrypted_id: bytes) -> (Queue, int):
     global server_socket
     server_socket = socket.socket()
@@ -79,7 +77,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             msg: NormalServer.Input.StateUpdate = NormalServer.Input.StateUpdate(ser=ser)
             updates_queue.put(msg)
         elif prefix == 1:
-            msg: NormalServer.Input.ChangeNormalServerMsg = NormalServer.Input.ChangeNormalServerMsg(ser=ser)
+            msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
             print(msg.server.addr())
             global server_socket
             server_socket.close()

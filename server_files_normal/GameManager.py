@@ -293,6 +293,7 @@ class GameManager(threading.Thread):
                     continue
                 if Server(addr[0], addr[1] - self.my_server_index) == NORMAL_SERVERS[i]:
                     data = decrypt(data, self.DH_keys[i])
+                    print(data)
                     prefix, data = data[0], data[1:]
                     if prefix == 0:  # overlapped players update
                         state_update = NormalServer.StateUpdateNoAck(ser=data)
@@ -486,6 +487,7 @@ class GameManager(threading.Thread):
 
                         self.output_overlapped_players_updates[i] = {}
                         self.output_overlapped_enemies_updates[i] = {}
+                        self.output_overlapped_items_updates[i] = {}
 
                         self.send_to_normal_server(i, b'\x00' + state_update.serialize())
 
