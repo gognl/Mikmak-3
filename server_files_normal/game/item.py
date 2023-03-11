@@ -3,6 +3,7 @@ from collections import deque
 import pygame
 import re
 from server_files_normal.game.settings import *
+from server_files_normal.structures import Client
 
 
 class Item(pygame.sprite.Sprite):

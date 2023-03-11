@@ -296,6 +296,8 @@ class GameManager(threading.Thread):
                     prefix, data = data[0], data[1:]
                     if prefix == 0:  # overlapped players update
                         state_update = NormalServer.StateUpdateNoAck(ser=data)
+
+
                         self.players_updates.extend(state_update.player_changes)
                         self.enemy_changes.extend(state_update.enemy_changes)
                         self.item_changes.extend(state_update.item_changes)
@@ -339,7 +341,7 @@ class GameManager(threading.Thread):
                         else:
                             Player((self.read_only_players,), player_data.entity_id, player_data.pos, player_data.health, player_data.resistance,
                                    player_data.strength, player_data.xp, player_data.inventory, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
-                                   self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
+                                   self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
 
 
 
@@ -590,7 +592,7 @@ class GameManager(threading.Thread):
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                     self.layout['objects'][random_y][random_x]) == -1:
                 Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
-                        groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=self.generate_entity_id(),
+                        groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=next(self.generate_entity_id),
                         obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion,
                         create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
                 break

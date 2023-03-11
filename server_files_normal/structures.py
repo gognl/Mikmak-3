@@ -64,6 +64,7 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.pos = (self._pos_x, self._pos_y)
                     return
 
                 self.id = kwargs.pop('id')
@@ -97,6 +98,7 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.direction = (self._direction_x, self._direction_y)
                     return
 
                 self.weapon_id = kwargs.pop('weapon_id')  # 0 = sword, 1 = rifle, 2 = kettle
@@ -104,6 +106,7 @@ class Client:
                 direction = kwargs.pop('direction')
                 self._direction_x = direction[0]
                 self._direction_y = direction[1]
+                self.direction = direction
 
             def _get_attr(self) -> dict:
                 return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), '_direction_x': (int, 's_2'),
@@ -114,6 +117,7 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.pos = (self._pos_x, self._pos_y)
                     return
 
                 self.id = kwargs.pop('id')
@@ -137,11 +141,13 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.direction = (self._direction_x, self._direction_y)
                     return
 
                 direction = kwargs.pop('direction')  # if it's (0, 0) then it's an exploding red cow
                 self._direction_x = direction[0]
                 self._direction_y = direction[1]
+                self.direction = direction
 
             def _get_attr(self) -> dict:
                 return {'_direction_x': (int, 's_2'), '_direction_y': (int, 's_2')}
@@ -180,6 +186,7 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    self.pos = (self._pos_x, self._pos_y)
                     return
 
                 self.player_id = kwargs.pop('player_id', 0)  # id of player
@@ -340,28 +347,6 @@ class NormalServer:
 
         def _get_attr(self) -> dict:
             return {'item_details_list': (list, (NormalServer.ItemDetails, 'o'))}
-
-    class Input:
-        class PlayerUpdate(Serializable):
-            """
-            A class of messages from the server - input
-            """
-
-            def __init__(self, **kwargs):
-                s: bytes = kwargs.pop('ser', b'')
-                super().__init__(ser=s)
-                if s != b'':
-                    self.status: str = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle', 6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(self.status)
-                    self.pos: Tuple[int, int] = (self._pos_x, self._pos_y)
-                    return
-
-                # For interpolation
-                data: dict = kwargs.pop('data')
-                self.id: int = data.pop('id')
-                self.pos: Tuple[int, int] = data.pop('pos')
-                self.attacks: Tuple[Client.Output.AttackUpdate] = data.pop('attacks')
-                self.status: str = data.pop('status')
-                self.health: int = data.pop('health')
 
     class StateUpdateNoAck(Serializable):
         def __init__(self, **kwargs):
