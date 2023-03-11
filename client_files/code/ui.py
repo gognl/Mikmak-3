@@ -280,7 +280,7 @@ class UI:
                             self.raw_text = r''
                             self.text = r''
                     elif sum([len(line) for line in self.raw_text]) < CHAT_TEXT_TOTAL_LENGTH:
-                        if 'a' < event.unicode < 'z' or 'A' < event.unicode < 'Z':
+                        if 'a' <= event.unicode <= 'z' or 'A' <= event.unicode <= 'Z' or event.unicode in ' ?!.,':
                             self.raw_text += event.unicode
                             self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
 
