@@ -72,6 +72,7 @@ class Client:
                 pos = changes['pos']
                 self._pos_x = pos[0]
                 self._pos_y = pos[1]
+                self.pos = pos
                 self.attacks = changes['attacks']
                 status_str = changes['status']
                 self.status: int = {'up': 0,
@@ -122,6 +123,7 @@ class Client:
                 pos = changes['pos']
                 self._pos_x = pos[0]
                 self._pos_y = pos[1]
+                self.pos = pos
                 status = changes['status']
                 self._is_dead = True if status == 'dead' else False
                 self.attacks = changes['attacks']
@@ -187,6 +189,7 @@ class Client:
                 pos = kwargs.pop('pos', (0, 0))  # tuple of item position
                 self._pos_x = pos[0]
                 self._pos_y = pos[1]
+                self.pos = pos
 
             def _get_attr(self) -> dict:
                 return {'player_id': (int, 'u_2'), 'action_type': (int, 'u_1'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2')}
