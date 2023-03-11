@@ -89,7 +89,7 @@ class Client:
                 self.health = changes['health']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
+                return {'id': (int, 'u_6'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
                         'attacks': (tuple, (Client.Output.AttackUpdate, 'o')), 'status': (int, 'u_1'),
                         'health': (int, 'u_1')}
 
@@ -133,7 +133,7 @@ class Client:
                 self.attacks = changes['attacks']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'), 'type': (int, 'u_1'),
+                return {'id': (int, 'u_6'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'), 'type': (int, 'u_1'),
                         'attacks': (tuple, (Client.Output.EnemyAttackUpdate, 'o')), '_is_dead': (bool, 'b')}
 
         class EnemyAttackUpdate(Serializable):
@@ -199,7 +199,7 @@ class Client:
                 self.pos = pos
 
             def _get_attr(self) -> dict:
-                return {'player_id': (int, 'u_2'), 'action_type': (int, 'u_1'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2')}
+                return {'player_id': (int, 'u_6'), 'action_type': (int, 'u_1'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2')}
 
     class Input:
         class ClientCMD(Serializable):

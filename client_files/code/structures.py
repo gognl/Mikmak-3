@@ -122,6 +122,7 @@ class NormalServer:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
+                    print(self.__dict__)
                     self.pos = (self._pos_x, self._pos_y)
                     self.type = {0: 'white_cow', 1: 'green_cow', 2: 'red_cow', 3: 'yellow_cow'}.get(self.type)
                     self.status = 'dead' if self._is_dead else ''
