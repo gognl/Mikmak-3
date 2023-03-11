@@ -173,9 +173,9 @@ class Player(Entity):
 
         # Energy
         self.can_energy = True
-        self.energy_cooldown = 60
+        self.energy_cooldown = 6
         self.energy_time = 0
-        self.energy_point_cooldown = 10
+        self.energy_point_cooldown = 1
         self.energy_point_time = 0
 
         self.dt = 1
@@ -541,9 +541,6 @@ class Player(Entity):
             self.can_lightning = False
             self.energy -= self.lightning_cost
             self.can_energy = False
-            for entity in []:  # TODO - @goni search through all entities
-                if entity.rect.distance(pygame.math.Vector2(self.rect.x, self.rect.y)) < self.lightning_radius:
-                    entity.deal_damage(self.strength // 10 + 25)
             self.lightning_start = 0
             self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
 

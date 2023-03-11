@@ -57,7 +57,8 @@ class Player(pygame.sprite.Sprite):
 		# Stats
 		self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 400}
 		self.health = self.stats['health']
-		self.energy = self.stats['energy']
+		self.max_energy = self.stats['energy']
+		self.energy = self.max_energy
 		self.xp = 0
 		self.speed = self.stats['speed']
 		self.strength = self.stats['attack']
@@ -83,6 +84,7 @@ class Player(pygame.sprite.Sprite):
 		self.speed_time = 3
 		self.speed_skill_cooldown = 20  # less than client cooldown, because of the possible latency
 		self.speed_skill_factor = 2
+		self.speed_cost = 40
 
 		# Magnet skill
 		self.can_magnet = True
@@ -91,12 +93,21 @@ class Player(pygame.sprite.Sprite):
 		self.magnet_time = 10
 		self.magnet_skill_cooldown = 40  # less than client cooldown, because of the possible latency
 		self.magnetic_players = magnetic_players
+		self.magnet_cost = 20
 
 		# Lightning skill
 		self.can_lightning = False
 		self.lightning_start = 0
 		self.lightning_skill_cooldown = 30
 		self.activate_lightning = activate_lightning
+		self.lightning_skill = 30
+
+		# Energy
+		self.can_energy = True
+		self.energy_cooldown = 6
+		self.energy_time = 0
+		self.energy_point_cooldown = 1
+		self.energy_point_time = 0
 
 		self.disconnected = False
 
@@ -187,15 +198,21 @@ class Player(pygame.sprite.Sprite):
 					self.is_fast = True
 					self.speed *= self.speed_skill_factor
 					self.speed_start = 0
+					self.energy -= self.speed_cost
+					self.can_energy = False
 				elif item_action.item_id == 2 and self.can_magnet:  # magnet
 					self.can_magnet = False
 					self.add(self.magnetic_players)
 					self.is_magnet = True
 					self.magnet_start = 0
+					self.energy -= self.magnet_cost
+					self.can_energy = False
 				elif item_action.item_id == 3 and self.can_lightning:  # damage
 					self.can_lightning = False
 					self.lightning_start = 0
 					self.activate_lightning(self)
+					self.energy -= self.lightning_cost
+					self.can_energy = False
 
 		self.update_pos(update.pos)
 
@@ -239,6 +256,20 @@ class Player(pygame.sprite.Sprite):
 		self.item_collision()
 
 	def cooldowns(self):
+
+		# Energy
+		if not self.can_energy:
+			if self.energy_time >= self.energy_cooldown:
+				self.can_energy = True
+				self.energy_time = 0
+			else:
+				self.energy_time += self.dt
+		elif self.energy < self.max_energy:
+			if self.energy_point_time >= self.energy_point_cooldown:
+				self.energy += 1
+				self.energy_point_time = 0
+			else:
+				self.energy_point_time += 1
 
 		# Speed skill timers
 		if not self.can_speed:
