@@ -82,7 +82,7 @@ class Player(pygame.sprite.Sprite):
 		self.is_fast = False
 		self.speed_start = None
 		self.speed_time = 3
-		self.speed_skill_cooldown = 20  # less than client cooldown, because of the possible latency
+		self.speed_skill_cooldown = 20
 		self.speed_skill_factor = 2
 		self.speed_cost = 40
 
@@ -91,7 +91,7 @@ class Player(pygame.sprite.Sprite):
 		self.is_magnet = False
 		self.magnet_start = None
 		self.magnet_time = 10
-		self.magnet_skill_cooldown = 40  # less than client cooldown, because of the possible latency
+		self.magnet_skill_cooldown = 40
 		self.magnetic_players = magnetic_players
 		self.magnet_cost = 20
 
@@ -106,7 +106,7 @@ class Player(pygame.sprite.Sprite):
 		self.can_energy = True
 		self.energy_cooldown = 6
 		self.energy_time = 0
-		self.energy_point_cooldown = 1
+		self.energy_point_cooldown = 5
 		self.energy_point_time = 0
 
 		self.disconnected = False

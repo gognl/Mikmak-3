@@ -175,7 +175,7 @@ class Player(Entity):
         self.can_energy = True
         self.energy_cooldown = 6
         self.energy_time = 0
-        self.energy_point_cooldown = 1
+        self.energy_point_cooldown = 5
         self.energy_point_time = 0
 
         self.dt = 1
