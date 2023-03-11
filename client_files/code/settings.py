@@ -14,7 +14,11 @@ COL_UNLOAD_TILE_DISTANCE: int = 40
 SPAWNABLE_TILES: List[int] = [9, 10, 11, 17, 18, 19, 21, 22, 23, 24, 33, 36, 66, 67, 68, 69, 70]
 MAX_DIVERGENCE_SQUARED: int = 80 ** 2
 MAX_PETS_PER_PLAYER: int = 5
+
+MAX_OBSTACLE_SIZE = 100
+
 ENEMY_ATTACK_COOLDOWN: int = 100
+
 
 weapon_data = {
     'sword': {'damage': 100, 'graphic': '../graphics/weapons/sword/full.png'},
@@ -89,4 +93,4 @@ item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_gree
               'spawn_red', 'spawn_yellow', 'xp']  # TODO - keep only items that need to be naturally spawned
 
 INTERPOLATION_PERIOD = 50_000_000  # ns
-INTERPOLATION_ACTIVE = True
+INTERPOLATION_ACTIVE = False
