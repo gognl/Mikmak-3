@@ -9,7 +9,7 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players):
+	def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group, create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players, activate_lightning):
 		self.client_manager: ClientManager = None
 		self.entity_id = entity_id
 
@@ -91,6 +91,12 @@ class Player(pygame.sprite.Sprite):
 		self.magnet_time = 10000
 		self.magnet_skill_cooldown = 49500  # less than client cooldown, because of the possible latency
 		self.magnetic_players = magnetic_players
+
+		# Lightning skill
+		self.can_lightning = False
+		self.lightning_start = 0
+		self.lightning_skill_cooldown = 30
+		self.activate_lightning = activate_lightning
 
 		self.disconnected = False
 
@@ -187,7 +193,9 @@ class Player(pygame.sprite.Sprite):
 					self.is_magnet = True
 					self.magnet_start = pygame.time.get_ticks()
 				elif item_action.item_id == 3:  # damage
-					pass
+					self.can_lightning = False
+					self.lightning_start = 0
+					self.activate_lightning(self)
 
 		self.update_pos(update.pos)
 
@@ -248,6 +256,14 @@ class Player(pygame.sprite.Sprite):
 				self.remove(self.magnetic_players)
 			if current_time - self.magnet_start >= self.magnet_skill_cooldown:
 				self.can_magnet = True
+
+		# Lightning skill timers
+		if not self.can_lightning:
+			if self.lightning_start >= self.lightning_skill_cooldown:
+				self.can_lightning = True
+				self.lightning_start = 0
+			else:
+				self.lightning_start += self.dt
 
 		if self.attacking:  # TODO - make this based on ticks not time
 			if current_time - self.attack_time >= self.attack_cooldown:

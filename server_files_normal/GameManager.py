@@ -3,6 +3,8 @@ from collections import deque
 from queue import Queue, Empty
 from typing import Union, Dict
 
+from pygame.math import Vector2
+
 from server_files_normal.game.explosion import Explosion
 from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
@@ -98,7 +100,7 @@ class GameManager(threading.Thread):
 
 	def add_player(self, entity_id: int):
 		pos: (int, int) = (900, 900)
-		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players)
+		return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items, self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
 
 	@staticmethod
 	def get_player_data(player: Player):
@@ -273,6 +275,11 @@ class GameManager(threading.Thread):
 
 	def create_explosion(self, pos, damage):
 		Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites()+self.items.sprites()))
+
+	def activate_lightning(self, source: Player):
+		for entity in self.alive_entities.sprites():
+			if Vector2(source.rect.center).distance_squared_to(Vector2(entity.rect.center)) < LIGHTNING_RADIUS_SQUARED and entity != source:
+				entity.deal_damage(LIGHTNING_DAMAGE)
 
 	def spawn_enemy_from_egg(self, pos, name):
 		while True:
