@@ -23,18 +23,6 @@ class Explosion(pygame.sprite.Sprite):
         # Damage
         self.damage = damage
         self.sprites = sprites
-        self.deal_damage()
-
-    def deal_damage(self):
-        position = pygame.math.Vector2(self.rect.center[0], self.rect.center[1])
-        for sprite in self.sprites:
-            if position.distance_to(sprite.rect.center) <= self.radius:
-                if hasattr(sprite, "health"):
-                    pass
-                    #  sprite.deal_damage(self.damage)
-                elif isinstance(sprite, Item):
-                    pass
-                    #  sprite.kill()
 
     def update(self):
         self.image = pygame.transform.scale(self.original_image, (int(self.rect.width * self.speed), int(self.rect.height * self.speed)))
