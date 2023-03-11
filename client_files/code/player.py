@@ -109,7 +109,7 @@ class Player(Entity):
         self.can_magnet = True
         self.is_magnet = False
         self.magnet_start = 0
-        self.magnet_time = 600
+        self.magnet_time = 10
         self.magnet_skill_cooldown = 40
         self.magnet_cost = 20
 
@@ -117,7 +117,7 @@ class Player(Entity):
         self.can_speed = True
         self.is_fast = False
         self.speed_start = 0
-        self.speed_time = 120
+        self.speed_time = 3
         self.speed_skill_cooldown = 20
         self.speed_skill_factor = 2
         self.speed_cost = 40
@@ -126,7 +126,6 @@ class Player(Entity):
         self.can_lightning = True
         self.lightning_start = 0
         self.lightning_skill_cooldown = 30
-        self.lightning_radius = 256
         self.lightning_cost = 30
 
         # Inventory
