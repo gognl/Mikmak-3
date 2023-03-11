@@ -38,7 +38,7 @@ class Player(Entity):
 
         # Attacking
         self.attacking: bool = False
-        self.attack_cooldown: int = 24
+        self.attack_cooldown = 0.5
         self.attack_time: int = 0
 
         # layout
@@ -110,7 +110,7 @@ class Player(Entity):
         self.is_magnet = False
         self.magnet_start = 0
         self.magnet_time = 600
-        self.magnet_skill_cooldown = 1200
+        self.magnet_skill_cooldown = 40
         self.magnet_cost = 20
 
         # Speed skill
@@ -118,14 +118,14 @@ class Player(Entity):
         self.is_fast = False
         self.speed_start = 0
         self.speed_time = 120
-        self.speed_skill_cooldown = 220
+        self.speed_skill_cooldown = 20
         self.speed_skill_factor = 2
         self.speed_cost = 40
 
         # Lightning skill
         self.can_lightning = True
         self.lightning_start = 0
-        self.lightning_skill_cooldown = 120
+        self.lightning_skill_cooldown = 30
         self.lightning_radius = 256
         self.lightning_cost = 30
 
@@ -753,7 +753,7 @@ class Player(Entity):
                 self.can_energy = True
                 self.energy_time = 0
             else:
-                self.energy_time += 1
+                self.energy_time += self.dt
         elif self.energy < self.max_energy:
             if self.energy_point_time >= self.energy_point_cooldown:
                 self.energy += 1
@@ -770,7 +770,7 @@ class Player(Entity):
                 self.can_speed = True
                 self.speed_start = 0
             else:
-                self.speed_start += 1
+                self.speed_start += self.dt
 
         # Magnet skill timers
         if not self.can_magnet:
@@ -781,7 +781,7 @@ class Player(Entity):
                 self.can_magnet = True
                 self.magnet_start = 0
             else:
-                self.magnet_start += 1
+                self.magnet_start += self.dt
 
         # Lightning skill timers
         if not self.can_lightning:
@@ -789,7 +789,7 @@ class Player(Entity):
                 self.can_lightning = True
                 self.lightning_start = 0
             else:
-                self.lightning_start += 1
+                self.lightning_start += self.dt
 
         if self.attacking:
             if self.attack_time >= self.attack_cooldown:
@@ -798,21 +798,21 @@ class Player(Entity):
                 if self.weapon_index not in self.on_screen:
                     self.destroy_attack(self)
             else:
-                self.attack_time += 1
+                self.attack_time += self.dt
 
         if not self.can_switch_weapon:
             if self.weapon_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_weapon = True
                 self.weapon_switch_time = 0
             else:
-                self.weapon_switch_time += 1
+                self.weapon_switch_time += self.dt
 
         if not self.can_shoot:
             if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
                 self.shoot_time = 0
             else:
-                self.shoot_time += 1
+                self.shoot_time += self.dt
 
         if not self.can_change_inventory:
             if self.inventory_time >= self.inventory_cooldown:
