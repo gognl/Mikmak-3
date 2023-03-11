@@ -1,6 +1,8 @@
 import random
 from collections import deque
 from typing import Dict, Sequence, Tuple
+
+from client_files.code.explosion import Explosion
 from client_files.code.settings import *
 from client_files.code.structures import Server, InventorySlot
 from client_files.code.support import *
@@ -12,7 +14,7 @@ class Player(Entity):
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_chat,
                  destroy_chat, activate_zen, deactivate_zen, create_minimap, destroy_minimap, create_nametag,
                  nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
-                 magnetic_players, layout) -> None:
+                 magnetic_players, layout, create_lightning) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
         # Player name TODO: might be temporary
@@ -127,6 +129,7 @@ class Player(Entity):
         self.lightning_start = 0
         self.lightning_skill_cooldown = 30
         self.lightning_cost = 30
+        self.create_lightning = create_lightning
 
         # Inventory
         self.create_inventory = create_inventory
@@ -542,6 +545,7 @@ class Player(Entity):
             self.energy -= self.lightning_cost
             self.can_energy = False
             self.lightning_start = 0
+            self.create_lightning()
             self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
 
         # Move nametag right after moving

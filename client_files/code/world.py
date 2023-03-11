@@ -101,7 +101,7 @@ class World:
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
-                             0, self.magnetic_players, self.layout)  # TODO - make starting player position random (or a spawn)
+                             0, self.magnetic_players, self.layout, self.create_lightning)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -200,6 +200,9 @@ class World:
                 Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
                         self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
                 break
+
+    def create_lightning(self):
+        Explosion(self.player.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26, radius=LIGHTNING_RADIUS, color='blue')
 
     def create_explosion(self, pos, damage):
         Explosion(pos, damage, (self.visible_sprites,), self.visible_sprites)

@@ -96,11 +96,11 @@ class Player(pygame.sprite.Sprite):
 		self.magnet_cost = 20
 
 		# Lightning skill
-		self.can_lightning = False
+		self.can_lightning = True
 		self.lightning_start = 0
 		self.lightning_skill_cooldown = 30
 		self.activate_lightning = activate_lightning
-		self.lightning_skill = 30
+		self.lightning_cost = 30
 
 		# Energy
 		self.can_energy = True
@@ -211,6 +211,7 @@ class Player(pygame.sprite.Sprite):
 					self.can_lightning = False
 					self.lightning_start = 0
 					self.activate_lightning(self)
+					self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=2, direction=(0, 0)))
 					self.energy -= self.lightning_cost
 					self.can_energy = False
 
