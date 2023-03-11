@@ -7,7 +7,8 @@ from queue import Queue, Empty
 import socket
 from typing import Union, Dict
 from struct import unpack, pack
-from base64 import urlsafe_b64encode as b64
+
+from pygame import Vector2
 
 from server_files_normal.game.explosion import Explosion
 from server_files_normal.game.item import Item
@@ -91,13 +92,13 @@ class GameManager(threading.Thread):
                     continue
 
 
-            keys_list[server_index] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
+            keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
         def DH_with_login():
             x = pow(DH_g, a, DH_p)
             self.sock_to_login.send(x.to_bytes(128, 'little'))
             y = self.sock_to_login.recv(1024)
-            self.DH_login_key = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
+            self.DH_login_key = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
         DH_threads: list[threading.Thread] = []
         for i in self.other_server_indices:
@@ -145,12 +146,11 @@ class GameManager(threading.Thread):
                 if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                         self.layout['objects'][random_y][random_x]) == -1:
                     item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
-                    item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn',
-                                                                       pos=(random_x * 64 + 32, random_y * 64 + 32)))
+                    item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
+
         self.next_item_id = 40
         self.id_info_dict: dict[int: InfoData] = {}
-
 
 
     def recv_from_login(self):
@@ -211,7 +211,7 @@ class GameManager(threading.Thread):
                 if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
                     x: int = col_index * TILESIZE
                     y: int = row_index * TILESIZE
-                    Barrier((x, y), (self.obstacle_sprites,))
+                    Barrier((x, y), (self.obstacle_sprites, self.all_obstacles))
 
     def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
         while True:
@@ -249,25 +249,19 @@ class GameManager(threading.Thread):
         items_data: List = []
 
         for player in self.players.sprites():
-            initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index,
-                                                                                         attack_type=0,
-                                                                                         direction=(0, 0))
-            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,),
-                       'status': player.status, 'health': player.health, 'strength': player.strength}
+            initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=0, direction=(0, 0))
+            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,), 'status': player.status, 'health': player.health, 'strength': player.strength}
             player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
         for enemy in self.enemies.sprites():
-            changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y),
-                       'status': enemy.status, 'attacks': tuple(enemy.attacks)}
+            changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'status': enemy.status, 'attacks': tuple(enemy.attacks)}
             enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
         for item in self.items.sprites():
             item_actions = (Client.Output.ItemActionUpdate(pos=tuple(item.rect.center)),)
             items_data.append(Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item_actions))
 
-        state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data),
-                                                                                      tuple(enemies_data),
-                                                                                      tuple(items_data))
+        state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data), tuple(enemies_data), tuple(items_data))
         client_manager.send_msg(state_update)
 
     def handle_read_only_player_update(self, player_update: Client.Output.PlayerUpdate):
@@ -430,17 +424,18 @@ class GameManager(threading.Thread):
                 if event.type == cmd_received_event:
                     self.handle_cmds(event.cmds)
 
+            dt = self.clock.tick(FPS)/1000
+            tick_count += 1
+
             # Run enemies simulation
             for enemy in self.enemies.sprites():
-                for i in range(CLIENT_FPS // FPS):
-                    enemy.update()
-                    enemy.enemy_update(self.players)
+                enemy.dt = dt
+                enemy.update()
+                enemy.enemy_update(self.players)
 
                 if enemy.dead:
                     enemy.status = 'dead'
-                current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y),
-                                       'direction': (enemy.direction.x, enemy.direction.y),
-                                       'attacks': tuple(enemy.attacks), 'status': enemy.status}
+                current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y), 'attacks': tuple(enemy.attacks), 'status': enemy.status}
                 if enemy.previous_state != current_enemy_state:
                     enemy_pos: Point = enemy.get_pos()
                     suitable_server_index = self.find_suitable_server_index(enemy_pos)
@@ -463,14 +458,19 @@ class GameManager(threading.Thread):
                 if enemy.status == 'dead':
                     enemy.kill()
 
-            for i in range(CLIENT_FPS // FPS):
-                self.projectiles.update()
-                self.weapons.update()
-                self.players.update()
-                self.items.update()
+            for proj in self.projectiles.sprites():
+                proj.dt = dt
+            for player in self.players.sprites():
+                player.dt = dt
 
-                for item in self.items.sprites():
-                    item.update_movement(self.magnetic_players)
+            self.projectiles.update()
+            self.weapons.update()
+            self.players.update()
+            self.items.update()
+
+            for item in self.items.sprites():
+                item.dt = dt
+                item.update_movement(self.magnetic_players)
 
             if tick_count % (FPS // OVERLAPPED_UPDATE_FREQUENCY) == 0:
 
@@ -514,8 +514,7 @@ class GameManager(threading.Thread):
                 for item in self.items.sprites():
 
                     if tuple(item.rect.center) != item.previous_pos and item.previous_pos != ():
-                        item.actions.append(
-                            Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                        item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
 
                     if not item.actions:
                         continue  # don't send if no new actions
@@ -527,15 +526,11 @@ class GameManager(threading.Thread):
                     if item.die:
                         item.kill()
 
-                state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(
-                    tuple(self.players_updates), tuple(self.enemy_changes), tuple(self.item_changes))
+                state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(self.enemy_changes), tuple(self.item_changes))
                 self.broadcast_msg(state_update)
-                self.players_updates.clear()  # clear the list
+                self.players_updates = []
                 self.enemy_changes = []
                 self.item_changes = []
-
-            self.clock.tick(FPS)
-            tick_count += 1
 
             # Check if a cmd was received
             cmds: List[(ClientManager, Client.Input.ClientCMD)] = []
@@ -563,8 +558,7 @@ class GameManager(threading.Thread):
     def create_bullet(self, source: Union[Player, Enemy], pos, mouse):
         direction = pygame.math.Vector2(mouse)
         if not isinstance(source, Enemy):
-            source.attacks.append(
-                Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
+            source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
             damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
         else:
             direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
@@ -572,37 +566,32 @@ class GameManager(threading.Thread):
             damage = source.damage
 
         Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
-                   self.all_obstacles, 4, 15, 120, './graphics/weapons/bullet.png', damage)
+                   self.all_obstacles, 4, 500, 5, './graphics/weapons/bullet.png', damage)
 
     def create_kettle(self, player: Player, pos, mouse):
         direction = pygame.math.Vector2(mouse)
         player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
         Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
-                   self.all_obstacles, 4, 5, 45, './graphics/weapons/kettle/full.png',
-                   int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion,
-                   True)
+                   self.all_obstacles, 4, 75, 3, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
 
     def create_explosion(self, pos, damage):
-        Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites() + self.items.sprites()))
+        Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites()+self.items.sprites()))
 
-    def spawn_enemy_from_egg(self, player, pos, name, is_pet=False):
+    def activate_lightning(self, source: Player):
+        for entity in self.alive_entities.sprites():
+            if Vector2(source.rect.center).distance_squared_to(Vector2(entity.rect.center)) < LIGHTNING_RADIUS_SQUARED and entity != source:
+                entity.deal_damage(LIGHTNING_DAMAGE)
+
+    def spawn_enemy_from_egg(self, pos, name):
         while True:
             random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
             random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
 
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                     self.layout['objects'][random_y][random_x]) == -1:
-                if is_pet:
-                    '''Pet(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
-                        self.obstacle_sprites, player, self.create_dropped_item, self.create_explosion,
-                        self.create_bullet, safe=[player], nametag=True, name="random",
-                        create_nametag=self.create_nametag,
-                        nametag_update=self.nametag_update)'''
-                else:
-                    Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
-                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id),
-                          obstacle_sprites=self.all_obstacles, item_sprites=self.items,
-                          create_explosion=self.create_explosion,
-                          create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
+                Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
+                        groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=self.generate_entity_id(),
+                        obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion,
+                        create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
                 break
+

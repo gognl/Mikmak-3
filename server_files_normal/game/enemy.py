@@ -72,164 +72,164 @@ class Enemy(pygame.sprite.Sprite):
 
         self.dt = 1
 
-def import_graphics(self, name: str):
-    self.animations = {'move': []}
-    path = f'./graphics/monsters/{name}/move/'
-    self.animations['move'] = list(import_folder(path).values())
+    def import_graphics(self, name: str):
+        self.animations = {'move': []}
+        path = f'./graphics/monsters/{name}/move/'
+        self.animations['move'] = list(import_folder(path).values())
 
-def get_closest_player(self, players: List[Player]) -> Player:
-    enemy_pos = pygame.Vector2(self.rect.center)
-    return min(players, key=lambda p: enemy_pos.distance_squared_to(pygame.Vector2(p.rect.center)))
+    def get_closest_player(self, players: List[Player]) -> Player:
+        enemy_pos = pygame.Vector2(self.rect.center)
+        return min(players, key=lambda p: enemy_pos.distance_squared_to(pygame.Vector2(p.rect.center)))
 
-def get_player_distance_direction(self, player):
-    enemy_vec = pygame.math.Vector2(self.rect.center)
-    player_vec = pygame.math.Vector2(player.rect.center)
-    distance = (player_vec - enemy_vec).magnitude()
-    if distance > 10:
-        direction = (player_vec - enemy_vec).normalize()
-    else:
-        direction = pygame.math.Vector2()
-    return distance, direction
+    def get_player_distance_direction(self, player):
+        enemy_vec = pygame.math.Vector2(self.rect.center)
+        player_vec = pygame.math.Vector2(player.rect.center)
+        distance = (player_vec - enemy_vec).magnitude()
+        if distance > 10:
+            direction = (player_vec - enemy_vec).normalize()
+        else:
+            direction = pygame.math.Vector2()
+        return distance, direction
 
-def get_status(self, player):
-    distance = self.get_player_distance_direction(player)[0]
+    def get_status(self, player):
+        distance = self.get_player_distance_direction(player)[0]
 
-    if distance <= self.attack_radius:
-        self.status = 'attack'
-    elif distance <= self.notice_radius:
-        self.status = 'move'
-    else:
-        self.status = 'idle'
+        if distance <= self.attack_radius:
+            self.status = 'attack'
+        elif distance <= self.notice_radius:
+            self.status = 'move'
+        else:
+            self.status = 'idle'
 
-def attack(self, player):
-    if self.enemy_name == "white_cow" or self.enemy_name == "green_cow":
-        player.deal_damage(self.damage)
-    elif self.enemy_name == "red_cow":
-        self.create_explosion(self.rect.center, self.damage)
-        self.attacks.append(Client.Output.EnemyAttackUpdate(direction=(0, 0)))
-        self.die()
-    elif self.enemy_name == "yellow_cow":
-        self.create_bullet(self, self.rect.center, player.rect.center)
+    def attack(self, player):
+        if self.enemy_name == "white_cow" or self.enemy_name == "green_cow":
+            player.deal_damage(self.damage)
+        elif self.enemy_name == "red_cow":
+            self.create_explosion(self.rect.center, self.damage)
+            self.attacks.append(Client.Output.EnemyAttackUpdate(direction=(0, 0)))
+            self.die()
+        elif self.enemy_name == "yellow_cow":
+            self.create_bullet(self, self.rect.center, player.rect.center)
 
-def actions(self, player):
-    if self.status == 'attack':
-        if self.can_attack:
-            self.can_attack = False
-            self.attack(player)
+    def actions(self, player):
+        if self.status == 'attack':
+            if self.can_attack:
+                self.can_attack = False
+                self.attack(player)
 
-    elif self.status == 'move':
-        if self.can_move:
-            self.can_move = False
-            self.direction = self.get_player_distance_direction(player)[1]
-            self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
+        elif self.status == 'move':
+            if self.can_move:
+                self.can_move = False
+                self.direction = self.get_player_distance_direction(player)[1]
+                self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
 
-    else:
-        self.direction = pygame.math.Vector2()
+        else:
+            self.direction = pygame.math.Vector2()
 
-def move(self, speed: int) -> None:
-    """
-    Move the player towards the direction it is going, and apply collision
-    :param speed: maximum pixels per direction per frame (may vary if both directions are active)
-    :return: None
-    """
-    # Normalize direction
-    if self.direction.magnitude() != 0:
-        self.direction = self.direction.normalize()
+    def move(self, speed: int) -> None:
+        """
+        Move the player towards the direction it is going, and apply collision
+        :param speed: maximum pixels per direction per frame (may vary if both directions are active)
+        :return: None
+        """
+        # Normalize direction
+        if self.direction.magnitude() != 0:
+            self.direction = self.direction.normalize()
 
-    self.hitbox.x += self.direction.x * speed
-    self.collision('horizontal')  # Check collisions in the horizontal axis
-    self.hitbox.y += self.direction.y * speed
-    self.collision('vertical')  # Check collisions in the vertical axis
-    self.rect.center = self.hitbox.center
+        self.hitbox.x += self.direction.x * speed
+        self.collision('horizontal')  # Check collisions in the horizontal axis
+        self.hitbox.y += self.direction.y * speed
+        self.collision('vertical')  # Check collisions in the vertical axis
+        self.rect.center = self.hitbox.center
 
-def collision(self, direction: str) -> None:
-    """
-    Apply collisions to the player, each axis separately
-    :param direction: A string representing the direction the player is going
-    :return: None
-    """
+    def collision(self, direction: str) -> None:
+        """
+        Apply collisions to the player, each axis separately
+        :param direction: A string representing the direction the player is going
+        :return: None
+        """
 
-    if direction == 'horizontal':
-        for sprite in self.obstacle_sprites:
-            if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
-                if self.direction.x > 0:  # Player going right
-                    self.hitbox.right = sprite.hitbox.left
-                elif self.direction.x < 0:  # Player going left
-                    self.hitbox.left = sprite.hitbox.right
-                elif hasattr(sprite, 'direction'):  # Only if sprite has direction
-                    if sprite.direction.x > 0:  # Sprite going right
-                        self.hitbox.left = sprite.hitbox.right
-                    elif sprite.direction.x < 0:  # Sprite going left
+        if direction == 'horizontal':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+                    if self.direction.x > 0:  # Player going right
                         self.hitbox.right = sprite.hitbox.left
+                    elif self.direction.x < 0:  # Player going left
+                        self.hitbox.left = sprite.hitbox.right
+                    elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+                        if sprite.direction.x > 0:  # Sprite going right
+                            self.hitbox.left = sprite.hitbox.right
+                        elif sprite.direction.x < 0:  # Sprite going left
+                            self.hitbox.right = sprite.hitbox.left
 
-    if direction == 'vertical':
-        for sprite in self.obstacle_sprites:
-            if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
-                if self.direction.y > 0:  # Player going down
-                    self.hitbox.bottom = sprite.hitbox.top
-                elif self.direction.y < 0:  # Player going up
-                    self.hitbox.top = sprite.hitbox.bottom
-                elif hasattr(sprite, 'direction'):  # Only if sprite has direction
-                    if sprite.direction.y > 0:  # Sprite going down
-                        self.hitbox.top = sprite.hitbox.bottom
-                    elif sprite.direction.y < 0:  # Sprite going up
+        if direction == 'vertical':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+                    if self.direction.y > 0:  # Player going down
                         self.hitbox.bottom = sprite.hitbox.top
+                    elif self.direction.y < 0:  # Player going up
+                        self.hitbox.top = sprite.hitbox.bottom
+                    elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+                        if sprite.direction.y > 0:  # Sprite going down
+                            self.hitbox.top = sprite.hitbox.bottom
+                        elif sprite.direction.y < 0:  # Sprite going up
+                            self.hitbox.bottom = sprite.hitbox.top
 
-def cooldowns(self):
-    if not self.can_attack:
-        if self.attack_time >= self.attack_cooldown:
-            self.can_attack = True
-            self.attack_time = 0
-        else:
-            self.attack_time += 1
+    def cooldowns(self):
+        if not self.can_attack:
+            if self.attack_time >= self.attack_cooldown:
+                self.can_attack = True
+                self.attack_time = 0
+            else:
+                self.attack_time += 1
 
-    if not self.can_move:
-        if self.move_time >= self.move_cooldown:
-            self.can_move = True
-            self.move_time = 0
-        else:
-            self.move_time += 1
+        if not self.can_move:
+            if self.move_time >= self.move_cooldown:
+                self.can_move = True
+                self.move_time = 0
+            else:
+                self.move_time += 1
 
-def update(self):
-    if self.dead:
-        return
+    def update(self):
+        if self.dead:
+            return
 
-    if self.status == 'move':
-        self.move(self.speed)
+        if self.status == 'move':
+            self.move(self.speed)
 
-    if self.health <= 0:
-        self.die()
+        if self.health <= 0:
+            self.die()
 
-    self.cooldowns()
+        self.cooldowns()
 
-def die(self):
-    self.dead = True
+    def die(self):
+        self.dead = True
 
-    for i in range(min(2, len(self.death_items))):
-        self.create_dropped_item(choice(self.death_items), self.rect.center, self.get_free_item_id())
-    for i in range(self.xp):
-        self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
+        for i in range(min(2, len(self.death_items))):
+            self.create_dropped_item(choice(self.death_items), self.rect.center, self.get_free_item_id())
+        for i in range(self.xp):
+            self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
 
-    # reset stats
-    self.xp = 0
-    self.health = 0
+        # reset stats
+        self.xp = 0
+        self.health = 0
 
-def create_dropped_item(self, name, pos, item_id):
-    new_item = Item(name, (self.item_sprites,), pos, item_id)
-    new_item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='drop', pos=pos))
+    def create_dropped_item(self, name, pos, item_id):
+        new_item = Item(name, (self.item_sprites,), pos, item_id)
+        new_item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='drop', pos=pos))
 
-def enemy_update(self, players):
-    if self.dead or not players:
-        return
-    player: Player = self.get_closest_player(players)
-    self.get_status(player)
-    self.actions(player)
+    def enemy_update(self, players):
+        if self.dead or not players:
+            return
+        player: Player = self.get_closest_player(players)
+        self.get_status(player)
+        self.actions(player)
 
-def deal_damage(self, damage):
-    self.health -= int(damage - (0.1 * self.resistance))
+    def deal_damage(self, damage):
+        self.health -= int(damage - (0.1 * self.resistance))
 
-def reset_attacks(self):
-    self.attacks: deque[Client.Output.EnemyAttackUpdate] = deque()
+    def reset_attacks(self):
+        self.attacks: deque[Client.Output.EnemyAttackUpdate] = deque()
 
-def get_pos(self):
-    return Point(self.rect.x, self.rect.y)
+    def get_pos(self):
+        return Point(self.rect.x, self.rect.y)
