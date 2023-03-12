@@ -402,15 +402,15 @@ class Player(Entity):
 
         # Move accordingly to the direction
         if not self.is_on_tile:
-            if self.direction.x == 0 or self.hitbox.x % 64 == 0:
+            if self.direction.x == 0 or (self.hitbox.centerx - 32) % 64 == 0:
                 self.is_done_x = True
-            if self.direction.y == 0 or self.hitbox.y % 64 == 0:
+            if self.direction.y == 0 or (self.hitbox.centery - 32) % 64 == 0:
                 self.is_done_y = True
             if not self.is_done_x and self.direction.x < 0:
                 if int((self.hitbox.x + self.direction.x * speed) / 64) == int(self.hitbox.x / 64):
                     self.hitbox.x += self.direction.x * speed
                 else:
-                    self.hitbox.x -= self.hitbox.x % 64
+                    self.hitbox.x -= (self.hitbox.centerx - 32) % 64
                     self.is_done_x = True
             elif not self.is_done_x:
                 if int((self.hitbox.x + self.direction.x * speed) / 64) == int(self.hitbox.x / 64):
@@ -422,7 +422,7 @@ class Player(Entity):
                 if int((self.hitbox.y + self.direction.y * speed) / 64) == int(self.hitbox.y / 64):
                     self.hitbox.y += self.direction.y * speed
                 else:
-                    self.hitbox.y -= self.hitbox.y % 64
+                    self.hitbox.y -= (self.hitbox.centery - 32) % 64
                     self.is_done_y = True
             elif not self.is_done_y:
                 if int((self.hitbox.y + self.direction.y * speed) / 64) == int(self.hitbox.y / 64):
@@ -524,6 +524,7 @@ class Player(Entity):
             self.can_speed = False
             self.energy -= self.speed_cost
             self.can_energy = False
+            self.energy_time = 0
             self.is_fast = True
             self.speed *= self.speed_skill_factor
             self.speed_start = 0
@@ -534,6 +535,7 @@ class Player(Entity):
             self.can_magnet = False
             self.energy -= self.magnet_cost
             self.can_energy = False
+            self.energy_time = 0
             self.add(self.magnetic_players)
             self.is_magnet = True
             self.magnet_start = 0
@@ -544,6 +546,7 @@ class Player(Entity):
             self.can_lightning = False
             self.energy -= self.lightning_cost
             self.can_energy = False
+            self.energy_time = 0
             self.lightning_start = 0
             self.create_lightning()
             self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
