@@ -295,9 +295,7 @@ def run_game(*args) -> None:
     update_queue, client_id = initialize_connection(server_addr, info_to_client.encrypted_client_id)
     world.player.entity_id = client_id
     data_to_client: DataToClient = info_to_client.data_to_client
-    print((data_to_client.pos_x, data_to_client.pos_y))
     world.player.update_pos((data_to_client.pos_x, data_to_client.pos_y))
-    print(world.player.rect)
     world.player.health = data_to_client.health
     world.player.strength = data_to_client.strength
     world.player.resistance = data_to_client.resistance

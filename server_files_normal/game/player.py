@@ -364,6 +364,8 @@ class Player(pygame.sprite.Sprite):
 
     def deal_damage(self, damage):
         self.health -= int(damage - (0.1 * self.resistance))
+        if self.health < 0:
+            self.health = 0
 
     def item_collision(self):
         item: Item

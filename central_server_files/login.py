@@ -125,7 +125,6 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
             inventory[item_name] = ([next_item_id+i for i in range(item_count)], item_count)
             next_item_id += item_count
 
-        print(inventory)
         data_to_client = DataToClient(pos_x=info_data.info[0], pos_y=info_data.info[1], health=info_data.info[2],
                                       strength=info_data.info[3], resistance=info_data.info[4], xp=info_data.info[5], inventory=inventory)
         resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(ip=msg.server.ip, port=msg.server.port),

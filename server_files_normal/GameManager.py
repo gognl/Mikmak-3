@@ -127,9 +127,9 @@ class GameManager(threading.Thread):
 
 
         # TODO temporary
-        for i in range(25):
+        for i in range(200):
             pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1) * self.center.x)
-            pos_y = random.randrange(my_server_index % 2 * self.center.y, (my_server_index % 2 + 1) * self.center.y)
+            pos_y = random.randrange(my_server_index // 2 * self.center.y, (my_server_index // 2 + 1) * self.center.y)
             pos = (pos_x, pos_y)
             Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
                   entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles, item_sprites=self.items,
@@ -345,12 +345,14 @@ class GameManager(threading.Thread):
                                                                  'move_cooldown': enemy_details.move_cooldown}}
                         print("######################")
                         enemy = Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
-                                      groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                                      groups=tuple(),
                                       entity_id=enemy_details.entity_id, obstacle_sprites=self.all_obstacles,
                                       item_sprites=self.items,
                                       create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                                       get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
-                        print(enemy.hitbox)
+                        groups = [self.enemies, self.all_obstacles, self.alive_entities]
+                        for group in groups:
+                            group.add(enemy)
 
                     elif prefix == 2:  # item in my region
                         item_details_list = NormalServer.ItemDetailsList(ser=data).item_details_list
