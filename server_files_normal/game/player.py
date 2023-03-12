@@ -205,6 +205,7 @@ class Player(pygame.sprite.Sprite):
 					self.add(self.magnetic_players)
 					self.is_magnet = True
 					self.magnet_start = 0
+					self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=3, direction=(0, 0)))
 					self.energy -= self.magnet_cost
 					self.can_energy = False
 				elif item_action.item_id == 3 and self.can_lightning and self.energy >= self.lightning_cost:  # damage
@@ -283,16 +284,16 @@ class Player(pygame.sprite.Sprite):
 			else:
 				self.speed_start += self.dt
 
-			# Magnet skill timers
-			if not self.can_magnet:
-				if self.magnet_start >= self.magnet_time and self.is_magnet:
-					self.is_magnet = False
-					self.remove(self.magnetic_players)
-				elif self.magnet_start >= self.magnet_skill_cooldown:
-					self.can_magnet = True
-					self.magnet_start = 0
-				else:
-					self.magnet_start += self.dt
+		# Magnet skill timers
+		if not self.can_magnet:
+			if self.magnet_start >= self.magnet_time and self.is_magnet:
+				self.is_magnet = False
+				self.remove(self.magnetic_players)
+			elif self.magnet_start >= self.magnet_skill_cooldown:
+				self.can_magnet = True
+				self.magnet_start = 0
+			else:
+				self.magnet_start += self.dt
 
 		# Lightning skill timers
 		if not self.can_lightning:

@@ -14,7 +14,7 @@ class Player(Entity):
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_chat,
                  destroy_chat, activate_zen, deactivate_zen, create_minimap, destroy_minimap, create_nametag,
                  nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
-                 magnetic_players, layout, create_lightning) -> None:
+                 magnetic_players, layout, create_lightning, create_magnet) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
         # Player name TODO: might be temporary
@@ -114,6 +114,7 @@ class Player(Entity):
         self.magnet_time = 10
         self.magnet_skill_cooldown = 40
         self.magnet_cost = 20
+        self.create_magnet = create_magnet
 
         # Speed skill
         self.can_speed = True
@@ -539,6 +540,7 @@ class Player(Entity):
             self.add(self.magnetic_players)
             self.is_magnet = True
             self.magnet_start = 0
+            self.create_magnet()
             self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
 
         # Check if using lightning skill
