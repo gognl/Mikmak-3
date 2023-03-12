@@ -125,7 +125,7 @@ class GameManager(threading.Thread):
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):
-            pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1)*self.center.x)
+            pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1) * self.center.x)
             pos_y = random.randrange(my_server_index % 2 * self.center.y, (my_server_index % 2 + 1) * self.center.y)
             pos = (pos_x, pos_y)
             Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
@@ -406,7 +406,7 @@ class GameManager(threading.Thread):
 
             changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status,
                        'health': player.health}
-            player.reset_attacks()
+            print(player.attacks)
             player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
             self.add_overlapped_update(player_update)

@@ -78,14 +78,12 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             updates_queue.put(msg)
         elif prefix == 1:
             msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
-            print(msg.server.addr())
             global server_socket
             server_socket.close()
             server_socket = socket.socket()
             server_socket.connect(msg.server.addr())
 
             hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
-            print(msg.server.addr())
             server_socket.send(hello_msg.serialize())
 
 
