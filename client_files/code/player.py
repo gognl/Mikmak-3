@@ -78,6 +78,7 @@ class Player(Entity):
 
         # Animations
         self.animations: Dict[str, List[pygame.Surface]] = {}
+        self.speed_animations: Dict[str, List[pygame.Surface]] = {}
         self.import_player_assets()
         self.status = 'down'
 
@@ -192,11 +193,17 @@ class Player(Entity):
         :return: None
         """
         path: str = '../graphics/player/'
-
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
                            'left_idle': [], 'right_idle': []}
         for animation in self.animations.keys():
             self.animations[animation] = list(import_folder(path + animation).values())
+
+        speed_path: str = '../graphics/player_speed/'
+        self.speed_animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
+                           'left_idle': [], 'right_idle': []}
+        for speed_animation in self.speed_animations.keys():
+            self.speed_animations[speed_animation] = list(import_folder(speed_path + speed_animation).values())
+
 
     def stop_auto_walk(self) -> None:
         if self.is_auto_walk:
@@ -844,7 +851,10 @@ class Player(Entity):
         animate through images
         :return: None
         """
-        animation: List[pygame.Surface] = self.animations[self.status]
+        if self.is_fast:
+            animation: List[pygame.Surface] = self.speed_animations[self.status]
+        else:
+            animation: List[pygame.Surface] = self.animations[self.status]
 
         self.frame_index += self.animation_speed
         if self.frame_index >= len(animation):
