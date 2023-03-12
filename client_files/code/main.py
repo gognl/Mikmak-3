@@ -1,6 +1,7 @@
 import socket  # Socket
 import hashlib
 import sys
+import threading
 
 import pygame  # Pygame
 from threading import Thread  # Multi-threading
@@ -35,16 +36,31 @@ def initialize_connection(server_addr: (str, int), encrypted_id: bytes) -> (Queu
     return updates_queue, client_id
 
 
+get_server_pkt_AllowChanging = True
+send_msg_to_server_AllowChanging = True
+want_to_change_server = False
+amount_server_changes = 0
+
+
 def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
     """Sends a message to the server (and encrypts it)"""
+    while want_to_change_server:
+        pass
+    global send_msg_to_server_AllowChanging
+    send_msg_to_server_AllowChanging = False
+    msg.seq = NormalServer.Output.StateUpdate.seq_count
     data: bytes = msg.serialize()
     size: bytes = pack("<H", len(data))
     try:
         server_socket.send(size)
         server_socket.send(data)
+        send_msg_to_server_AllowChanging = True
     except socket.error:
-        pygame.quit()
-        exit()
+        if want_to_change_server:
+            send_msg_to_server_AllowChanging = True
+        else:
+            pygame.quit()
+            exit()
 
 
 def get_server_pkt() -> bytes:
@@ -52,13 +68,21 @@ def get_server_pkt() -> bytes:
     Gets a packet from the server (and decrypts them...)
     :return: The packet from the server.
     """
+    while want_to_change_server:
+        pass
+    global get_server_pkt_AllowChanging
+    get_server_pkt_AllowChanging = False
     try:
         size: int = unpack("<H", server_socket.recv(2))[0]
         data: bytes = server_socket.recv(size)
+        get_server_pkt_AllowChanging = True
         return data
     except socket.error:
-        pygame.quit()
-        exit()
+        if want_to_change_server:
+            get_server_pkt_AllowChanging = True
+        else:
+            pygame.quit()
+            exit()
 
 
 def handle_server_pkts(updates_queue: Queue) -> None:
@@ -78,17 +102,32 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             updates_queue.put(msg)
         elif prefix == 1:
             msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
-            global server_socket
-            server_socket.close()
-            server_socket = socket.socket()
-            print(msg.server.addr())
-            server_socket.connect(msg.server.addr())
+            global want_to_change_server, amount_server_changes
+            want_to_change_server = True
+            amount_server_changes += 1
 
-            print(msg.src_server_index)
-            hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
-            server_socket.send(hello_msg.serialize())
+            def change_server(amount_changes_now):
+                while not (get_server_pkt_AllowChanging and send_msg_to_server_AllowChanging):
+                    if amount_changes_now != amount_server_changes:
+                        return
+                if amount_changes_now == amount_server_changes:
+                    global server_socket
+                    server_socket.close()
+                    server_socket = socket.socket()
+                    print(msg.server.addr())
+                    server_socket.connect(msg.server.addr())
 
-            NormalServer.Output.StateUpdate.seq_count = 0
+                    print(msg.src_server_index)
+                    hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
+                    server_socket.send(hello_msg.serialize())
+
+                    NormalServer.Output.StateUpdate.seq_count = 0
+
+                    global want_to_change_server
+                    want_to_change_server = False
+
+            threading.Thread(target=change_server, args=(amount_server_changes,)).start()
+
 
 
 def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:

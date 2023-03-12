@@ -1,4 +1,5 @@
 import socket
+import struct
 import threading
 from collections import deque
 from struct import unpack, pack
@@ -36,7 +37,7 @@ class ClientManager(threading.Thread):
         while self.connected:
             data: bytes = self._receive_pkt()
             if data == b'':
-                return  # kill this thread
+                break  # kill this thread
             self.queue.append((self, Client.Input.ClientCMD(ser=data)))
             self.cmd_semaphore.release()
 
@@ -47,6 +48,8 @@ class ClientManager(threading.Thread):
         try:
             size: int = unpack("<H", self.client_sock.recv(2))[0]
             data = self.client_sock.recv(size)
+        except struct.error:
+            return b''
         except socket.error:
             self.player.dead = True
             self.player.disconnected = True
