@@ -465,10 +465,7 @@ class Serializable:
 
 			value = self.__dict__.get(attr)
 
-			try:
-				serialized_primitive = BaseSerializer.serialize_base(value, tsid)
-			except struct.error:
-				print(value, tsid)
+			serialized_primitive = BaseSerializer.serialize_base(value, tsid)
 
 			if serialized_primitive is None:
 				print(f'Could not serialize attribute {attr}.\tTSID: {tsid}\n\tValue: {value}')
