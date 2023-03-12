@@ -39,7 +39,7 @@ def send_center_update_to_normals():
 
 
 def get_new_center(players: dict[int, PlayerCentral]):
-    if len(players) == 0:
+    if len(players) < 10:
         return Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 
     avg = Point(0, 0)
@@ -72,17 +72,19 @@ def get_server(ip: str, port: int, servers: list[Server]):
 
 
 def recv_from_normals():
-    for server in normal_sockets:
-        normal_sock: socket.socket = normal_sockets[server]
+    while True:
+        for server in normal_sockets:
+            normal_sock: socket.socket = normal_sockets[server]
 
-        try:
-            data = normal_sock.recv(1024)
-        except socket.timeout:
-            continue
+            try:
+                data = normal_sock.recv(1024)
+            except socket.timeout:
+                continue
 
-        players_list = PlayerCentralList(ser=data)
-        for player in players_list.players:
-            players[player.id] = player
+            players_list = PlayerCentralList(ser=data)
+            print(players_list.players)
+            for player in players_list.players:
+                players[player.id] = player
 
 
 def LB_main(new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg]):

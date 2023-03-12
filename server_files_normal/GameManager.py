@@ -546,6 +546,7 @@ class GameManager(threading.Thread):
                     players=[PlayerCentral(pos=PointSer(x=player.get_pos().x, y=player.get_pos().y),
                                            player_id=player.entity_id) for player in
                              self.players])
+                print("123")
                 self.sock_to_LB.send(player_central_list.serialize())
 
             if tick_count % (FPS / UPDATE_FREQUENCY) == 0:

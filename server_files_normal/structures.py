@@ -397,7 +397,7 @@ class PointSer(Serializable):
 class PlayerCentral(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser)
+        super().__init__(ser=ser)
         if ser != b'':
             return
 
@@ -412,7 +412,7 @@ class PlayerCentral(Serializable):
 class PlayerCentralList(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser)
+        super().__init__(ser=ser)
         if ser != b'':
             return
 
