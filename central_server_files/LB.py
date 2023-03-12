@@ -40,7 +40,7 @@ def send_center_update_to_normals():
 
 
 def get_new_center(players: dict[int, PlayerCentral]):
-    if len(players) == 0:
+    if len(players) < 10:
         return Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 
     avg = Point(0, 0)

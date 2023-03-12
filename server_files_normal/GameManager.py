@@ -203,9 +203,8 @@ class GameManager(threading.Thread):
                     item.kill()
 
             for i in self.other_server_indices:
-                if len(item_details_to_servers) != 0:
-                    self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(
-                        item_details_list=item_details_to_servers[i]).serialize())
+                if len(item_details_to_servers[i]) != 0:
+                    self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(item_details_list=item_details_to_servers[i]).serialize())
 
     def get_free_item_id(self):
         self.next_item_id += 1
@@ -239,7 +238,6 @@ class GameManager(threading.Thread):
     def add_player(self, entity_id: int):
         print(self.id_info_dict[entity_id].info)
         pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
-        print(pos)
         return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
                       self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
                       self.id_info_dict[entity_id].info[3],
@@ -316,7 +314,6 @@ class GameManager(threading.Thread):
                     continue
                 if Server(addr[0], addr[1] - self.my_server_index) == NORMAL_SERVERS[i]:
                     data = decrypt(data, self.DH_keys[i])
-                    print(data)
                     prefix, data = data[0], data[1:]
                     if prefix == 0:  # overlapped players update
                         state_update = NormalServer.StateUpdateNoAck(ser=data)
