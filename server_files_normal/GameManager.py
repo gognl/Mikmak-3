@@ -406,7 +406,7 @@ class GameManager(threading.Thread):
 
             changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status,
                        'health': player.health}
-            print(player.attacks)
+
             player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
             self.add_overlapped_update(player_update)
