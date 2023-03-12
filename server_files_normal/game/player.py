@@ -7,6 +7,7 @@ from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.item import Item
 
+
 class Player(pygame.sprite.Sprite):
     def __init__(self, groups, entity_id: int, pos: (int, int), health, resistance,
                  strength, xp, inventory, create_bullet, create_kettle, weapons_group,
@@ -29,7 +30,7 @@ class Player(pygame.sprite.Sprite):
         # Shooting cooldown
         self.can_shoot = True
         self.shoot_time = None
-        self.shoot_cooldown = 18
+        self.shoot_cooldown = 1
 
         # Switch cooldown
         self.can_switch_weapon = True
@@ -38,7 +39,7 @@ class Player(pygame.sprite.Sprite):
 
         # violence
         self.attacking: bool = False
-        self.attack_cooldown: int = 400
+        self.attack_cooldown = 0.5
         self.attack_time: int = 0
 
         # Projectiles
@@ -196,21 +197,21 @@ class Player(pygame.sprite.Sprite):
                     del self.inventory_items[item_action.item_name]
 
             elif item_action.action_type == 'skill':
-                if item_action.item_id == 1 and self.can_speed:  # speed
+                if item_action.item_id == 1 and self.can_speed and self.energy >= self.speed_cost:  # speed
                     self.can_speed = False
                     self.is_fast = True
                     self.speed *= self.speed_skill_factor
                     self.speed_start = 0
                     self.energy -= self.speed_cost
                     self.can_energy = False
-                elif item_action.item_id == 2 and self.can_magnet:  # magnet
+                elif item_action.item_id == 2 and self.can_magnet and self.energy >= self.magnet_cost:  # magnet
                     self.can_magnet = False
                     self.add(self.magnetic_players)
                     self.is_magnet = True
                     self.magnet_start = 0
                     self.energy -= self.magnet_cost
                     self.can_energy = False
-                elif item_action.item_id == 3 and self.can_lightning:  # damage
+                elif item_action.item_id == 3 and self.can_lightning and self.energy >= self.lightning_cost:  # damage
                     self.can_lightning = False
                     self.lightning_start = 0
                     self.activate_lightning(self)
@@ -330,9 +331,9 @@ class Player(pygame.sprite.Sprite):
 
     def switch_weapon(self, weapon_id: int) -> None:
         """
-		switch current held weapon
-		:return:
-		"""
+        switch current held weapon
+        :return:
+        """
 
         if self.weapon_index in self.on_screen:
             self.destroy_attack()
