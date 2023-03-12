@@ -330,11 +330,11 @@ class NormalServer:
 
             self.id = kwargs.pop('id')
             self.name = kwargs.pop('name')
-            self.pos = kwargs.pop('actions')
+            self.pos = kwargs.pop('pos')
 
         def _get_attr(self) -> dict:
             return {'id': (int, 'u_3'), 'name': (str, 'str'),
-                    'pos': (tuple, (int, 'u_6'))}
+                    'pos': (tuple, (int, 'u_2'))}
 
     class ItemDetailsList(Serializable):
         def __init__(self, **kwargs):

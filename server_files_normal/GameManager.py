@@ -176,24 +176,31 @@ class GameManager(threading.Thread):
 
             item_details_to_servers: list[list[NormalServer.ItemDetails]] = [[], [], [], []]
             for item in self.items:
-                pos: Tuple[int] = item.get_pos()
+                transferred = False
+                pos: tuple[int] = item.get_pos()
                 item_details = NormalServer.ItemDetails(id=item.item_id, name=item.str_name, pos=pos)
-                pos: Point = Point(pos[0], pos[1])
                 if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                              self.center.y + OVERLAPPING_AREA_T):
+                    transferred = True
                     item_details_to_servers[0].append(item_details)
 
                 if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
                                                              self.center.y + OVERLAPPING_AREA_T):
+                    transferred = True
                     item_details_to_servers[1].append(item_details)
 
                 if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T,
                                                              self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
+                    transferred = True
                     item_details_to_servers[2].append(item_details)
 
                 if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T,
                                                              self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
+                    transferred = True
                     item_details_to_servers[3].append(item_details)
+
+                if transferred:
+                    item.kill()
 
             for i in self.other_server_indices:
                 if len(item_details_to_servers) != 0:
@@ -344,9 +351,9 @@ class GameManager(threading.Thread):
                     elif prefix == 2:  # item in my region
                         item_details_list = NormalServer.ItemDetailsList(ser=data).item_details_list
                         for item_details in item_details_list:
-                            item = Item(item_details.name, (self.items,), item_details.pos, item_details.id)
-                            item.actions.append(
-                                Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                            item = Item(item_details.name, tuple(), item_details.pos, item_details.id)
+                            item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                            self.items.add(item)
 
                     elif prefix == 3:  # details about player moving to my region
                         player_data = PlayerData(ser=data)
@@ -548,7 +555,6 @@ class GameManager(threading.Thread):
                     players=[PlayerCentral(pos=PointSer(x=player.get_pos().x, y=player.get_pos().y),
                                            player_id=player.entity_id) for player in
                              self.players])
-                print("123")
                 self.sock_to_LB.send(player_central_list.serialize())
 
             if tick_count % (FPS / UPDATE_FREQUENCY) == 0:
