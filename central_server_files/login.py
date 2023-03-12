@@ -91,7 +91,6 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
             list_user_info = load_info_by_id(db, new_id)
             print(list_user_info[0][2], password)
             if list_user_info[0][2] != password or new_id in active_players_id:
-                print("banana")
                 x = 0
                 error_code = x.to_bytes(2, 'little')
                 client_sock.send(error_code)
@@ -103,21 +102,33 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         id_socket_dict[info_tuple[0]] = client_sock
         new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
+next_item_id: int = 4*AMOUNT_ITEMS_PER_SERVER+50
+
 def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]):
     while True:
         if len(LB_to_login_q) == 0:
             continue
         msg: LB_to_login_msg = LB_to_login_q.pop()
-        info_to_normals = InfoData(info=load_player_data(db, msg.client_id))  # list of the info
+        info_data = InfoData(info=load_player_data(db, msg.client_id))  # list of the info
         client_id_bytes = msg.client_id.to_bytes(6, 'little')
-        encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_to_normals).serialize(), DH_normal_keys[msg.server])
+        encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_data).serialize(), DH_normal_keys[msg.server])
         size = pack("<H", len(encrypted_package_info))
 
         server_serverSocket_dict[msg.server].send(size)
         server_serverSocket_dict[msg.server].send(encrypted_package_info)
 
         client_sock: socket.socket = id_socket_dict[msg.client_id]
-        resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(ip=msg.server.ip, port=msg.server.port))
+        inventory_from_info: dict[str, int] = info_data.info[6]
+        inventory: dict[str, tuple[list[int], int]] = {}
+        global next_item_id
+        for item_name, item_count in inventory_from_info.items():
+            inventory[item_name] = ([next_item_id+i for i in range(item_count)], item_count)
+            next_item_id += item_count
+
+        data_to_client = DataToClient(pos_x=info_data.info[0], pos_y=info_data.info[1], health=info_data.info[2],
+                                      strength=info_data.info[3], resistance=info_data.info[4], xp=info_data.info[5], inventory=inventory)
+        resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(ip=msg.server.ip, port=msg.server.port),
+                                                                      data_to_client=data_to_client)
         resp_to_client_bytes = resp_to_client.serialize()
 
         def func():

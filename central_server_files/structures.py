@@ -101,6 +101,31 @@ class LB_to_login_msg:
         self.client_id: int = client_id
         self.server: Server = server
 
+class DataToClient(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser)
+        if ser != b'':
+            return
+
+        self.pos_x = kwargs.pop('pos_x')
+        self.pos_y = kwargs.pop('pos_y')
+
+        self.health = kwargs.pop('health')  # 1 byte unsigned integer
+        self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
+        self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
+        self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
+
+        self.inventory = kwargs.pop('inventory')  # {item_name: (item_ids, item_count)}
+
+    def _get_attr(self) -> dict:
+        return {'entity_id': (int, 'u_6'),
+                'pos': (tuple, (int, 'u_2')),
+                'health': (int, 'u_1'),
+                'strength': (int, 'u_1'),
+                'resistance': (int, 'u_1'),
+                'xp': (int, 'u_2'),
+                'inventory': (dict, (tuple, (str, 'str'), (tuple, (list, (int, 'u_1')), (int, 'u_1'))))}
 
 class LoginResponseToClient(Serializable):
     def __init__(self, **kwargs):
@@ -111,10 +136,11 @@ class LoginResponseToClient(Serializable):
 
         self.encrypted_client_id: bytes = kwargs['encrypted_id']
         self.server: ServerSer = kwargs['server']
+        self.data_to_client = kwargs['data_to_client']
 
     def _get_attr(self) -> dict:
         return {'encrypted_client_id': (bytes, 'by'),
-                'server': (ServerSer, 'o')}
+                'server': (ServerSer, 'o'), 'data_to_client': (DataToClient, 'o')}
 
 
 class InfoData(Serializable):

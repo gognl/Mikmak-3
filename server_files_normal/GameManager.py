@@ -127,7 +127,7 @@ class GameManager(threading.Thread):
 
 
         # TODO temporary
-        for i in range(AMOUNT_ENEMIES_PER_SERVER):
+        for i in range(25):
             pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1) * self.center.x)
             pos_y = random.randrange(my_server_index % 2 * self.center.y, (my_server_index % 2 + 1) * self.center.y)
             pos = (pos_x, pos_y)
@@ -143,7 +143,13 @@ class GameManager(threading.Thread):
             'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
         }
 
-        for item_id in range(40):
+        def generate_item_id():
+            for i in range(AMOUNT_ITEMS_PER_SERVER):
+                yield my_server_index * AMOUNT_ITEMS_PER_SERVER + i
+
+        self.item_id_generator = generate_item_id()
+
+        for _ in range(40):
             while True:
                 random_x = random.randint(20, 30)
                 random_y = random.randint(20, 30)
@@ -151,6 +157,7 @@ class GameManager(threading.Thread):
 
                 if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                         self.layout['objects'][random_y][random_x]) == -1:
+                    item_id = next(self.item_id_generator)
                     item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
                     item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn',
                                                                        pos=(random_x * 64 + 32, random_y * 64 + 32)))
@@ -207,8 +214,7 @@ class GameManager(threading.Thread):
                     self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(item_details_list=item_details_to_servers[i]).serialize())
 
     def get_free_item_id(self):
-        self.next_item_id += 1
-        return self.next_item_id
+        return next(self.item_id_generator)
 
     def get_obstacle_sprites(self):
         return self.obstacle_sprites
@@ -238,6 +244,7 @@ class GameManager(threading.Thread):
     def add_player(self, entity_id: int):
         print(self.id_info_dict[entity_id].info)
         pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
+        print(self.id_info_dict[entity_id].info)
         return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
                       self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
                       self.id_info_dict[entity_id].info[3],

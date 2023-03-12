@@ -295,6 +295,24 @@ def run_game(*args) -> None:
     client_id: int
     update_queue, client_id = initialize_connection(server_addr, info_to_client.encrypted_client_id)
     world.player.entity_id = client_id
+    data_to_client: DataToClient = info_to_client.data_to_client
+    world.player.rect = world.player.image.get_rect(topleft=(info_data[0], info_data[1]))
+    world.player.health = data_to_client.health
+    world.player.strength = data_to_client.strength
+    world.player.resistance = data_to_client.resistance
+    world.player.xp = data_to_client.xp
+    inventory: dict[str, tuple[list[str], int]] = data_to_client.inventory
+    inventory_items: dict[str, InventorySlot] = {}
+    for item_name in inventory:
+        item_ids, item_count = inventory[item_name]
+        if item_count > 0:
+            inventory_slot = InventorySlot(item_ids[0])
+            for i in range(1, len(item_ids)):
+                inventory_slot.add_item(item_ids[0][i])
+            inventory_items[item_name] = inventory_slot
+
+    world.player.inventory_items = inventory_items
+
 
     # The main game loop
     running: bool = True
