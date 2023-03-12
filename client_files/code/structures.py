@@ -276,7 +276,7 @@ class NormalServer:
                 if s != b'':
                     return
 
-                self.item_name = kwargs.pop('item_name')
+                item_name = kwargs.pop('item_name')
                 self.item_name = {'heal': 0,
                                   'strength': 1,
                                   'kettle': 2,
@@ -286,8 +286,8 @@ class NormalServer:
                                   'spawn_red': 6,
                                   'spawn_yellow': 7,
                                   'xp': 8,
-                                  }.get(self.item_name, 9)
-                if 'grave_player' in self.item_name:
+                                  }.get(item_name, 9)
+                if 'grave_player' in item_name:
                     self.item_name = 10 + int(self.item_name[13:-1])
                 action_type = kwargs.pop('action_type')  # 'drop' or 'use' or 'skill'
                 self.action_type = {'drop': 0, 'use': 1, 'skill': 2}.get(action_type)  # 'drop' or 'use' or 'skill'

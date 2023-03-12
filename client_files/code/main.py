@@ -95,6 +95,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
         data: bytes = get_server_pkt()
         if data == b'':
             print('got empty msg')
+            continue
 
         prefix, ser = data[0], data[1:]
         if prefix == 0:
@@ -296,6 +297,8 @@ def run_game(*args) -> None:
     world.player.entity_id = client_id
     data_to_client: DataToClient = info_to_client.data_to_client
     world.player.update_pos((data_to_client.pos_x, data_to_client.pos_y))
+    world.player.name = username
+    world.player.nametag = world.player.create_nametag(world.player, world.player.name)
     world.player.health = data_to_client.health
     world.player.strength = data_to_client.strength
     world.player.resistance = data_to_client.resistance

@@ -89,7 +89,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         else:
             new_id = get_id_by_name(db, username)
             list_user_info = load_info_by_id(db, new_id)
-            print(list_user_info[0][2], password)
+
             if list_user_info[0][2] != password or new_id in active_players_id:
                 x = 0
                 error_code = x.to_bytes(2, 'little')

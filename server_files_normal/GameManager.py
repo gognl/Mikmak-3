@@ -242,9 +242,7 @@ class GameManager(threading.Thread):
             client_manager.send_msg(msg)
 
     def add_player(self, entity_id: int):
-        print(self.id_info_dict[entity_id].info)
         pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
-        print(self.id_info_dict[entity_id].info)
         return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
                       self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
                       self.id_info_dict[entity_id].info[3],
