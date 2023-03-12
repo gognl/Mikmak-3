@@ -661,14 +661,6 @@ class Player(Entity):
                         used = False
                     elif item == "shield":
                         self.resistance += 1
-                    elif item == "spawn_white":
-                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "white_cow")
-                    elif item == "spawn_green":
-                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "green_cow")
-                    elif item == "spawn_red":
-                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "red_cow")
-                    elif item == "spawn_yellow":
-                        pass  # self.spawn_enemy_from_egg(self, self.rect.topleft, "yellow_cow")
 
                     if used:
                         item_id = self.inventory_items[item].remove_item()

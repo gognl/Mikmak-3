@@ -92,8 +92,7 @@ enemy_data = {
                    'move_cooldown': 24, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30}
 }
 
-item_names = ['heal', 'strength', 'kettle', 'shield', 'spawn_white', 'spawn_green',
-              'spawn_red', 'spawn_yellow', 'xp']  # TODO - keep only items that need to be naturally spawned
+item_names = ['heal', 'strength', 'kettle', 'shield']
 
 INTERPOLATION_PERIOD = 50_000_000  # ns
 INTERPOLATION_ACTIVE = False
