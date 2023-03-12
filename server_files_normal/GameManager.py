@@ -348,6 +348,7 @@ class GameManager(threading.Thread):
 
                     elif prefix == 3:  # details about player moving to my region
                         player_data = PlayerData(ser=data)
+                        print(f"{player_data.entity_id} should connect")
                         for player in self.read_only_players:
                             if player_data.entity_id == player.entity_id:
                                 player: Player
@@ -399,8 +400,10 @@ class GameManager(threading.Thread):
     def send_change_server(self, client_manager: ClientManager, change_server_msg: Client.Output.ChangeServerMsg):
         time.sleep(0.3)
         client_manager.send_change_server(change_server_msg)
-        self.change_ids.remove(client_manager.player.entity_id)
         self.client_managers.remove(client_manager)
+        time.sleep(3)
+        self.change_ids.remove(client_manager.player.entity_id)
+
 
     def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
         for cmd in cmds:
