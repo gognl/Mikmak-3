@@ -1,5 +1,6 @@
 import random
 import threading
+import time
 from collections import deque
 import socket
 from structures import *
@@ -118,8 +119,14 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
         client_sock: socket.socket = id_socket_dict[msg.client_id]
         resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(ip=msg.server.ip, port=msg.server.port))
         resp_to_client_bytes = resp_to_client.serialize()
-        client_sock.send(pack("<H", len(resp_to_client_bytes)))
-        client_sock.send(resp_to_client_bytes)
+
+        def func():
+            time.sleep(0.3)
+            client_sock.send(pack("<H", len(resp_to_client_bytes)))
+            client_sock.send(resp_to_client_bytes)
+
+        threading.Thread(target=func).start()
+
 
 def handle_disconnect(db: SQLDataBase):
     while True:

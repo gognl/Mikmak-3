@@ -81,6 +81,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             global server_socket
             server_socket.close()
             server_socket = socket.socket()
+            print(msg.server.addr())
             server_socket.connect(msg.server.addr())
 
             hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
@@ -117,6 +118,7 @@ def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickU
             if entity_status == 'dead':
                 world.player.die()  # TODO display death screen
                 pygame.quit()
+                print("123")
                 exit()
 
     for item_update in update_msg.state_update.item_changes:

@@ -259,6 +259,7 @@ class GameManager(threading.Thread):
                                                                                          direction=(0, 0))
             changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,),
                        'status': player.status, 'health': player.health, 'strength': player.strength}
+
             player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
         for enemy in self.enemies.sprites():
@@ -289,7 +290,8 @@ class GameManager(threading.Thread):
 
         # Update the player
         player.update_pos(player_update.pos)
-        player.status = player_update.status
+        player.status = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle',
+                                        6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(player_update.status)
         player.health = player_update.health
 
     def receive_from_another_normal_servers(self):
