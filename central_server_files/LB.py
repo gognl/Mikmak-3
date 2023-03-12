@@ -30,7 +30,8 @@ def send_center_update_to_normals():
         new_center: Point = get_new_center(players.copy())
         for server in normal_sockets:
             normal_sock: socket.socket = normal_sockets[server]
-            normal_sock.send(PointSer(new_center.x, new_center.y).serialize())
+            print(new_center.x, new_center.y)
+            normal_sock.send(PointSer(x=new_center.x, y=new_center.y).serialize())
 
         global center
         center = new_center
@@ -39,7 +40,7 @@ def send_center_update_to_normals():
 
 
 def get_new_center(players: dict[int, PlayerCentral]):
-    if len(players) < 10:
+    if len(players) == 0:
         return Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 
     avg = Point(0, 0)
@@ -82,7 +83,6 @@ def recv_from_normals():
                 continue
 
             players_list = PlayerCentralList(ser=data)
-            print(players_list.players)
             for player in players_list.players:
                 players[player.id] = player
 

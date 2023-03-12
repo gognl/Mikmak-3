@@ -7,7 +7,7 @@ class Point:
         self.y: int = y
 
     def add(self, other):
-        assert isinstance(other, Point)
+        assert isinstance(other, Point) or isinstance(other, PointSer)
         self.x += other.x
         self.y += other.y
 
@@ -20,15 +20,19 @@ class Point:
         return f"({self.x}, {self.y})"
 
     def dist2(self, other):
-        assert isinstance(other, Point)
+        assert isinstance(other, Point) or isinstance(other, PointSer)
         return (self.x - other.x) ** 2 + (self.y - other.y) ** 2
 
 
 class PointSer(Serializable):
-    def __init__(self, x: int, y: int):
-        super().__init__(ser=b'')
-        self.x = x
-        self.y = y
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser=ser)
+        if ser != b'':
+            return
+
+        self.x = kwargs['x']
+        self.y = kwargs['y']
 
     def _get_attr(self) -> dict:
         return {'x': (int, 'u_2'),

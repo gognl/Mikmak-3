@@ -123,6 +123,8 @@ class GameManager(threading.Thread):
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
         threading.Thread(target=self.recv_from_login).start()
+        threading.Thread(target=self.recv_from_LB).start()
+
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):

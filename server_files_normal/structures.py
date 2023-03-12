@@ -387,6 +387,9 @@ class PointSer(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
         super().__init__(ser=ser)
+        if ser != b'':
+            return
+
         self.x = kwargs['x']
         self.y = kwargs['y']
 
