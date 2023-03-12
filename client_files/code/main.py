@@ -258,11 +258,15 @@ def run_game(*args) -> None:
         screen.fill('black')
 
         quit_response, running, username, password = title.run()  # TODO - add ip and port (if needed - @goni?)
+        username = username.upper()
+        password = password.upper()
+
         if not running:
             size = 0
             if password != '' and username != '':
                 login_socket.connect(login_addr)
-                data_to_login = username + " " + str(hash_and_salt(password))
+                data_to_login = username + " " + hash_and_salt(password)
+                print(hash_and_salt(password))
                 login_socket.send(pack("<H", len(data_to_login)))
                 login_socket.send(data_to_login.encode())
                 size = int.from_bytes(login_socket.recv(2), 'little')

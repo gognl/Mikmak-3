@@ -4,7 +4,7 @@ import time
 from collections import deque
 import socket
 from structures import *
-from db_utils import load_info, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data, get_id_by_name
+from db_utils import load_info_by_id, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data, get_id_by_name
 from SQLDataBase import SQLDataBase
 from server_files_normal.game.settings import *
 from encryption import *
@@ -17,7 +17,7 @@ DATA_MAX_LENGTH = 510
 id_socket_dict = {}
 DH_normal_keys = {}
 server_serverSocket_dict = {}
-active_players_username: list[str] = []
+active_players_id: list[int] = []
 
 server_indices = [i for i in range(4)]
 
@@ -80,18 +80,18 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         length = unpack("<H", client_sock.recv(PROTOCOL_LEN))[0]
         data = client_sock.recv(length).decode()
         username = data.split(" ")[0]
-        password = hash_and_salt(data.split(" ")[1])
+        password = data.split(" ")[1]
         if not is_user_in_db(db, username):
             new_id = get_current_id(db) + 1
             add_new_to_db(db, new_id, username, password)
             update_id_table(db)
-            list_user_info = load_info(db, new_id)
+            list_user_info = load_info_by_id(db, new_id)
         else:
             new_id = get_id_by_name(db, username)
-            print(new_id)
-            list_user_info = load_info(db, new_id)
-            print(list_user_info)
-            if not list_user_info[0][2] == password or list_user_info[0][1] in active_players_username:
+            list_user_info = load_info_by_id(db, new_id)
+            print(list_user_info[0][2], password)
+            if list_user_info[0][2] != password or new_id in active_players_id:
+                print("banana")
                 x = 0
                 error_code = x.to_bytes(2, 'little')
                 client_sock.send(error_code)
@@ -99,7 +99,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
                 continue
 
         info_tuple = list_user_info[0]
-        active_players_username.append(info_tuple[1])
+        active_players_id.append(new_id)
         id_socket_dict[info_tuple[0]] = client_sock
         new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
@@ -128,18 +128,28 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
         threading.Thread(target=func).start()
 
 
+def get_msg_from_timeout_socket(sock: socket.socket, size: int):
+    while True:
+        try:
+            data = sock.recv(size)
+            return data
+        except socket.timeout:
+            continue
+
 def handle_disconnect(db: SQLDataBase):
     while True:
         for server in server_serverSocket_dict:
             normal_sock: socket.socket = server_serverSocket_dict[server]
+
             try:
                 size = unpack('<H', normal_sock.recv(2))[0]
             except socket.timeout:
                 continue
 
-            player_data = PlayerData(ser=decrypt(normal_sock.recv(size), DH_normal_keys[server]))
-            username = load_info(db, player_data.entity_id)[0][1]
+            player_data = PlayerData(ser=decrypt(get_msg_from_timeout_socket(normal_sock, size), DH_normal_keys[server]))
+            print(player_data)
+
             disconnected_client_sock = id_socket_dict[player_data.entity_id]
             disconnected_client_sock.close()
-            active_players_username.remove(username)
+            active_players_id.remove(player_data.entity_id)
             update_user_info(db, player_data)

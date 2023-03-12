@@ -65,14 +65,11 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
 def disconnect_client_manager(client_manager: ClientManager, DH_key):
     player_data = PlayerData(**game_manager.get_player_data(client_manager.player))
     print(f'disconnected client. data:\n\t{player_data.__dict__}')
-    # TODO send to login @bar
-    login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    login_socket.connect(LOGIN_SERVER.addr())
-    #server_id = pack('<H', server_index)
+
+
     size = pack("<H", len(encrypt(player_data.serialize(), DH_key)))
-    #login_socket.send(server_id)
-    login_socket.send(size)
-    login_socket.send(encrypt(player_data.serialize(), DH_key))
+    game_manager.sock_to_login.send(size)
+    game_manager.sock_to_login.send(encrypt(player_data.serialize(), DH_key))
     client_managers.remove(client_manager)
 
 
