@@ -205,6 +205,7 @@ class Player(pygame.sprite.Sprite):
 					self.add(self.magnetic_players)
 					self.is_magnet = True
 					self.magnet_start = 0
+					self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=3, direction=(0, 0)))
 					self.energy -= self.magnet_cost
 					self.can_energy = False
 				elif item_action.item_id == 3 and self.can_lightning and self.energy >= self.lightning_cost:  # damage

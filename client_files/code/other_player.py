@@ -60,6 +60,10 @@ class OtherPlayer(Entity):
 
         self.dt = 1
 
+        self.is_magnet = False
+        self.magnet_start = 0
+        self.magnet_time = 10
+
     def import_graphics(self):
         path: str = '../graphics/player/'
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
@@ -119,6 +123,10 @@ class OtherPlayer(Entity):
             if attack.attack_type == 2:
                 Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26,
                           radius=LIGHTNING_RADIUS, color='blue')
+            elif attack.attack_type == 3:
+                self.is_magnet = True
+                self.magnet_start = 0
+                Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.05, radius=40, color='gray', player=self)
 
         self.update_pos(update.pos)
 
@@ -141,3 +149,10 @@ class OtherPlayer(Entity):
                     self.destroy_attack(self)
             else:
                 self.attack_time += self.dt
+
+        # Magnet skill timers
+        if self.is_magnet:
+            if self.magnet_start >= self.magnet_time:
+                self.is_magnet = False
+            else:
+                self.magnet_start += self.dt
