@@ -177,7 +177,7 @@ class NormalServer:
                 self.actions = kwargs.pop('actions')
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_6'), 'name_int': (int, 'u_1'),
+                return {'id': (int, 'u_3'), 'name_int': (int, 'u_1'),
                         'actions': (tuple, (NormalServer.Input.ItemActionUpdate, 'o'))}
 
         class ItemActionUpdate(Serializable):
@@ -248,7 +248,7 @@ class NormalServer:
                 self.item_actions = changes['item_actions']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_2'),
+                return {'id': (int, 'u_6'),
                         '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
                         'attacks': (tuple, (NormalServer.Input.AttackUpdate, 'o')),
                         '_status_int': (int, 'u_1'),

@@ -25,6 +25,7 @@ from server_files_normal.structures import PlayerCentral, PlayerCentralList
 import pygame
 from encryption import encrypt, decrypt
 
+
 class GameManager(threading.Thread):
     def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, my_server_index: int):
         super().__init__()
@@ -91,7 +92,6 @@ class GameManager(threading.Thread):
                 except socket.timeout:
                     continue
 
-
             keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
         def DH_with_login():
@@ -115,7 +115,8 @@ class GameManager(threading.Thread):
             thread.join()
 
         self.read_only_players = pygame.sprite.Group()
-        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
+                                                                                               {}]  # in index i are the (id, update) pairs to server i
         self.output_overlapped_items_updates: list[dict[int, Client.Output.ItemUpdate]] = [{}, {}, {}, {}]
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
@@ -124,7 +125,9 @@ class GameManager(threading.Thread):
 
         # TODO temporary
         for i in range(AMOUNT_ENEMIES_PER_SERVER):
-            pos = (random.randint(2000, 3000), random.randint(2000, 3000))
+            pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1)*self.center.x)
+            pos_y = random.randrange(my_server_index % 2 * self.center.y, (my_server_index % 2 + 1) * self.center.y)
+            pos = (pos_x, pos_y)
             Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
                   entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles, item_sprites=self.items,
                   create_explosion=self.create_explosion, create_bullet=self.create_bullet,
@@ -146,12 +149,12 @@ class GameManager(threading.Thread):
                 if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                         self.layout['objects'][random_y][random_x]) == -1:
                     item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
-                    item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn', pos=(random_x * 64 + 32, random_y * 64 + 32)))
+                    item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn',
+                                                                       pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
 
         self.next_item_id = 40
         self.id_info_dict: dict[int: InfoData] = {}
-
 
     def recv_from_login(self):
         while True:
@@ -175,7 +178,6 @@ class GameManager(threading.Thread):
                 pos: Point = Point(pos[0], pos[1])
                 if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                              self.center.y + OVERLAPPING_AREA_T):
-
                     item_details_to_servers[0].append(item_details)
 
                 if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
@@ -192,8 +194,8 @@ class GameManager(threading.Thread):
 
             for i in self.other_server_indices:
                 if len(item_details_to_servers) != 0:
-                    self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(item_details_list=item_details_to_servers[i]).serialize())
-
+                    self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(
+                        item_details_list=item_details_to_servers[i]).serialize())
 
     def get_free_item_id(self):
         self.next_item_id += 1
@@ -228,7 +230,8 @@ class GameManager(threading.Thread):
         print(self.id_info_dict[entity_id].info)
         pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
         return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
-                      self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4], self.id_info_dict[entity_id].info[3],
+                      self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
+                      self.id_info_dict[entity_id].info[3],
                       self.id_info_dict[entity_id].info[5], self.id_info_dict[entity_id].info[6],
                       self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
                       self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
@@ -249,19 +252,25 @@ class GameManager(threading.Thread):
         items_data: List = []
 
         for player in self.players.sprites():
-            initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=0, direction=(0, 0))
-            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,), 'status': player.status, 'health': player.health, 'strength': player.strength}
+            initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index,
+                                                                                         attack_type=0,
+                                                                                         direction=(0, 0))
+            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': (initial_weapon_data,),
+                       'status': player.status, 'health': player.health, 'strength': player.strength}
             player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
         for enemy in self.enemies.sprites():
-            changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y), 'status': enemy.status, 'attacks': tuple(enemy.attacks)}
+            changes = {'pos': (enemy.rect.x, enemy.rect.y), 'direction': (enemy.direction.x, enemy.direction.y),
+                       'status': enemy.status, 'attacks': tuple(enemy.attacks)}
             enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
         for item in self.items.sprites():
             item_actions = (Client.Output.ItemActionUpdate(pos=tuple(item.rect.center)),)
             items_data.append(Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item_actions))
 
-        state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data), tuple(enemies_data), tuple(items_data))
+        state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data),
+                                                                                      tuple(enemies_data),
+                                                                                      tuple(items_data))
         client_manager.send_msg(state_update)
 
     def handle_read_only_player_update(self, player_update: Client.Output.PlayerUpdate):
@@ -271,14 +280,15 @@ class GameManager(threading.Thread):
                 break
         else:
             player = Player((self.read_only_players,), player_update.id, player_update.pos, player_update.health, None,
-                            None, None, None,  self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
-                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
+                            None, None, None, self.create_bullet, self.create_kettle, self.weapons, self.create_attack,
+                            self.items,
+                            self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
+                            self.activate_lightning)
 
         # Update the player
         player.update_pos(player_update.pos)
         player.status = player_update.status
         player.health = player_update.health
-
 
     def receive_from_another_normal_servers(self):
         while True:
@@ -298,7 +308,6 @@ class GameManager(threading.Thread):
                     if prefix == 0:  # overlapped players update
                         state_update = NormalServer.StateUpdateNoAck(ser=data)
 
-
                         self.players_updates.extend(state_update.player_changes)
                         self.enemy_changes.extend(state_update.enemy_changes)
                         self.item_changes.extend(state_update.item_changes)
@@ -308,25 +317,30 @@ class GameManager(threading.Thread):
 
                     elif prefix == 1:  # enemy control transfer
                         enemy_details: NormalServer.EnemyDetails = NormalServer.EnemyDetails(ser=data)
-                        enemy_info = {enemy_details.enemy_name: {'health': enemy_details.health, 'xp': enemy_details.xp, 'speed': enemy_details.speed,
-                                                         'damage': enemy_details.damage,
-                                                         'resistance': enemy_details.resistance,
-                                                         'attack_radius': enemy_details.attack_radius, 'notice_radius':
-                                                             enemy_details.notice_radius, 'death_items': enemy_details.death_items,
-                                                         'move_cooldown': enemy_details.move_cooldown}}
-
-                        Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
-                              groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                              entity_id=enemy_details.entity_id, obstacle_sprites=self.all_obstacles,
-                              item_sprites=self.items,
-                              create_explosion=self.create_explosion, create_bullet=self.create_bullet,
-                              get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
+                        enemy_info = {enemy_details.enemy_name: {'health': enemy_details.health, 'xp': enemy_details.xp,
+                                                                 'speed': enemy_details.speed,
+                                                                 'damage': enemy_details.damage,
+                                                                 'resistance': enemy_details.resistance,
+                                                                 'attack_radius': enemy_details.attack_radius,
+                                                                 'notice_radius':
+                                                                     enemy_details.notice_radius,
+                                                                 'death_items': enemy_details.death_items,
+                                                                 'move_cooldown': enemy_details.move_cooldown}}
+                        print("######################")
+                        enemy = Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
+                                      groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                                      entity_id=enemy_details.entity_id, obstacle_sprites=self.all_obstacles,
+                                      item_sprites=self.items,
+                                      create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                                      get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
+                        print(enemy.hitbox)
 
                     elif prefix == 2:  # item in my region
                         item_details_list = NormalServer.ItemDetailsList(ser=data).item_details_list
                         for item_details in item_details_list:
                             item = Item(item_details.name, (self.items,), item_details.pos, item_details.id)
-                            item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                            item.actions.append(
+                                Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
 
                     elif prefix == 3:  # details about player moving to my region
                         player_data = PlayerData(ser=data)
@@ -340,16 +354,22 @@ class GameManager(threading.Thread):
                                 player.inventory_items = player_data.inventory
                                 break
                         else:
-                            Player((self.read_only_players,), player_data.entity_id, player_data.pos, player_data.health, player_data.resistance,
-                                   player_data.strength, player_data.xp, player_data.inventory, self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
-                                   self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
+                            Player((self.read_only_players,), player_data.entity_id, player_data.pos,
+                                   player_data.health, player_data.resistance,
+                                   player_data.strength, player_data.xp, player_data.inventory, self.create_bullet,
+                                   self.create_kettle, self.weapons, self.create_attack, self.items,
+                                   self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
+                                   self.activate_lightning)
 
-
-
-    def add_overlapped_update(self, update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
-        pos = update.pos if isinstance(update, Client.Output.PlayerUpdate) or isinstance(update, Client.Output.EnemyUpdate) else update.actions[0].pos
-        dict_lists = [self.output_overlapped_players_updates, self.output_overlapped_enemies_updates, self.output_overlapped_items_updates]
-        dict_list = dict_lists[0] if isinstance(update, Client.Output.PlayerUpdate) else (dict_lists[1] if isinstance(update, Client.Output.EnemyUpdate) else dict_lists[2])
+    def add_overlapped_update(self,
+                              update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
+        pos = update.pos if isinstance(update, Client.Output.PlayerUpdate) or isinstance(update,
+                                                                                         Client.Output.EnemyUpdate) else \
+            update.actions[0].pos
+        dict_lists = [self.output_overlapped_players_updates, self.output_overlapped_enemies_updates,
+                      self.output_overlapped_items_updates]
+        dict_list = dict_lists[0] if isinstance(update, Client.Output.PlayerUpdate) else (
+            dict_lists[1] if isinstance(update, Client.Output.EnemyUpdate) else dict_lists[2])
 
         if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                      self.center.y + OVERLAPPING_AREA_T):
@@ -384,7 +404,8 @@ class GameManager(threading.Thread):
             # Update the player
             player.process_client_updates(player_update)
 
-            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status, 'health': player.health}
+            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status,
+                       'health': player.health}
             player.reset_attacks()
             player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
@@ -393,19 +414,22 @@ class GameManager(threading.Thread):
             player_pos = player.get_pos()
             suitable_server_index = self.find_suitable_server_index(player_pos)
             if suitable_server_index != self.my_server_index:
-                encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'), self.DH_keys[suitable_server_index])
-                player_data = PlayerData(entity_id=player.entity_id, pos=player.get_pos(), health=player.health, strength=player.strength, resistance=player.resistance,
+                encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'),
+                                              self.DH_keys[suitable_server_index])
+                player_data = PlayerData(entity_id=player.entity_id, pos=player.get_pos(), health=player.health,
+                                         strength=player.strength, resistance=player.resistance,
                                          xp=player.xp, inventory=player.inventory_items)
                 self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
 
-                client_manager.send_change_server(Client.Output.ChangeServerMsg(NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id, self.my_server_index))
+                client_manager.send_change_server(
+                    Client.Output.ChangeServerMsg(NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id,
+                                                  self.my_server_index))
                 self.players.remove(player)
                 self.alive_entities.remove(player)
                 self.obstacle_sprites.remove(player)
                 self.all_obstacles.remove(player)
 
                 self.read_only_players.add(player)
-
 
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
@@ -427,7 +451,7 @@ class GameManager(threading.Thread):
                 if event.type == cmd_received_event:
                     self.handle_cmds(event.cmds)
 
-            dt = self.clock.tick(FPS)/1000
+            dt = self.clock.tick(FPS) / 1000
             tick_count += 1
 
             # Run enemies simulation
@@ -438,15 +462,22 @@ class GameManager(threading.Thread):
 
                 if enemy.dead:
                     enemy.status = 'dead'
-                current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y), 'attacks': tuple(enemy.attacks), 'status': enemy.status}
+                current_enemy_state = {'pos': (enemy.rect.x, enemy.rect.y), 'attacks': tuple(enemy.attacks),
+                                       'status': enemy.status}
                 if enemy.previous_state != current_enemy_state:
                     enemy_pos: Point = enemy.get_pos()
                     suitable_server_index = self.find_suitable_server_index(enemy_pos)
                     if suitable_server_index != self.my_server_index:
                         enemy_pos: Point = enemy.get_pos()
-                        enemy_details = NormalServer.EnemyDetails(entity_id=enemy.entity_id, pos=(enemy_pos.x, enemy_pos.y), enemy_name=enemy.enemy_name, health=enemy.health,
-                                                                  xp=enemy.xp, speed=enemy.speed, damage=enemy.damage, resistance=enemy.resistance, attack_radius=enemy.attack_radius,
-                                                                  notice_radius=enemy.notice_radius, death_items=enemy.death_items, move_cooldown=enemy.move_cooldown)
+                        enemy_details = NormalServer.EnemyDetails(entity_id=enemy.entity_id,
+                                                                  pos=(enemy_pos.x, enemy_pos.y),
+                                                                  enemy_name=enemy.enemy_name, health=enemy.health,
+                                                                  xp=enemy.xp, speed=enemy.speed, damage=enemy.damage,
+                                                                  resistance=enemy.resistance,
+                                                                  attack_radius=enemy.attack_radius,
+                                                                  notice_radius=enemy.notice_radius,
+                                                                  death_items=enemy.death_items,
+                                                                  move_cooldown=enemy.move_cooldown)
                         self.send_to_normal_server(suitable_server_index, b'\x01' + enemy_details.serialize())
                         enemy.kill()
                         continue
@@ -478,7 +509,9 @@ class GameManager(threading.Thread):
             if tick_count % (FPS // OVERLAPPED_UPDATE_FREQUENCY) == 0:
 
                 for i in self.other_server_indices:
-                    if len(self.output_overlapped_players_updates[i]) + len(self.output_overlapped_enemies_updates[i]) + len(self.output_overlapped_items_updates[i]) != 0:
+                    if len(self.output_overlapped_players_updates[i]) + len(
+                            self.output_overlapped_enemies_updates[i]) + len(
+                        self.output_overlapped_items_updates[i]) != 0:
                         state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
                             player_changes=tuple(self.output_overlapped_players_updates[i].values()),
                             enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
@@ -493,7 +526,8 @@ class GameManager(threading.Thread):
 
             if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
                 player_central_list = PlayerCentralList(
-                    players=[PlayerCentral(pos=PointSer(x=player.get_pos().x, y=player.get_pos().y), player_id=player.entity_id) for player in
+                    players=[PlayerCentral(pos=PointSer(x=player.get_pos().x, y=player.get_pos().y),
+                                           player_id=player.entity_id) for player in
                              self.players])
                 self.sock_to_LB.send(player_central_list.serialize())
 
@@ -513,12 +547,12 @@ class GameManager(threading.Thread):
                         player.kill()
                 self.players_updates.extend(player_changes)
 
-
                 item: Item
                 for item in self.items.sprites():
 
                     if tuple(item.rect.center) != item.previous_pos and item.previous_pos != ():
-                        item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                        item.actions.append(
+                            Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
 
                     if not item.actions:
                         continue  # don't send if no new actions
@@ -530,7 +564,8 @@ class GameManager(threading.Thread):
                     if item.die:
                         item.kill()
 
-                state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(self.players_updates), tuple(self.enemy_changes), tuple(self.item_changes))
+                state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(
+                    tuple(self.players_updates), tuple(self.enemy_changes), tuple(self.item_changes))
                 self.broadcast_msg(state_update)
                 self.players_updates = []
                 self.enemy_changes = []
@@ -562,7 +597,8 @@ class GameManager(threading.Thread):
     def create_bullet(self, source: Union[Player, Enemy], pos, mouse):
         direction = pygame.math.Vector2(mouse)
         if not isinstance(source, Enemy):
-            source.attacks.append(Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
+            source.attacks.append(
+                Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
             damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
         else:
             direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
@@ -576,14 +612,17 @@ class GameManager(threading.Thread):
         direction = pygame.math.Vector2(mouse)
         player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
         Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
-                   self.all_obstacles, 4, 75, 3, './graphics/weapons/kettle/full.png', int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion, True)
+                   self.all_obstacles, 4, 75, 3, './graphics/weapons/kettle/full.png',
+                   int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion,
+                   True)
 
     def create_explosion(self, pos, damage):
-        Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites()+self.items.sprites()))
+        Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites() + self.items.sprites()))
 
     def activate_lightning(self, source: Player):
         for entity in self.alive_entities.sprites():
-            if Vector2(source.rect.center).distance_squared_to(Vector2(entity.rect.center)) < LIGHTNING_RADIUS_SQUARED and entity != source:
+            if Vector2(source.rect.center).distance_squared_to(
+                    Vector2(entity.rect.center)) < LIGHTNING_RADIUS_SQUARED and entity != source:
                 entity.deal_damage(LIGHTNING_DAMAGE)
 
     def spawn_enemy_from_egg(self, pos, name):
@@ -594,8 +633,9 @@ class GameManager(threading.Thread):
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                     self.layout['objects'][random_y][random_x]) == -1:
                 Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
-                        groups=(self.enemies, self.all_obstacles, self.alive_entities), entity_id=next(self.generate_entity_id),
-                        obstacle_sprites=self.all_obstacles, item_sprites=self.items, create_explosion=self.create_explosion,
-                        create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
+                      groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                      entity_id=next(self.generate_entity_id),
+                      obstacle_sprites=self.all_obstacles, item_sprites=self.items,
+                      create_explosion=self.create_explosion,
+                      create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
                 break
-
