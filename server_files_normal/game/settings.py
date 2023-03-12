@@ -20,7 +20,7 @@ enemy_data = {
                 'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red'], 'xp': 40},
     'green_cow': {'health': 100, 'damage': 1, 'speed': 300, 'resistance': 50, 'attack_radius': 55, 'notice_radius': 400,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green'], 'xp': 20},
-    'white_cow': {'health': 100, 'damage': 1, 'speed': 200, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
+    'white_cow': {'health': 5, 'damage': 1, 'speed': 200, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white'], 'xp': 15},
     'yellow_cow': {'health': 100, 'damage': 1, 'speed': 150, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
                    'move_cooldown': 1, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30}

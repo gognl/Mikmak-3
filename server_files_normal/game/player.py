@@ -283,16 +283,16 @@ class Player(pygame.sprite.Sprite):
 			else:
 				self.speed_start += self.dt
 
-			# Magnet skill timers
-			if not self.can_magnet:
-				if self.magnet_start >= self.magnet_time and self.is_magnet:
-					self.is_magnet = False
-					self.remove(self.magnetic_players)
-				elif self.magnet_start >= self.magnet_skill_cooldown:
-					self.can_magnet = True
-					self.magnet_start = 0
-				else:
-					self.magnet_start += self.dt
+		# Magnet skill timers
+		if not self.can_magnet:
+			if self.magnet_start >= self.magnet_time and self.is_magnet:
+				self.is_magnet = False
+				self.remove(self.magnetic_players)
+			elif self.magnet_start >= self.magnet_skill_cooldown:
+				self.can_magnet = True
+				self.magnet_start = 0
+			else:
+				self.magnet_start += self.dt
 
 		# Lightning skill timers
 		if not self.can_lightning:
