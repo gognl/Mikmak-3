@@ -55,7 +55,7 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
         else:
             player: Player = game_manager.add_player(client_id)  # Add the player to the game simulation
 
-        new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore, disconnect_client_manager, key)  # Create a new client manager
+        new_client_manager: ClientManager = ClientManager(client_sock, client_id, player, cmd_semaphore, disconnect_client_manager, game_manager.DH_login_key)  # Create a new client manager
         client_managers.append(new_client_manager)
         new_client_manager.start()
         player.client_manager = new_client_manager  # Add the client manager to the player's attributes
@@ -78,7 +78,7 @@ def disconnect_client_manager(client_manager: ClientManager, DH_key):
 
 client_managers: deque[ClientManager]
 game_manager: GameManager
-server_index = 0
+server_index = 1
 def main():
     server_sock: socket.socket = socket.socket()
     server_sock.bind(('0.0.0.0', NORMAL_SERVERS_FOR_CLIENT[server_index].port))

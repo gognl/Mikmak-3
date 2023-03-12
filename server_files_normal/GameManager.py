@@ -398,6 +398,7 @@ class GameManager(threading.Thread):
         time.sleep(0.3)
         client_manager.send_change_server(change_server_msg)
         self.change_ids.remove(client_manager.player.entity_id)
+        self.client_managers.remove(client_manager)
 
     def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
         for cmd in cmds:
