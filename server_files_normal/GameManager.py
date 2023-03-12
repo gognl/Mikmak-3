@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 import threading
+import time
 from collections import deque
 from queue import Queue, Empty
 import socket
@@ -115,10 +116,10 @@ class GameManager(threading.Thread):
             thread.join()
 
         self.read_only_players = pygame.sprite.Group()
-        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
-                                                                                               {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]  # in index i are the (id, update) pairs to server i
         self.output_overlapped_items_updates: list[dict[int, Client.Output.ItemUpdate]] = [{}, {}, {}, {}]
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
+        self.change_ids: list[int] = []
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
         threading.Thread(target=self.recv_from_login).start()
@@ -393,6 +394,11 @@ class GameManager(threading.Thread):
         b1 = pos.y > self.center.y
         return 2 * b1 + b0
 
+    def send_change_server(self, client_manager: ClientManager, change_server_msg: Client.Output.ChangeServerMsg):
+        time.sleep(0.3)
+        client_manager.send_change_server(change_server_msg)
+        self.change_ids.remove(client_manager.player.entity_id)
+
     def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
         for cmd in cmds:
             client_manager = cmd[0]
@@ -401,6 +407,8 @@ class GameManager(threading.Thread):
             # TODO what if player died and then cmd arrived
             player_update: Client.Input.PlayerUpdate = client_cmd.player_changes
             player = client_manager.player
+            if player.entity_id in self.change_ids:
+                continue
 
             # Update the player
             player.process_client_updates(player_update)
@@ -416,19 +424,17 @@ class GameManager(threading.Thread):
             suitable_server_index = self.find_suitable_server_index(player_pos)
             if suitable_server_index != self.my_server_index:
                 print('bye')
-
                 encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'),
                                               self.DH_keys[suitable_server_index])
-                pos: Point = player.get_pos()
-                player_data = PlayerData(entity_id=player.entity_id, pos=(pos.x, pos.y), health=player.health,
+                player_data = PlayerData(entity_id=player.entity_id, pos=(player_pos.x, player_pos.y), health=player.health,
                                          strength=player.strength, resistance=player.resistance,
                                          xp=player.xp, inventory=player.inventory_items)
-                print(player.health)
+
                 self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
 
-                client_manager.send_change_server(
-                    Client.Output.ChangeServerMsg(NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id,
-                                                  self.my_server_index))
+                self.change_ids.append(player.entity_id)
+                threading.Thread(target=self.send_change_server, args=(client_manager, Client.Output.ChangeServerMsg(NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id, self.my_server_index))).start()
+
                 self.players.remove(player)
                 self.alive_entities.remove(player)
                 self.obstacle_sprites.remove(player)

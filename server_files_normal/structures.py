@@ -20,10 +20,10 @@ class ServerSer(Serializable, Server):
 class Client:
     class Output:
         class ChangeServerMsg(Serializable):
-            def __init__(self, server: ServerSer, encrypted_client_id: bytes, src_server_index: int):
+            def __init__(self, server: Server, encrypted_client_id: bytes, src_server_index: int):
                 super().__init__(ser=b'')
 
-                self.server: ServerSer = server
+                self.server: ServerSer = ServerSer(ip=server.ip, port=server.port)
                 self.encrypted_client_id: bytes = encrypted_client_id
                 self.src_server_index: int = src_server_index
 
