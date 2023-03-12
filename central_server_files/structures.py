@@ -104,7 +104,7 @@ class LB_to_login_msg:
 class DataToClient(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser)
+        super().__init__(ser=ser)
         if ser != b'':
             return
 
@@ -119,18 +119,18 @@ class DataToClient(Serializable):
         self.inventory = kwargs.pop('inventory')  # {item_name: (item_ids, item_count)}
 
     def _get_attr(self) -> dict:
-        return {'entity_id': (int, 'u_6'),
-                'pos': (tuple, (int, 'u_2')),
+        return {'pos_x': (int, 'u_2'),
+                'pos_y': (int, 'u_2'),
                 'health': (int, 'u_1'),
                 'strength': (int, 'u_1'),
                 'resistance': (int, 'u_1'),
                 'xp': (int, 'u_2'),
-                'inventory': (dict, (tuple, (str, 'str'), (tuple, (list, (int, 'u_1')), (int, 'u_1'))))}
+                'inventory': (dict, (tuple, (str, 'str'), (tuple, (list, (int, 'u_4')), (int, 'u_1'))))}
 
 class LoginResponseToClient(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser)
+        super().__init__(ser=ser)
         if ser != b'':
             return
 

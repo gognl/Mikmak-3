@@ -266,7 +266,6 @@ def run_game(*args) -> None:
             if password != '' and username != '':
                 login_socket.connect(login_addr)
                 data_to_login = username + " " + hash_and_salt(password)
-                print(hash_and_salt(password))
                 login_socket.send(pack("<H", len(data_to_login)))
                 login_socket.send(data_to_login.encode())
                 size = int.from_bytes(login_socket.recv(2), 'little')
@@ -296,7 +295,9 @@ def run_game(*args) -> None:
     update_queue, client_id = initialize_connection(server_addr, info_to_client.encrypted_client_id)
     world.player.entity_id = client_id
     data_to_client: DataToClient = info_to_client.data_to_client
-    world.player.rect = world.player.image.get_rect(topleft=(info_data[0], info_data[1]))
+    print((data_to_client.pos_x, data_to_client.pos_y))
+    world.player.update_pos((data_to_client.pos_x, data_to_client.pos_y))
+    print(world.player.rect)
     world.player.health = data_to_client.health
     world.player.strength = data_to_client.strength
     world.player.resistance = data_to_client.resistance
