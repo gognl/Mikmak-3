@@ -229,6 +229,7 @@ class GameManager(threading.Thread):
     def add_player(self, entity_id: int):
         print(self.id_info_dict[entity_id].info)
         pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
+        print(pos)
         return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
                       self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
                       self.id_info_dict[entity_id].info[3],
@@ -422,6 +423,7 @@ class GameManager(threading.Thread):
                 player_data = PlayerData(entity_id=player.entity_id, pos=(pos.x, pos.y), health=player.health,
                                          strength=player.strength, resistance=player.resistance,
                                          xp=player.xp, inventory=player.inventory_items)
+                print(player.health)
                 self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
 
                 client_manager.send_change_server(

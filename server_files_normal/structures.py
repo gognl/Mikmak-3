@@ -481,7 +481,7 @@ class PlayerData(Serializable):
 
     def _get_attr(self) -> dict:
         return {'entity_id': (int, 'u_6'),
-                'pos': (tuple, 'u_2'),
+                'pos': (tuple, (int, 'u_2')),
                 'health': (int, 'u_1'),
                 'strength': (int, 'u_1'),
                 'resistance': (int, 'u_1'),
