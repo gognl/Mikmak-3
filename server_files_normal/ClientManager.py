@@ -33,7 +33,7 @@ class ClientManager(threading.Thread):
         :return: None
         """
 
-        while self.connected and not self.disconnect:
+        while self.connected:
             data: bytes = self._receive_pkt()
             if data == b'':
                 return  # kill this thread

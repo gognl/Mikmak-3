@@ -414,9 +414,12 @@ class GameManager(threading.Thread):
             player_pos = player.get_pos()
             suitable_server_index = self.find_suitable_server_index(player_pos)
             if suitable_server_index != self.my_server_index:
+                print('bye')
+
                 encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'),
                                               self.DH_keys[suitable_server_index])
-                player_data = PlayerData(entity_id=player.entity_id, pos=player.get_pos(), health=player.health,
+                pos: Point = player.get_pos()
+                player_data = PlayerData(entity_id=player.entity_id, pos=(pos.x, pos.y), health=player.health,
                                          strength=player.strength, resistance=player.resistance,
                                          xp=player.xp, inventory=player.inventory_items)
                 self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
