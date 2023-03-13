@@ -1,4 +1,5 @@
 import socket
+import struct
 import threading
 from collections import deque
 from struct import unpack, pack
@@ -11,7 +12,8 @@ from server_files_normal.structures import *
 class ClientManager(threading.Thread):
     """Handles the interactions with the client server"""
 
-    def __init__(self, client_sock: socket.socket, client_id: int, player: Player, cmd_semaphore: threading.Semaphore, disconnect):
+    def __init__(self, client_sock: socket.socket, client_id: int, player: Player, cmd_semaphore: threading.Semaphore,
+                 disconnect, key):
         super().__init__()
         self.client_sock: socket.socket = client_sock
         self.client_id: int = client_id
@@ -19,7 +21,8 @@ class ClientManager(threading.Thread):
         self.ack: int = 0
         self.queue: deque[Tuple[ClientManager, Client.Input.ClientCMD]] = deque()
         self.cmd_semaphore = cmd_semaphore
-
+        self.DH_key = key
+        self.connected = True
         self.disconnect = disconnect
 
     def run(self) -> None:
@@ -31,45 +34,51 @@ class ClientManager(threading.Thread):
         :return: None
         """
 
-        while True:
+        while self.connected:
             data: bytes = self._receive_pkt()
             if data == b'':
-                return  # kill this thread
+                break  # kill this thread
             self.queue.append((self, Client.Input.ClientCMD(ser=data)))
             self.cmd_semaphore.release()
+
+        self.client_sock.close()
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
         try:
             size: int = unpack("<H", self.client_sock.recv(2))[0]
-            # TODO maybe decrypt here too
             data = self.client_sock.recv(size)
-            # TODO decrypt here
+        except struct.error:
+            return b''
         except socket.error:
             self.player.dead = True
             self.player.disconnected = True
-            self.disconnect(self)
+            self.disconnect(self, self.DH_key)
             return b''
         return data
 
     def _send_pkt(self, pkt: bytes):
         """Encrypts and then sends a packet to the client"""
         size: bytes = pack("<H", len(pkt))
-        # TODO encrypt here
         try:
             self.client_sock.send(size)
             self.client_sock.send(pkt)
         except socket.error:
             self.player.dead = True
             self.player.disconnected = True
-            self.disconnect(self)
+            self.disconnect(self, self.DH_key)
 
     def send_msg(self, changes: Client.Output.StateUpdateNoAck):
         if self.player.disconnected:
             return
         msg = Client.Output.StateUpdate(self.ack, changes)  # Add an ack to the msg
         data: bytes = msg.serialize()
-        self._send_pkt(data)
+        self._send_pkt(b'\x00' + data)
+
+    def send_change_server(self, msg: Client.Output.ChangeServerMsg):
+        data: bytes = msg.serialize()
+        self._send_pkt(b'\x01' + data)
+        self.connected = False
 
     def has_messages(self):
         return len(self.queue) != 0

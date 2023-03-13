@@ -4,7 +4,7 @@ from typing import Union
 from client_files.code.entity import Entity
 from client_files.code.explosion import Explosion
 from client_files.code.settings import weapon_data, LIGHTNING_RADIUS
-from client_files.code.structures import Server
+from client_files.code.structures import NormalServer
 from client_files.code.support import *
 
 class OtherPlayer(Entity):
@@ -101,7 +101,7 @@ class OtherPlayer(Entity):
         self.image = animation[int(self.frame_index)]
         self.rect = self.image.get_rect(center=self.hitbox.center)
 
-    def process_server_update(self, update: Server.Input.PlayerUpdate) -> Union[str, None]:
+    def process_server_update(self, update: NormalServer.Input.PlayerUpdate) -> Union[str, None]:
         self.status = update.status
 
         if update.status == 'dead':

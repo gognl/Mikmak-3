@@ -145,7 +145,7 @@ class Title:
             if event.type == pygame.QUIT:
                 self.quit = True
             elif event.type == pygame.KEYDOWN:
-                if 'a' < event.unicode < 'z' or 'A' < event.unicode < 'Z':
+                if event.key == pygame.K_BACKSPACE or 'a' <= event.unicode <= 'z' or 'A' <= event.unicode <= 'Z' or '0' <= event.unicode <= '9':
                     if self.username_selected:
                         if event.key == pygame.K_BACKSPACE:
                             self.username = self.username[:-1]

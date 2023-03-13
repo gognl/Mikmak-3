@@ -76,3 +76,6 @@ class Item(pygame.sprite.Sprite):
 
     def reset_actions(self):
         self.actions: deque = deque()
+
+    def get_pos(self):
+        return self.rect.x, self.rect.y

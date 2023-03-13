@@ -4,7 +4,7 @@ from typing import Dict, Sequence, Tuple
 
 from client_files.code.explosion import Explosion
 from client_files.code.settings import *
-from client_files.code.structures import Server, InventorySlot
+from client_files.code.structures import NormalServer, InventorySlot
 from client_files.code.support import *
 from client_files.code.entity import Entity
 
@@ -536,7 +536,7 @@ class Player(Entity):
             self.is_fast = True
             self.speed *= self.speed_skill_factor
             self.speed_start = 0
-            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=1, item_name=''))
+            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=1, item_name=''))
 
         # Check if using magnet skill
         if self.can_magnet and keys[pygame.K_2] and self.energy >= self.magnet_cost:
@@ -548,7 +548,7 @@ class Player(Entity):
             self.is_magnet = True
             self.magnet_start = 0
             self.create_magnet()
-            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
+            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
 
         # Check if using lightning skill
         if self.can_lightning and keys[pygame.K_3] and self.energy >= self.lightning_cost:
@@ -558,7 +558,7 @@ class Player(Entity):
             self.energy_time = 0
             self.lightning_start = 0
             self.create_lightning()
-            self.item_actions.append(Server.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
+            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
 
         # Move nametag right after moving
         self.nametag_update(self.nametag)
@@ -627,7 +627,7 @@ class Player(Entity):
             if not self.inventory_active or pygame.mouse.get_pos()[0] < SCREEN_WIDTH - INVENTORY_WIDTH:
                 if self.weapon_index not in self.on_screen:
                     self.attacks.append(
-                        Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
+                        NormalServer.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
                     self.create_attack(self)
                     self.attacking = True
                     self.release_mouse[0] = True
@@ -676,7 +676,7 @@ class Player(Entity):
 
                     if used:
                         item_id = self.inventory_items[item].remove_item()
-                        self.item_actions.append(Server.Output.ItemActionUpdate(item_name=item, action_type='use', item_id=item_id))
+                        self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=item, action_type='use', item_id=item_id))
 
                         if self.inventory_items[item].count == 0:
                             del self.inventory_items[item]
@@ -688,11 +688,11 @@ class Player(Entity):
                         for i in range(self.inventory_items[item].count):
                             item_id = self.inventory_items[item].remove_item()
                             self.create_dropped_item(item, (self.rect.centerx, self.rect.centery), item_id)
-                            self.item_actions.append(Server.Output.ItemActionUpdate(item_name=item, action_type='drop', item_id=item_id))
+                            self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=item, action_type='drop', item_id=item_id))
                     else:
                         item_id = self.inventory_items[item].remove_item()
                         self.create_dropped_item(item, (self.rect.centerx, self.rect.centery), item_id)
-                        self.item_actions.append(Server.Output.ItemActionUpdate(item_name=item, action_type='drop', item_id=item_id))
+                        self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=item, action_type='drop', item_id=item_id))
 
                     if self.inventory_items[item].count == 0:
                         if item == "kettle" and self.weapon_index == 2:
@@ -728,7 +728,7 @@ class Player(Entity):
         if self.weapon_index in self.on_screen:
             self.create_attack(self)
 
-        self.attacks.append(Server.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
+        self.attacks.append(NormalServer.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=0, direction=(0, 0)))
 
         # if switched to kettle and have no kettle, reswitch
         if self.weapon_index == 2 and 'kettle' not in self.inventory_items:

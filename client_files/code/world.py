@@ -95,7 +95,7 @@ class World:
             if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(self.layout['objects'][random_y][random_x]) == -1:
                 pos = (random_x * 64, random_y * 64)
                 break
-        pos = (900, 900)
+        pos = (25000, 800)
         self.player = Player("gognl", pos, (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
                              self.all_obstacles, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
@@ -121,7 +121,7 @@ class World:
         if isinstance(source, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (source.rect.center - self.camera + self.screen_center)
-            source.attacks.append(Server.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
+            source.attacks.append(NormalServer.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
         elif isinstance(source, Enemy):
             direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
         else:
@@ -140,7 +140,7 @@ class World:
         if isinstance(player, Player):
             mouse = pygame.mouse.get_pos()
             direction = pygame.math.Vector2(mouse[0], mouse[1]) - (player.rect.center - self.camera + self.screen_center)
-            player.attacks.append(Server.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
+            player.attacks.append(NormalServer.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=tuple([int(i) for i in direction])))
         else:
             direction = pygame.math.Vector2(mouse)
         Projectile(player, pos, direction, (self.visible_sprites, self.obstacle_sprites,
@@ -215,7 +215,7 @@ class World:
         del self.enemies[enemy.entity_id]
         enemy.kill()
 
-    def run(self) -> (TickUpdate, Server.Output.StateUpdate):
+    def run(self) -> (TickUpdate, NormalServer.Output.StateUpdate):
         """
             Run one world frame
             :return: None
@@ -287,8 +287,8 @@ class World:
         # Get info about changes made in this tick (used for server synchronization)
         if self.player.changes is None:
             return None, None  # no changes
-        player_changes = Server.Output.PlayerUpdate(id=self.player.entity_id, changes=self.player.changes)
-        state_update: Server.Output.StateUpdate = Server.Output.StateUpdate(player_changes=player_changes)  # sent to server
+        player_changes = NormalServer.Output.PlayerUpdate(id=self.player.entity_id, changes=self.player.changes)
+        state_update: NormalServer.Output.StateUpdate = NormalServer.Output.StateUpdate(player_changes=player_changes)  # sent to server
         tick_update: TickUpdate = TickUpdate(player_changes)  # kept for synchronization
 
         return tick_update, state_update

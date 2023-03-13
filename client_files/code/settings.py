@@ -18,6 +18,7 @@ MAX_PETS_PER_PLAYER: int = 5
 MAX_OBSTACLE_SIZE = 100
 
 ENEMY_ATTACK_COOLDOWN: int = 100
+LOGIN_PORT_TO_CLIENT = 12402
 
 
 weapon_data = {
@@ -25,6 +26,8 @@ weapon_data = {
     'nerf': {'damage': 20, 'graphic': '../graphics/weapons/nerf/full.png'},
     'kettle': {'damage': 40, 'graphic': '../graphics/weapons/kettle/full.png'}
 }
+
+SALT = "WfLc6hyf"
 
 # UI
 UI_FONT = '../graphics/font/joystix.ttf'

@@ -6,20 +6,20 @@ from pygame.math import Vector2
 from client_files.code.enemy import Enemy
 from client_files.code.other_player import OtherPlayer
 from client_files.code.settings import INTERPOLATION_PERIOD, INTERPOLATION_ACTIVE
-from client_files.code.structures import Server
+from client_files.code.structures import NormalServer
 
 
 class Interpolator:
     def __init__(self, world):
-        self.updates_queue: deque[Server.Input.StateUpdateNoAck] = deque()
-        self.current_state: Union[Server.Input.StateUpdateNoAck, None] = None
-        self.current_target: Union[Server.Input.StateUpdateNoAck, None] = None
+        self.updates_queue: deque[NormalServer.Input.StateUpdateNoAck] = deque()
+        self.current_state: Union[NormalServer.Input.StateUpdateNoAck, None] = None
+        self.current_target: Union[NormalServer.Input.StateUpdateNoAck, None] = None
         self.start_time: int = 0
         self.world = world
 
         self.first_update = True
 
-    def add_update(self, update: Server.Input.StateUpdateNoAck):
+    def add_update(self, update: NormalServer.Input.StateUpdateNoAck):
 
         if INTERPOLATION_ACTIVE:
             self.updates_queue.append(update)
@@ -50,14 +50,14 @@ class Interpolator:
             self.current_target = None
             return  # TODO tp to final pos
 
-        interp_state: Server.Input.StateUpdateNoAck = self.create_interpolated_state(self.current_state,
+        interp_state: NormalServer.Input.StateUpdateNoAck = self.create_interpolated_state(self.current_state,
                                                                                      self.current_target, time_part)
         self.update_entities(interp_state)
 
     def create_interpolated_state(self,
-                                  start: Server.Input.StateUpdateNoAck,
-                                  end: Server.Input.StateUpdateNoAck,
-                                  part: float) -> Server.Input.StateUpdateNoAck:
+                                  start: NormalServer.Input.StateUpdateNoAck,
+                                  end: NormalServer.Input.StateUpdateNoAck,
+                                  part: float) -> NormalServer.Input.StateUpdateNoAck:
         """
         Calculates the state of each relevant entity in this time part.
         :param start: The state in the beginning
@@ -67,12 +67,12 @@ class Interpolator:
         """
 
         player_lookup = {k: v for v in start.player_changes for k in end.player_changes if k.id == v.id}
-        player_changes: List[Tuple[Server.Input.PlayerUpdate, Server.Input.PlayerUpdate]] = [(k, player_lookup.get(k))
+        player_changes: List[Tuple[NormalServer.Input.PlayerUpdate, NormalServer.Input.PlayerUpdate]] = [(k, player_lookup.get(k))
                                                                                              for k in
                                                                                              end.player_changes]
 
         enemy_lookup = {k: v for v in start.enemy_changes for k in end.enemy_changes if k.id == v.id}
-        enemy_changes: List[Tuple[Server.Input.EnemyUpdate, Server.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k
+        enemy_changes: List[Tuple[NormalServer.Input.EnemyUpdate, NormalServer.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k
                                                                                           in end.enemy_changes]
 
         interp_player_changes = []
@@ -97,7 +97,7 @@ class Interpolator:
                     'pos': interp_pos}
             if part == 0:
                 data['attacks'] = end_player_update.attacks
-            interp_player_update = Server.Input.PlayerUpdate(data=data)
+            interp_player_update = NormalServer.Input.PlayerUpdate(data=data)
             interp_player_changes.append(interp_player_update)
 
         interp_enemy_changes = []
@@ -119,10 +119,10 @@ class Interpolator:
                     'pos': interp_pos}
             if part == 0:
                 data['attacks'] = end_enemy_update.attacks
-            interp_enemy_update = Server.Input.EnemyUpdate(data=data)
+            interp_enemy_update = NormalServer.Input.EnemyUpdate(data=data)
             interp_enemy_changes.append(interp_enemy_update)
 
-        interp_state = Server.Input.StateUpdateNoAck(player_changes=interp_player_changes,
+        interp_state = NormalServer.Input.StateUpdateNoAck(player_changes=interp_player_changes,
                                                      enemy_changes=interp_enemy_changes, item_changes=())
         return interp_state
 

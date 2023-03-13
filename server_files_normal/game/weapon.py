@@ -60,7 +60,7 @@ class Weapon(pygame.sprite.Sprite):
 		:return: None
 		"""
 		for sprite in self.obstacle_sprites:
-			if sprite.hitbox.colliderect(self.rect) and sprite is not self and sprite is not self.player:  # Do not collide with own player
+			if sprite.hitbox.colliderect(self.rect.inflate(30, 30)) and sprite is not self and sprite is not self.player:  # Do not collide with own player
 				if hasattr(sprite, "health"):
 					sprite.deal_damage(self.damage)
 					self.acted = True

@@ -9,9 +9,11 @@ from server_files_normal.game.item import Item
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, groups, entity_id: int, pos: (int, int), create_bullet, create_kettle, weapons_group,
-                 create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg, magnetic_players,
-                 activate_lightning):
+    def __init__(self, groups, entity_id: int, pos: (int, int), health, resistance,
+                 strength, xp, inventory, create_bullet, create_kettle, weapons_group,
+                 create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg,
+                 magnetic_players, activate_lightning):
+                 
         self.client_manager: ClientManager = None
         self.entity_id = entity_id
 
@@ -57,21 +59,22 @@ class Player(pygame.sprite.Sprite):
         self.update_queue: deque = deque()
 
         # Stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'speed': 400}
+        self.stats = {'health': health, 'energy': 60, 'attack': strength, 'speed': 10}
         self.health = self.stats['health']
         self.max_energy = self.stats['energy']
         self.energy = self.max_energy
-        self.xp = 0
+        self.xp = xp
         self.speed = self.stats['speed']
         self.strength = self.stats['attack']
-        self.resistance = 0
+        self.resistance = resistance
 
         self.weapons_group = weapons_group
 
         self.previous_state = {}
 
         self.item_sprites = item_sprites
-        self.inventory_items = {}
+
+        self.inventory_items = inventory
 
         self.get_free_item_id = get_free_item_id
 
@@ -131,8 +134,7 @@ class Player(pygame.sprite.Sprite):
                 self.switch_weapon(attack.weapon_id)
             elif attack.attack_type == 1:  # attack
                 if self.weapon_index not in self.on_screen:
-                    self.attacks.append(
-                        Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
+                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
                     self.create_attack(self)
                     self.attacking = True
                     self.attack_time = pygame.time.get_ticks()
@@ -161,8 +163,8 @@ class Player(pygame.sprite.Sprite):
                 used = True
                 if item_name == "heal":
                     self.health += 20
-                    if self.health > self.stats['health']:
-                        self.health = self.stats['health']
+                    if self.health > MAX_PLAYER_HEALTH:
+                        self.health = MAX_PLAYER_HEALTH
                 elif item_name == "strength":
                     self.strength += 1
                 elif item_name == "kettle":
@@ -188,8 +190,7 @@ class Player(pygame.sprite.Sprite):
 
             elif item_action.action_type == 'drop' and self.inventory_items[item_action.item_name] > 0:
                 # TODO check that the item_id is actually in the player's inventory items pool
-                self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery),
-                                         item_action.item_id)
+                self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
                 self.inventory_items[item_action.item_name] -= 1
                 if self.inventory_items[item_action.item_name] == 0:
                     if item_action.item_name == "kettle" and self.weapon_index == 2:
@@ -276,7 +277,7 @@ class Player(pygame.sprite.Sprite):
                 self.energy += 1
                 self.energy_point_time = 0
             else:
-                self.energy_point_time += 1
+                self.energy_point_time += self.dt
 
         # Speed skill timers
         if not self.can_speed:
@@ -288,7 +289,7 @@ class Player(pygame.sprite.Sprite):
                 self.speed_start = 0
             else:
                 self.speed_start += self.dt
-
+        
         # Magnet skill timers
         if not self.can_magnet:
             if self.magnet_start >= self.magnet_time and self.is_magnet:
@@ -333,9 +334,9 @@ class Player(pygame.sprite.Sprite):
 
     def switch_weapon(self, weapon_id: int) -> None:
         """
-		switch current held weapon
-		:return:
-		"""
+        switch current held weapon
+        :return:
+        """
 
         if self.weapon_index in self.on_screen:
             self.destroy_attack()
@@ -367,6 +368,8 @@ class Player(pygame.sprite.Sprite):
 
     def deal_damage(self, damage):
         self.health -= int(damage - (0.1 * self.resistance))
+        if self.health < 0:
+            self.health = 0
 
     def item_collision(self):
         item: Item
@@ -376,25 +379,21 @@ class Player(pygame.sprite.Sprite):
             if self.rect.colliderect(item.rect):
                 if item.can_pick_up:
                     if item.name == "xp":
-                        item.actions.append(
-                            Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+                        item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                         self.xp += 1
                         item.die = True
                     elif item.name == "grave_player" or item.name == "grave_pet":
                         if len(self.inventory_items) < INVENTORY_ITEMS:
-                            item.actions.append(
-                                Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+                            item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                             self.inventory_items[item.name + f'({len(self.inventory_items)})'] = 1
                             item.die = True
                     else:
                         if item.name in self.inventory_items:
-                            item.actions.append(
-                                Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+                            item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                             self.inventory_items[item.name] += 1
                             item.die = True
                         elif len(self.inventory_items) < INVENTORY_ITEMS:
-                            item.actions.append(
-                                Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
+                            item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                             self.inventory_items[item.name] = 1
                             item.die = True
 
@@ -404,3 +403,6 @@ class Player(pygame.sprite.Sprite):
 
     def reset_attacks(self):
         self.attacks: deque = deque()
+
+    def get_pos(self):
+        return Point(self.rect.x, self.rect.y)
