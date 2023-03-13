@@ -68,7 +68,9 @@ TO MAKE IT WORK:
     
     d. Run the normal server again (server_files_normal\main.py)
     
-    e. Run as many clients as you wish (client_files\main.py)
+    e. Press ENTER in both servers' console
+    
+    f. Run as many clients as you wish (client_files\main.py)
     
 
 Keep in mind that you will need to change server_index back to 0 after stopping the servers, before running them again.
