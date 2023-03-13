@@ -14,7 +14,7 @@ OVERLAPPING_AREA_T = 300
 DH_p = 129580882928432529101537842147269734269461392429415268045151341409571915390240545252786047823626355003667141296663918972102908481139133511887035351545132033655663683090166304802438003459450977581889646160951156933194756978255460848171968985564238788467016810538221614304187340780075305032745815204247560364281
 DH_g = 119475692254216920066132241696136552167987712858139173729861721592048057547464063002529177743099212305134089294733874076960807769722388944847002937915383340517574084979135586810183464775095834581566522721036079400681459953414957269562943460288437613755140572753576980521074966372619062067471488360595813421462
 AMOUNT_ENEMIES_PER_SERVER = 1000
-AMOUNT_ITEMS_PER_SERVER = 200
+AMOUNT_ITEMS_PER_SERVER = 1000
 MAX_ENTITY_ID_SIZE = 6
 
 
@@ -57,7 +57,7 @@ enemy_data = {
                 'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red'], 'xp': 40},
     'green_cow': {'health': 100, 'damage': 1, 'speed': 300, 'resistance': 50, 'attack_radius': 55, 'notice_radius': 400,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green'], 'xp': 20},
-    'white_cow': {'health': 5, 'damage': 1, 'speed': 200, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
+    'white_cow': {'health': 100, 'damage': 1, 'speed': 200, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white'], 'xp': 15},
     'yellow_cow': {'health': 100, 'damage': 1, 'speed': 150, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
                    'move_cooldown': 1, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30}

@@ -24,7 +24,7 @@ from server_files_normal.structures import *
 from server_files_normal.game.settings import *
 from server_files_normal.structures import PlayerCentral, PlayerCentralList
 import pygame
-from encryption import encrypt, decrypt
+from server_files_normal.encryption import encrypt, decrypt
 
 
 class GameManager(threading.Thread):
@@ -87,7 +87,7 @@ class GameManager(threading.Thread):
             y, addr = 0, ('0.0.0.0', 0)
             while not Server(addr[0], addr[1] - my_server_index) == NORMAL_SERVERS[server_index]:
                 try:
-                    y, addr = self.sock_to_other_normals[server_index].recvfrom(1024)
+                    y, addr = self.sock_to_other_normals[server_index].recvfrom(4096)
                 except socket.timeout:
                     continue
 
@@ -123,23 +123,77 @@ class GameManager(threading.Thread):
         threading.Thread(target=self.recv_from_login).start()
         threading.Thread(target=self.recv_from_LB).start()
 
+        self.id_info_dict: dict[int: InfoData] = {}
 
-        # TODO temporary
-        for i in range(200):
-            pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1) * self.center.x)
-            pos_y = random.randrange(my_server_index // 2 * self.center.y, (my_server_index // 2 + 1) * self.center.y)
-            pos = (pos_x, pos_y)
-            Enemy(enemy_name='white_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                  entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles, item_sprites=self.items,
-                  create_explosion=self.create_explosion, create_bullet=self.create_bullet,
-                  get_free_item_id=self.get_free_item_id)
-
-        # TODO temporary, item spawning
         self.layout: Dict[str, List[List[str]]] = {
             'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
             'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
             'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
         }
+
+        for _ in range(50):
+            while True:
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_y]) == -1:
+                    Enemy(enemy_name='white_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
+                          item_sprites=self.items,
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
+                    break
+
+        for _ in range(50):
+            while True:
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_y]) == -1:
+                    Enemy(enemy_name='green_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
+                          item_sprites=self.items,
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
+                    break
+
+        for _ in range(50):
+            while True:
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_y]) == -1:
+                    Enemy(enemy_name='red_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
+                          item_sprites=self.items,
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
+                    break
+
+        for _ in range(50):
+            while True:
+                pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y, (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x*64, pos_y*64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_y]) == -1:
+                    Enemy(enemy_name='yellow_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles, item_sprites=self.items,
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
+                    break
 
         def generate_item_id():
             for i in range(AMOUNT_ITEMS_PER_SERVER):
@@ -147,10 +201,12 @@ class GameManager(threading.Thread):
 
         self.item_id_generator = generate_item_id()
 
-        for _ in range(40):
+        for _ in range(100):
             while True:
-                random_x = random.randint(20, 30)
-                random_y = random.randint(20, 30)
+                random_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                random_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
                 name = item_names[int(random.randint(0, len(item_names) - 1))]
 
                 if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
@@ -161,8 +217,6 @@ class GameManager(threading.Thread):
                                                                        pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
 
-        self.next_item_id = 40
-        self.id_info_dict: dict[int: InfoData] = {}
 
     def recv_from_login(self):
         while True:
