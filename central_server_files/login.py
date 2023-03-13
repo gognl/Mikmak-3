@@ -3,13 +3,13 @@ import threading
 import time
 from collections import deque
 import socket
-from structures import *
-from db_utils import load_info_by_id, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data, get_id_by_name
-from SQLDataBase import SQLDataBase
+from central_server_files.structures import *
+from central_server_files.db_utils import load_info_by_id, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data, get_id_by_name
+from central_server_files.SQLDataBase import SQLDataBase
 from server_files_normal.game.settings import *
-from encryption import *
+from central_server_files.encryption import *
 from _struct import unpack, pack
-from Constant import MAX_ENTITY_ID_SIZE, DH_p, DH_g, LOGIN_PORT_TO_CLIENT
+from central_server_files.Constant import MAX_ENTITY_ID_SIZE, DH_p, DH_g, LOGIN_PORT_TO_CLIENT
 from base64 import urlsafe_b64encode as b64
 
 PROTOCOL_LEN = 2

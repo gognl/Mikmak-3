@@ -288,7 +288,7 @@ class NormalServer:
                                   'xp': 8,
                                   }.get(item_name, 9)
                 if 'grave_player' in item_name:
-                    self.item_name = 10 + int(self.item_name[13:-1])
+                    self.item_name = 10 + int(item_name[13:-1])
                 action_type = kwargs.pop('action_type')  # 'drop' or 'use' or 'skill'
                 self.action_type = {'drop': 0, 'use': 1, 'skill': 2}.get(action_type)  # 'drop' or 'use' or 'skill'
                 self.item_id = kwargs.pop('item_id')  # if skill, then 1=speed, 2=magnet, 3=damage

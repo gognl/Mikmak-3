@@ -2,11 +2,11 @@ import socket
 import threading
 from collections import deque
 from server_files_normal.game.settings import *
-from Constant import *
-import LB
-import login
-from structures import *
-from SQLDataBase import SQLDataBase
+from central_server_files.Constant import *
+import central_server_files.LB as LB
+import central_server_files.login as login
+from central_server_files.structures import *
+from central_server_files.SQLDataBase import SQLDataBase
 
 
 def main():

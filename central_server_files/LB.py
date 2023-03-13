@@ -2,7 +2,7 @@ import socket
 import threading
 import time
 from collections import deque
-from structures import *
+from central_server_files.structures import *
 from server_files_normal.game.settings import *
 
 center = Point(MAP_WIDTH//2, MAP_HEIGHT//2)

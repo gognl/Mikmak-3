@@ -162,8 +162,8 @@ class Player(pygame.sprite.Sprite):
                 used = True
                 if item_name == "heal":
                     self.health += 20
-                    if self.health > self.stats['health']:
-                        self.health = self.stats['health']
+                    if self.health > MAX_PLAYER_HEALTH:
+                        self.health = MAX_PLAYER_HEALTH
                 elif item_name == "strength":
                     self.strength += 1
                 elif item_name == "kettle":

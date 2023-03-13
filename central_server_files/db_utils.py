@@ -1,9 +1,9 @@
 from central_server_files.SQLDataBase import SQLDataBase
 from sqlalchemy import select, delete, update
 from sqlalchemy.dialects.mysql import insert
-from encryption import hash_and_salt
-from Constant import *
-from structures import PlayerData
+from central_server_files.encryption import hash_and_salt
+from central_server_files.Constant import *
+from central_server_files.structures import PlayerData
 
 def update_user_info(db: SQLDataBase, user: PlayerData) -> None:
 	"""Updating user's info in database - done by id because names are not exclusive."""

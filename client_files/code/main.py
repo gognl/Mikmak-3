@@ -158,6 +158,7 @@ def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickU
             world.player.update_pos(entity_pos)
             world.player.status = entity_status
             world.player.health = player_update.health
+            print(f'got {player_update.health}')
             if entity_status == 'dead':
                 world.player.die()  # TODO display death screen
                 pygame.quit()
@@ -310,11 +311,10 @@ def run_game(*args) -> None:
         if item_count > 0:
             inventory_slot = InventorySlot(item_ids[0])
             for i in range(1, len(item_ids)):
-                inventory_slot.add_item(item_ids[0][i])
+                inventory_slot.add_item(item_ids[i])
             inventory_items[item_name] = inventory_slot
 
     world.player.inventory_items = inventory_items
-
 
     # The main game loop
     running: bool = True
@@ -369,7 +369,7 @@ login_port: int
 def main():
     global login_host, login_port
     # login_host, login_port = sys.argv[1], sys.argv[2]
-    login_host, login_port = '192.168.1.47', LOGIN_PORT_TO_CLIENT
+    login_host, login_port = '127.0.0.1', LOGIN_PORT_TO_CLIENT
 
     # Initialize the game
     screen, clock, world = initialize_game()

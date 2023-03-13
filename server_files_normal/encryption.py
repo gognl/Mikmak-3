@@ -1,4 +1,3 @@
-from cryptography.fernet import Fernet
 from central_server_files.Constant import SALT
 import hashlib
 

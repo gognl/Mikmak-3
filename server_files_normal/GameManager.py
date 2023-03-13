@@ -109,7 +109,7 @@ class GameManager(threading.Thread):
 
         DH_threads.append(threading.Thread(target=DH_with_login))
 
-        input("Press Enter to start the server")
+        #  input("Press Enter to start the server")
         for thread in DH_threads:
             thread.start()
         for thread in DH_threads:
@@ -541,7 +541,7 @@ class GameManager(threading.Thread):
                 for i in self.other_server_indices:
                     if len(self.output_overlapped_players_updates[i]) + len(
                             self.output_overlapped_enemies_updates[i]) + len(
-                        self.output_overlapped_items_updates[i]) != 0:
+                            self.output_overlapped_items_updates[i]) != 0:
                         state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
                             player_changes=tuple(self.output_overlapped_players_updates[i].values()),
                             enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
