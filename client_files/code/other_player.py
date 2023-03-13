@@ -60,12 +60,26 @@ class OtherPlayer(Entity):
 
         self.dt = 1
 
+        self.is_magnet = False
+        self.magnet_start = 0
+        self.magnet_time = 10
+
+        self.is_fast = False
+        self.speed_start = 0
+        self.speed_time = 3
+
     def import_graphics(self):
         path: str = '../graphics/player/'
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
                             'left_idle': [], 'right_idle': []}
         for animation in self.animations.keys():
             self.animations[animation] = list(import_folder(path + animation).values())
+
+        speed_path: str = '../graphics/player_speed/'
+        self.speed_animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
+                                 'left_idle': [], 'right_idle': []}
+        for speed_animation in self.speed_animations.keys():
+            self.speed_animations[speed_animation] = list(import_folder(speed_path + speed_animation).values())
 
         self.status = 'down_idle'
 
@@ -74,7 +88,10 @@ class OtherPlayer(Entity):
         animate through images
         :return: None
         """
-        animation: List[pygame.Surface] = self.animations[self.status]
+        if self.is_fast:
+            animation: List[pygame.Surface] = self.speed_animations[self.status]
+        else:
+            animation: List[pygame.Surface] = self.animations[self.status]
 
         self.frame_index += self.animation_speed
         if self.frame_index >= len(animation):
@@ -119,6 +136,13 @@ class OtherPlayer(Entity):
             if attack.attack_type == 2:
                 Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26,
                           radius=LIGHTNING_RADIUS, color='blue')
+            elif attack.attack_type == 3:
+                self.is_magnet = True
+                self.magnet_start = 0
+                Explosion(self.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.05, radius=40, color='gray', player=self)
+            elif attack.attack_type == 4:
+                self.is_fast = True
+                self.speed_start = 0
 
         self.update_pos(update.pos)
 
@@ -141,3 +165,17 @@ class OtherPlayer(Entity):
                     self.destroy_attack(self)
             else:
                 self.attack_time += self.dt
+
+        # Magnet skill timers
+        if self.is_magnet:
+            if self.magnet_start >= self.magnet_time:
+                self.is_magnet = False
+            else:
+                self.magnet_start += self.dt
+
+        # Speed skill timers
+        if self.is_fast:
+            if self.speed_start >= self.speed_time:
+                self.is_fast = False
+            else:
+                self.speed_start += self.dt

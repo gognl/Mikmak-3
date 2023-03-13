@@ -97,11 +97,11 @@ class World:
                 break
         pos = (25000, 800)
         self.player = Player("gognl", pos, (self.visible_sprites, self.obstacle_sprites, self.server_sprites, self.all_obstacles),
-                             self.all_obstacles, 2, self.create_attack, self.destroy_attack, self.create_bullet,
+                             self.all_obstacles, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
                              self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
-                             0, self.magnetic_players, self.layout, self.create_lightning)  # TODO - make starting player position random (or a spawn)
+                             0, self.magnetic_players, self.layout, self.create_lightning, self.create_magnet)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -200,6 +200,9 @@ class World:
                 Enemy(name, (random_x * 64, random_y * 64), (self.visible_sprites, self.obstacle_sprites), 1,
                         self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
                 break
+
+    def create_magnet(self):
+        Explosion(self.player.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.05, radius=40, color='gray', player=self.player)
 
     def create_lightning(self):
         Explosion(self.player.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26, radius=LIGHTNING_RADIUS, color='blue')
@@ -361,6 +364,7 @@ class World:
 
     def item_use(self, item: Item, player_id: int, pos: (int, int)) -> None:
         """Remove the item from the player's inventory and use it"""
+
 
 class GroupYSort(pygame.sprite.Group):
     def __init__(self) -> None:

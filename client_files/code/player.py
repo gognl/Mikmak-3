@@ -14,7 +14,7 @@ class Player(Entity):
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_chat,
                  destroy_chat, activate_zen, deactivate_zen, create_minimap, destroy_minimap, create_nametag,
                  nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
-                 magnetic_players, layout, create_lightning) -> None:
+                 magnetic_players, layout, create_lightning, create_magnet) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
         # Player name TODO: might be temporary
@@ -78,6 +78,7 @@ class Player(Entity):
 
         # Animations
         self.animations: Dict[str, List[pygame.Surface]] = {}
+        self.speed_animations: Dict[str, List[pygame.Surface]] = {}
         self.import_player_assets()
         self.status = 'down'
 
@@ -114,6 +115,7 @@ class Player(Entity):
         self.magnet_time = 10
         self.magnet_skill_cooldown = 40
         self.magnet_cost = 20
+        self.create_magnet = create_magnet
 
         # Speed skill
         self.can_speed = True
@@ -191,11 +193,17 @@ class Player(Entity):
         :return: None
         """
         path: str = '../graphics/player/'
-
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
                            'left_idle': [], 'right_idle': []}
         for animation in self.animations.keys():
             self.animations[animation] = list(import_folder(path + animation).values())
+
+        speed_path: str = '../graphics/player_speed/'
+        self.speed_animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
+                           'left_idle': [], 'right_idle': []}
+        for speed_animation in self.speed_animations.keys():
+            self.speed_animations[speed_animation] = list(import_folder(speed_path + speed_animation).values())
+
 
     def stop_auto_walk(self) -> None:
         if self.is_auto_walk:
@@ -402,15 +410,15 @@ class Player(Entity):
 
         # Move accordingly to the direction
         if not self.is_on_tile:
-            if self.direction.x == 0 or self.hitbox.x % 64 == 0:
+            if self.direction.x == 0 or (self.hitbox.centerx - 32) % 64 == 0:
                 self.is_done_x = True
-            if self.direction.y == 0 or self.hitbox.y % 64 == 0:
+            if self.direction.y == 0 or (self.hitbox.centery - 32) % 64 == 0:
                 self.is_done_y = True
             if not self.is_done_x and self.direction.x < 0:
                 if int((self.hitbox.x + self.direction.x * speed) / 64) == int(self.hitbox.x / 64):
                     self.hitbox.x += self.direction.x * speed
                 else:
-                    self.hitbox.x -= self.hitbox.x % 64
+                    self.hitbox.x -= (self.hitbox.centerx - 32) % 64
                     self.is_done_x = True
             elif not self.is_done_x:
                 if int((self.hitbox.x + self.direction.x * speed) / 64) == int(self.hitbox.x / 64):
@@ -422,7 +430,7 @@ class Player(Entity):
                 if int((self.hitbox.y + self.direction.y * speed) / 64) == int(self.hitbox.y / 64):
                     self.hitbox.y += self.direction.y * speed
                 else:
-                    self.hitbox.y -= self.hitbox.y % 64
+                    self.hitbox.y -= (self.hitbox.centery - 32) % 64
                     self.is_done_y = True
             elif not self.is_done_y:
                 if int((self.hitbox.y + self.direction.y * speed) / 64) == int(self.hitbox.y / 64):
@@ -524,6 +532,7 @@ class Player(Entity):
             self.can_speed = False
             self.energy -= self.speed_cost
             self.can_energy = False
+            self.energy_time = 0
             self.is_fast = True
             self.speed *= self.speed_skill_factor
             self.speed_start = 0
@@ -534,9 +543,11 @@ class Player(Entity):
             self.can_magnet = False
             self.energy -= self.magnet_cost
             self.can_energy = False
+            self.energy_time = 0
             self.add(self.magnetic_players)
             self.is_magnet = True
             self.magnet_start = 0
+            self.create_magnet()
             self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
 
         # Check if using lightning skill
@@ -544,6 +555,7 @@ class Player(Entity):
             self.can_lightning = False
             self.energy -= self.lightning_cost
             self.can_energy = False
+            self.energy_time = 0
             self.lightning_start = 0
             self.create_lightning()
             self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
@@ -839,7 +851,10 @@ class Player(Entity):
         animate through images
         :return: None
         """
-        animation: List[pygame.Surface] = self.animations[self.status]
+        if self.is_fast:
+            animation: List[pygame.Surface] = self.speed_animations[self.status]
+        else:
+            animation: List[pygame.Surface] = self.animations[self.status]
 
         self.frame_index += self.animation_speed
         if self.frame_index >= len(animation):

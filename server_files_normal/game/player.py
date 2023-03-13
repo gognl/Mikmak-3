@@ -13,7 +13,7 @@ class Player(pygame.sprite.Sprite):
                  strength, xp, inventory, create_bullet, create_kettle, weapons_group,
                  create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg,
                  magnetic_players, activate_lightning):
-
+                 
         self.client_manager: ClientManager = None
         self.entity_id = entity_id
 
@@ -73,6 +73,7 @@ class Player(pygame.sprite.Sprite):
         self.previous_state = {}
 
         self.item_sprites = item_sprites
+
         self.inventory_items = inventory
 
         self.get_free_item_id = get_free_item_id
@@ -202,6 +203,7 @@ class Player(pygame.sprite.Sprite):
                     self.is_fast = True
                     self.speed *= self.speed_skill_factor
                     self.speed_start = 0
+                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=4, direction=(0, 0)))
                     self.energy -= self.speed_cost
                     self.can_energy = False
                 elif item_action.item_id == 2 and self.can_magnet and self.energy >= self.magnet_cost:  # magnet
@@ -209,6 +211,7 @@ class Player(pygame.sprite.Sprite):
                     self.add(self.magnetic_players)
                     self.is_magnet = True
                     self.magnet_start = 0
+                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=3, direction=(0, 0)))
                     self.energy -= self.magnet_cost
                     self.can_energy = False
                 elif item_action.item_id == 3 and self.can_lightning and self.energy >= self.lightning_cost:  # damage
@@ -286,17 +289,17 @@ class Player(pygame.sprite.Sprite):
                 self.speed_start = 0
             else:
                 self.speed_start += self.dt
-
-            # Magnet skill timers
-            if not self.can_magnet:
-                if self.magnet_start >= self.magnet_time and self.is_magnet:
-                    self.is_magnet = False
-                    self.remove(self.magnetic_players)
-                elif self.magnet_start >= self.magnet_skill_cooldown:
-                    self.can_magnet = True
-                    self.magnet_start = 0
-                else:
-                    self.magnet_start += self.dt
+        
+        # Magnet skill timers
+        if not self.can_magnet:
+            if self.magnet_start >= self.magnet_time and self.is_magnet:
+                self.is_magnet = False
+                self.remove(self.magnetic_players)
+            elif self.magnet_start >= self.magnet_skill_cooldown:
+                self.can_magnet = True
+                self.magnet_start = 0
+            else:
+                self.magnet_start += self.dt
 
         # Lightning skill timers
         if not self.can_lightning:
