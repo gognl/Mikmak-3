@@ -277,7 +277,7 @@ class Player(pygame.sprite.Sprite):
                 self.energy += 1
                 self.energy_point_time = 0
             else:
-                self.energy_point_time += 1
+                self.energy_point_time += self.dt
 
         # Speed skill timers
         if not self.can_speed:

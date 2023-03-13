@@ -158,7 +158,6 @@ def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickU
             world.player.update_pos(entity_pos)
             world.player.status = entity_status
             world.player.health = player_update.health
-            print(f'got {player_update.health}')
             if entity_status == 'dead':
                 world.player.die()  # TODO display death screen
                 pygame.quit()

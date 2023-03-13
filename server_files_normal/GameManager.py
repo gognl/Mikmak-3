@@ -84,12 +84,10 @@ class GameManager(threading.Thread):
             x = pow(DH_g, a, DH_p)
             other_server_addr = (NORMAL_SERVERS[server_index] + my_server_index).addr()
             self.sock_to_other_normals[server_index].sendto(x.to_bytes(128, 'little'), other_server_addr)
-            print('x:', x.to_bytes(128, 'little'))
             y, addr = 0, ('0.0.0.0', 0)
             while not Server(addr[0], addr[1] - my_server_index) == NORMAL_SERVERS[server_index]:
                 try:
                     y, addr = self.sock_to_other_normals[server_index].recvfrom(1024)
-                    print('y:', y)
                 except socket.timeout:
                     continue
 
