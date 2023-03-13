@@ -31,7 +31,7 @@ TO MAKE IT WORK:
         
         CREATE TABLE id (current_id int);
         
-        CRETAE TABLE data (id int, username varchar(255), password text, pos_x int, pos_y int, health int, strength int, resistance int, xp int, inventory json, PRIMARY KEY(id));
+        CREATE TABLE data (id int, username varchar(255), password text, pos_x int, pos_y int, health int, strength int, resistance int, xp int, inventory json, PRIMARY KEY(id));
         
         INSERT INTO id VALUES(1);
         
