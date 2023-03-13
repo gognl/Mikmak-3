@@ -107,7 +107,7 @@ class GameManager(threading.Thread):
 
         DH_threads.append(threading.Thread(target=DH_with_login))
 
-        #  input("Press Enter to start the server")
+        input("Press Enter to start the server")
         for thread in DH_threads:
             thread.start()
         for thread in DH_threads:
