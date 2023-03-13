@@ -4,6 +4,7 @@ import random
 from client_files.code.settings import *
 from client_files.code.item import Item
 from client_files.code.player import Player
+from collections import deque
 
 
 class UI:
@@ -37,6 +38,7 @@ class UI:
         # Chat
         self.chat_active: bool = False
         self.user_color_dict = {}
+        self.msg_q = deque[str]
 
         # Minimap
         self.minimap_active = False
@@ -311,11 +313,13 @@ class UI:
         head_rect.y = y + player.rect.y / 50 - head_rect.width / 2
         self.display_surface.blit(head_image, head_rect)
 
-    def add_msg(self, msg):
-        self.messages.append(msg)
+    def add_msg(self, msg: str):
+        print(f'message recieved: {msg}')
+        self.msg_q.append(msg)
 
     def send_msg(self, msg):  # TODO GONI
-        self.add_msg(msg)
+        print(f'returning all messages known to me: {self.messages}')
+        return self.messages
 
 
 class NameTag:

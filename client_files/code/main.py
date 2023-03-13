@@ -136,7 +136,7 @@ def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickU
     Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
     :param world: The pygame world.
     :param client_id: The id of this client.
-    :param update_msg: The update message from the server.
+    :param update_msg: The update message fruom the server.
     :param changes: A queue of the changes made to the game since the last call to this function.
     :return: None
     """
@@ -214,10 +214,10 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
     # Update the world state and then the screen
     tick_update: TickUpdate
     state_update: NormalServer.Output.StateUpdate
-    tick_update, state_update = world.run()
+    tick_update, state_update, msg_q = world.run()
     pygame.display.update()
 
-    return screen, clock, world, tick_update, state_update
+    return screen, clock, world, tick_update, state_update, msg_q
 
 
 def hash_and_salt(password: str) -> str:
@@ -290,6 +290,8 @@ def run_game(*args) -> None:
     info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
     server_addr = info_to_client.server.addr()
 
+    #rcv_msg, send_msg = world.ui.add_msg(), world.ui.send_msg()
+
     # Initialize the connection with the server
     update_queue: Queue
     client_id: int
@@ -315,7 +317,6 @@ def run_game(*args) -> None:
 
     world.player.inventory_items = inventory_items
 
-
     # The main game loop
     running: bool = True
     while running:
@@ -331,7 +332,7 @@ def run_game(*args) -> None:
         # Run game according to user inputs - prediction before getting update from server
         tick_update: TickUpdate
         state_update: NormalServer.Output.StateUpdate
-        screen, clock, world, tick_update, state_update = game_tick(screen, clock, world)
+        screen, clock, world, tick_update, state_update, msg_q = game_tick(screen, clock, world)
 
         if state_update is not None:
             send_msg_to_server(state_update)
