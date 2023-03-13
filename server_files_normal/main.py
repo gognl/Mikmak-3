@@ -75,9 +75,8 @@ def disconnect_client_manager(client_manager: ClientManager, DH_key):
 
 client_managers: deque[ClientManager]
 game_manager: GameManager
-# server_index = 0
-def main(*args):
-    server_index = args[0]
+def main():
+    server_index = 1
     server_sock: socket.socket = socket.socket()
     server_sock.bind(('0.0.0.0', NORMAL_SERVERS_FOR_CLIENT[server_index].port))
     server_sock.listen()
