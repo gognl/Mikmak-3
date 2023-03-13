@@ -169,8 +169,8 @@ def handle_disconnect(db: SQLDataBase):
 
 def handle_chat_msgs():
     while True:
-        for id in id_socket_dict:
-            client_sock = id_socket_dict[id]
+        for ID in id_socket_dict:
+            client_sock = id_socket_dict[ID]
 
             try:
                 size = unpack('<H', client_sock.recv(2))[0]
@@ -180,7 +180,7 @@ def handle_chat_msgs():
             msgs_lst = ChatMsgsLst(ser=get_msg_from_timeout_socket(client_sock, size))
 
             for id2 in id_socket_dict:
-                if id == id2:
+                if ID == id2:
                     continue
                 client_sock2 = id_socket_dict[id2]
                 client_sock2.send(pack('<H', len(msgs_lst.serialize())))
