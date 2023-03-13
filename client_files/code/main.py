@@ -214,10 +214,10 @@ def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) ->
     # Update the world state and then the screen
     tick_update: TickUpdate
     state_update: NormalServer.Output.StateUpdate
-    tick_update, state_update, msg_q = world.run()
+    tick_update, state_update, msg_lst = world.run()
     pygame.display.update()
 
-    return screen, clock, world, tick_update, state_update, msg_q
+    return screen, clock, world, tick_update, state_update, msg_lst
 
 
 def hash_and_salt(password: str) -> str:
@@ -290,7 +290,6 @@ def run_game(*args) -> None:
     info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
     server_addr = info_to_client.server.addr()
 
-    #rcv_msg, send_msg = world.ui.add_msg(), world.ui.send_msg()
 
     # Initialize the connection with the server
     update_queue: Queue
@@ -332,8 +331,15 @@ def run_game(*args) -> None:
         # Run game according to user inputs - prediction before getting update from server
         tick_update: TickUpdate
         state_update: NormalServer.Output.StateUpdate
-        screen, clock, world, tick_update, state_update, msg_q = game_tick(screen, clock, world)
+        screen, clock, world, tick_update, state_update, msg_lst = game_tick(screen, clock, world)
+        if msg_lst:
+            chat_msgs_lst: ChatMsgsLst = ChatMsgsLst(msg_lst=msg_lst)
+            size = pack('<H', len(chat_msgs_lst.serialize()))
+            login_socket.send(size)
+            login_socket.send(chat_msgs_lst.serialize())
 
+        size = unpack('<H', login_socket.recv(2))[0]
+        chat_msgs_lst_recved = ChatMsgsLst(ser=login_socket.recv(size))
         if state_update is not None:
             send_msg_to_server(state_update)
             NormalServer.Output.StateUpdate.seq_count += 1

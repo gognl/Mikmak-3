@@ -213,3 +213,14 @@ class PlayerData(Serializable):
 
     def get_pos(self):
         return self.pos[0], self.pos[1]
+
+class ChatMsgsLst(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser=ser)
+        if ser != b'':
+            return
+        self.msg_lst: list[str] = kwargs.get('msg_lst')
+
+    def _get_attr(self) -> dict:
+        return {'msg_lst': (list, (str, 'str'))}

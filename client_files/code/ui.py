@@ -38,7 +38,6 @@ class UI:
         # Chat
         self.chat_active: bool = False
         self.user_color_dict = {}
-        self.msg_q = deque[str]
 
         # Minimap
         self.minimap_active = False
@@ -315,11 +314,12 @@ class UI:
 
     def add_msg(self, msg: str):
         print(f'message recieved: {msg}')
-        self.msg_q.append(msg)
+        self.messages.append(msg)
 
-    def send_msg(self, msg):  # TODO GONI
+    def send_msg(self):  # TODO GONI
         print(f'returning all messages known to me: {self.messages}')
-        return self.messages
+        msg = self.messages.pop(-1)
+        return msg
 
 
 class NameTag:
