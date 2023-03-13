@@ -378,7 +378,7 @@ login_port: int
 def main():
     global login_host, login_port
     # login_host, login_port = sys.argv[1], sys.argv[2]
-    login_host, login_port = '192.168.1.47', LOGIN_PORT_TO_CLIENT
+    login_host, login_port = '127.0.0.1', LOGIN_PORT_TO_CLIENT
 
     # Initialize the game
     screen, clock, world = initialize_game()

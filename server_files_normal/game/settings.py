@@ -39,10 +39,10 @@ class Server:
 
 
 # TODO: get this list in the starting of the server
-NORMAL_SERVERS = [Server('192.168.1.47', 13412), Server('192.168.1.47', 32142), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
-NORMAL_SERVERS_FOR_CLIENT = [Server('192.168.1.47', 14760), Server('192.168.1.47', 14767), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
-LOGIN_SERVER = Server('192.168.1.47', 12304)
-LB_SERVER = Server('192.168.1.47', 12328)
+NORMAL_SERVERS = [Server('127.0.0.1', 13412), Server('127.0.0.1', 32142), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
+NORMAL_SERVERS_FOR_CLIENT = [Server('127.0.0.1', 14760), Server('127.0.0.1', 14767), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
+LOGIN_SERVER = Server('127.0.0.1', 12304)
+LB_SERVER = Server('127.0.0.1', 12328)
 
 weapon_data = {
     'sword': {'damage': 100, 'graphic': './graphics/weapons/sword/full.png'},
