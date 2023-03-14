@@ -14,7 +14,7 @@ class SQLDataBase:
 				host=hostname,
 				port=DB_PORT,
 				database=DB_NAME
-			)
+			), future=True
 		)
 		self.metadata: MetaData = MetaData()
 

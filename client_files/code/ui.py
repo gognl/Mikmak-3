@@ -46,6 +46,8 @@ class UI:
 
         # Messages
         self.messages = []
+        self.new_messages = []
+        self.recv_msgs = []
 
         # Chat activity
         self.text_active = False
@@ -277,6 +279,7 @@ class UI:
                     elif event.key == pygame.K_RETURN:
                         if self.raw_text != r'':
                             self.messages.append((player.name, self.raw_text))
+                            self.new_messages.append((player.name, self.raw_text))
                             self.raw_text = r''
                             self.text = r''
                     elif sum([len(line) for line in self.raw_text]) < CHAT_TEXT_TOTAL_LENGTH:
