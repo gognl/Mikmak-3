@@ -63,9 +63,11 @@ class Player(Entity):
         # Auto walk
         self.is_auto_walk = False
         self.moves_auto_walk = []
+        self.block_cords = []
         self.is_on_tile = False
         self.is_done_x = False
         self.is_done_y = False
+        self.count_times = 0
         self.path_to_tile = ()
         self.x_value = None
         self.y_value = None
@@ -207,10 +209,12 @@ class Player(Entity):
 
     def stop_auto_walk(self) -> None:
         if self.is_auto_walk:
+            self.count_times = 0
             self.is_auto_walk = False
             self.is_done_y = False
             self.is_done_x = False
             self.moves_auto_walk = []
+            self.block_cords = []
             self.is_on_tile = False
             self.path_to_tile = []
             self.desired_x = None
@@ -222,18 +226,8 @@ class Player(Entity):
             self.auto_count = 0
 
     def is_good_auto_walk(self, y: int, x: int, y_place: int, x_place: int) -> bool:
-        temp = True
-        for i in range(-3, 4):
-            for j in range(-3, 4):
-                if j + y == y_place and i + x == x_place:
-                    return True
-        for i in range(-1, 2):
-            for j in range(-1, 2):
-                if len(self.layout['floor']) > y + j >= 0 and len(self.layout['floor'][y + j]) > x + i >= 0 and \
-                    not (int(self.layout['floor'][y + j][x + i]) in SPAWNABLE_TILES and
-                              int(self.layout['objects'][y + j][x + i]) == -1):
-                    temp = False
-        return temp
+        return not (len(self.layout['floor']) > y >= 0 and len(self.layout['floor'][y]) > x >= 0 and not
+                    (int(self.layout['floor'][y][x]) in SPAWNABLE_TILES and int(self.layout['objects'][y][x]) == -1))
 
     def start_auto_walk(self) -> None:
         self.stop_auto_walk()
@@ -330,9 +324,13 @@ class Player(Entity):
             count += 1
         path = []
         new_directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-        mini = 1000000
-        i = random.randint(0, 3)
-        self.path_to_tile = new_directions[i]
+        min_dst = 10000000
+        for i in new_directions:
+            min_dst = min(min_dst, bfs_values[x + i[0] - x_values[0]][y + i[1] - y_values[x + i[0] - x_values[0]][0]])
+        for i in new_directions:
+            if min_dst == bfs_values[x + i[0] - x_values[0]][y + i[1] - y_values[x + i[0] - x_values[0]][0]]:
+                self.path_to_tile = i
+                break
         x += self.path_to_tile[0]
         y += self.path_to_tile[1]
         x_last = x
@@ -378,8 +376,22 @@ class Player(Entity):
                 before = True
             else:
                 self.moves_auto_walk.append(temp_answer[i])
+        answer = []
+        temp = (64 * x, 64 * y)
+        for i in range(0, len(self.moves_auto_walk)):
+            x += self.moves_auto_walk[len(self.moves_auto_walk) - 1 - i][0]
+            y += self.moves_auto_walk[len(self.moves_auto_walk) - 1 - i][1]
+            answer.append((x, y))
+        for i in range(0, len(answer)):
+            self.block_cords.append((answer[len(answer) - 1 - i][0] * 64, answer[len(answer) - 1 - i][1] * 64))
+        self.block_cords.append(temp)
 
     def move_auto(self, speed: int):
+
+        if self.count_times < 4:
+            self.count_times += 1
+            return
+
         # Update name tag right after moving
         if self.nametag is not None:
             self.nametag_update(self.nametag)
@@ -410,83 +422,56 @@ class Player(Entity):
 
         # Move accordingly to the direction
         if not self.is_on_tile:
-            if self.direction.x == 0 or (self.hitbox.centerx - 32) % 64 == 0:
-                self.is_done_x = True
-            if self.direction.y == 0 or (self.hitbox.centery - 32) % 64 == 0:
-                self.is_done_y = True
-            if not self.is_done_x and self.direction.x < 0:
+            if not self.is_done_x:
                 if int((self.hitbox.x + self.direction.x * speed) / 64) == int(self.hitbox.x / 64):
                     self.hitbox.x += self.direction.x * speed
                 else:
-                    self.hitbox.x -= (self.hitbox.centerx - 32) % 64
+                    self.hitbox.x = self.block_cords[-1][0]
                     self.is_done_x = True
-            elif not self.is_done_x:
-                if int((self.hitbox.x + self.direction.x * speed) / 64) == int(self.hitbox.x / 64):
-                    self.hitbox.x += self.direction.x * speed
-                else:
-                    self.hitbox.x = int((self.hitbox.x + self.direction.x * speed) / 64) * 64
-                    self.is_done_x = True
-            if not self.is_done_y and self.direction.y < 0:
+                self.collision('horizontal')  # Check collisions in the horizontal axis
+
+            if not self.is_done_y:
                 if int((self.hitbox.y + self.direction.y * speed) / 64) == int(self.hitbox.y / 64):
                     self.hitbox.y += self.direction.y * speed
                 else:
-                    self.hitbox.y -= (self.hitbox.centery - 32) % 64
+                    self.hitbox.y = self.block_cords[-1][1]
                     self.is_done_y = True
-            elif not self.is_done_y:
-                if int((self.hitbox.y + self.direction.y * speed) / 64) == int(self.hitbox.y / 64):
-                    self.hitbox.y += self.direction.y * speed
-                else:
-                    self.hitbox.y = int((self.hitbox.y + self.direction.y * speed) / 64) * 64
-                    self.is_done_y = True
+                self.collision('vertical')  # Check collisions in the vertical axis
+
             if self.is_done_x and self.is_done_y:
                 self.is_on_tile = True
-                self.x_value = self.hitbox.x
-                self.y_value = self.hitbox.y
                 self.is_done_x = False
                 self.is_done_y = False
+                del (self.block_cords[-1])
         else:
+            if self.direction.x == 0:
+                self.is_done_x = True
+            if self.direction.y == 0:
+                self.is_done_y = True
             if not self.is_done_x:
-                self.desired_x = self.x_value
-                if self.direction.x < 0:
-                    self.desired_x -= 64
-                elif self.direction.x > 0:
-                    self.desired_x += 64
-                if not (max(self.hitbox.x, self.hitbox.x + self.direction.x * speed) >= self.desired_x > min(
+                if not (max(self.hitbox.x, self.hitbox.x + self.direction.x * speed) >= self.block_cords[-1][0] > min(
                         self.hitbox.x, self.hitbox.x + self.direction.x * speed)):
                     self.hitbox.x += self.direction.x * speed
                 else:
-                    self.hitbox.x = self.desired_x
+                    self.hitbox.x = self.block_cords[-1][0]
                     self.is_done_x = True
+                self.collision('horizontal')  # Check collisions in the horizontal axis
+
             if not self.is_done_y:
-                self.desired_y = self.y_value
-                if self.direction.y < 0:
-                    self.desired_y -= 64
-                elif self.direction.y > 0:
-                    self.desired_y += 64
-                if not (max(self.hitbox.y, self.hitbox.y + self.direction.y * speed) >= self.desired_y > min(
+                if not (max(self.hitbox.y, self.hitbox.y + self.direction.y * speed) >= self.block_cords[-1][1] > min(
                         self.hitbox.y, self.hitbox.y + self.direction.y * speed)):
                     self.hitbox.y += self.direction.y * speed
                 else:
-                    self.hitbox.y = self.desired_y
+                    self.hitbox.y = self.block_cords[-1][1]
                     self.is_done_y = True
-
-        self.collision('horizontal')  # Check collisions in the horizontal axis
-        self.collision('vertical')  # Check collisions in the vertical axis
+                self.collision('vertical')  # Check collisions in the vertical axis
 
         self.rect.center = self.hitbox.center
-        if self.hitbox.x == self.last_x and self.hitbox.y == self.last_y:
-            self.auto_count += 1
-        else:
-            self.last_x = self.hitbox.x
-            self.last_y = self.hitbox.y
-            self.auto_count = 0
-
-        if self.hitbox.x == self.desired_x and self.hitbox.y == self.desired_y:
+        if self.hitbox.x == self.block_cords[-1][0] and self.hitbox.y == self.block_cords[-1][1] and self.is_on_tile:
             del (self.moves_auto_walk[-1])
+            del (self.block_cords[-1])
             self.is_done_x = False
             self.is_done_y = False
-            self.x_value = self.desired_x
-            self.y_value = self.desired_y
         if self.is_on_tile and len(self.moves_auto_walk) == 0:
             self.start_auto_walk()
         if self.auto_count == 3:
