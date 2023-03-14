@@ -99,6 +99,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
 
         info_tuple = list_user_info[0]
         active_players_id.append(new_id)
+        client_sock.settimeout(0.05)
         id_socket_dict[info_tuple[0]] = client_sock
         new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
@@ -164,3 +165,24 @@ def handle_disconnect(db: SQLDataBase):
             disconnected_client_sock.close()
             active_players_id.remove(player_data.entity_id)
             update_user_info(db, player_data)
+
+
+def handle_chat_msgs():
+    while True:
+        for client_id in id_socket_dict:
+            client_sock: socket.socket = id_socket_dict[client_id]
+
+            try:
+                size = unpack('<H', client_sock.recv(2))[0]
+            except socket.timeout:
+                continue
+
+            msgs_lst = ChatMsgsLst(ser=get_msg_from_timeout_socket(client_sock, size))
+
+            for id2 in id_socket_dict:
+                if client_id == id2:
+                    continue
+                client_sock2 = id_socket_dict[id2]
+                client_sock2.send(pack('<H', len(msgs_lst.serialize())))
+                client_sock2.send(msgs_lst.serialize())
+

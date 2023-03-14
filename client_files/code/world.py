@@ -291,7 +291,7 @@ class World:
         state_update: NormalServer.Output.StateUpdate = NormalServer.Output.StateUpdate(player_changes=player_changes)  # sent to server
         tick_update: TickUpdate = TickUpdate(player_changes)  # kept for synchronization
 
-        return tick_update, state_update
+        return tick_update, state_update, self.ui.messages
 
     def update_camera(self) -> None:
         """

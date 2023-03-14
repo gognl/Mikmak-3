@@ -368,3 +368,14 @@ class HelloMsg(Serializable):
 
     def _get_attr(self) -> dict:
         return {'encrypted_client_id': (bytes, 'by'), 'src_server_index': (int, 's_1')}
+
+class ChatMsgsLst(Serializable):
+    def __init__(self, **kwargs):
+        ser = kwargs.get('ser', b'')
+        super().__init__(ser=ser)
+        if ser != b'':
+            return
+        self.msg_lst: list[str] = kwargs.get('msg_lst')
+
+    def _get_attr(self) -> dict:
+        return {'msg_lst': (list, (str, 'str'))}
