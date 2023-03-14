@@ -47,6 +47,7 @@ class UI:
 
         # Messages
         self.messages = []
+        self.msgs_recv = []
 
         # Chat activity
         self.text_active = False

@@ -340,7 +340,7 @@ def run_game(*args) -> None:
 
         size = unpack('<H', login_socket.recv(2))[0]
         chat_msgs_lst_recved = ChatMsgsLst(ser=login_socket.recv(size))
-        world.ui.messages.extend(chat_msgs_lst_recved.msg_lst)
+        world.ui.msgs_recv.extend(chat_msgs_lst_recved.msg_lst)
 
         if state_update is not None:
             send_msg_to_server(state_update)
