@@ -25,6 +25,8 @@ class ClientManager(threading.Thread):
         self.connected = True
         self.disconnect = disconnect
 
+        self.hack_points = 5
+
     def run(self) -> None:
         self.handle_client_connection()
 
@@ -47,7 +49,9 @@ class ClientManager(threading.Thread):
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
-        if self.player.dead:
+        # print(self.hack_points)
+        if self.player.dead or self.hack_points <= 0:
+            self.player.dead = True
             self.player.disconnected = True
             self.connected = False
             self.client_sock.close()

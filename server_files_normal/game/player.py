@@ -136,7 +136,7 @@ class Player(pygame.sprite.Sprite):
         current_time = time()
         speed = pos.distance_to(update.pos)/(current_time - self.time_since_last_update)
         if (speed > MAX_SPEED and not self.is_fast) or (speed > self.speed_skill_factor*MAX_SPEED and self.is_fast):
-            pass
+            self.client_manager.hack_points -= 1
         self.time_since_last_update = current_time
 
         self.update_pos(update.pos)
@@ -149,20 +149,22 @@ class Player(pygame.sprite.Sprite):
             if attack.attack_type == 0:  # switch
                 self.switch_weapon(attack.weapon_id)
             elif attack.attack_type == 1:  # attack
+                if self.attacking:
+                    self.client_manager.hack_points -= 0.5
                 if self.weapon_index not in self.on_screen:
                     self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
                     self.create_attack(self)
                     self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
+                    self.attack_time = 0
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
                             self.create_bullet(self, self.current_weapon.rect.center, attack.direction)
                             self.can_shoot = False
-                            self.shoot_time = pygame.time.get_ticks()
+                            self.shoot_time = 0
                     elif self.weapon_index == 2:
                         self.attacking = True
-                        self.attack_time = pygame.time.get_ticks()
+                        self.attack_time = 0
 
                         self.create_kettle(self, self.current_weapon.rect.center, attack.direction)
 
@@ -184,7 +186,7 @@ class Player(pygame.sprite.Sprite):
                 elif item_name == "strength":
                     self.strength += 1
                 elif item_name == "kettle":
-                    if self.can_switch_weapon and not self.attacking and self.weapon_index != 2:
+                    if self.weapon_index != 2:
                         self.switch_weapon(2)
                     used = False
                 elif item_name == "shield":
@@ -214,32 +216,41 @@ class Player(pygame.sprite.Sprite):
                             self.switch_weapon(0)
                         del self.inventory_items[item_action.item_name]
                 else:
-                    pass  # TODO add to hack points
+                    self.client_manager.hack_points -= 3
 
             elif item_action.action_type == 'skill':
-                if item_action.item_id == 1 and self.can_speed and self.energy >= self.speed_cost:  # speed
-                    self.can_speed = False
-                    self.is_fast = True
-                    self.speed *= self.speed_skill_factor
-                    self.speed_start = 0
-                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=4, direction=(0, 0)))
-                    self.energy -= self.speed_cost
-                    self.can_energy = False
-                elif item_action.item_id == 2 and self.can_magnet and self.energy >= self.magnet_cost:  # magnet
-                    self.can_magnet = False
-                    self.add(self.magnetic_players)
-                    self.is_magnet = True
-                    self.magnet_start = 0
-                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=3, direction=(0, 0)))
-                    self.energy -= self.magnet_cost
-                    self.can_energy = False
-                elif item_action.item_id == 3 and self.can_lightning and self.energy >= self.lightning_cost:  # damage
-                    self.can_lightning = False
-                    self.lightning_start = 0
-                    self.activate_lightning(self)
-                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=2, direction=(0, 0)))
-                    self.energy -= self.lightning_cost
-                    self.can_energy = False
+                if item_action.item_id == 1:  # speed
+                    if self.can_speed and self.energy >= self.speed_cost:
+                        self.can_speed = False
+                        self.is_fast = True
+                        self.speed *= self.speed_skill_factor
+                        self.speed_start = 0
+                        self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=4, direction=(0, 0)))
+                        self.energy -= self.speed_cost
+                        self.can_energy = False
+                    else:
+                        self.client_manager.hack_points -= 1
+                elif item_action.item_id == 2:  # magnet
+                    if self.can_magnet and self.energy >= self.magnet_cost:
+                        self.can_magnet = False
+                        self.add(self.magnetic_players)
+                        self.is_magnet = True
+                        self.magnet_start = 0
+                        self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=3, direction=(0, 0)))
+                        self.energy -= self.magnet_cost
+                        self.can_energy = False
+                    else:
+                        self.client_manager.hack_points -= 1
+                elif item_action.item_id == 3:  # damage
+                    if self.can_lightning and self.energy >= self.lightning_cost:
+                        self.can_lightning = False
+                        self.lightning_start = 0
+                        self.activate_lightning(self)
+                        self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=2, direction=(0, 0)))
+                        self.energy -= self.lightning_cost
+                        self.can_energy = False
+                    else:
+                        self.client_manager.hack_points -= 1
 
     def die(self):
         self.dead = True
@@ -359,7 +370,7 @@ class Player(pygame.sprite.Sprite):
             self.destroy_attack()
 
         self.can_switch_weapon = False
-        self.weapon_switch_time = pygame.time.get_ticks()
+        self.weapon_switch_time = 0
         self.weapon_index = weapon_id
         self.weapon = list(weapon_data.keys())[self.weapon_index]
 
