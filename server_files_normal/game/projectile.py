@@ -7,7 +7,6 @@ from time import time_ns
 
 class Projectile(pygame.sprite.Sprite):
 	def __init__(self, player, pos, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
-		super().__init__(groups)
 		self.player = player
 		self.height: int = height
 		self.obstacle_sprites: pygame.sprite.Group = obstacle_sprites
@@ -44,6 +43,8 @@ class Projectile(pygame.sprite.Sprite):
 		self.start_time = time_ns()*10**(-6)
 
 		self.dt = 1
+
+		super().__init__(groups)
 
 	def update(self) -> None:
 		"""

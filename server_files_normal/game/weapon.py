@@ -5,7 +5,6 @@ from server_files_normal.game.settings import weapon_data
 
 class Weapon(pygame.sprite.Sprite):
 	def __init__(self, player, groups, height, obstacles):
-		super().__init__(groups)
 		self.player = player
 
 		self.direction: str = None
@@ -19,6 +18,8 @@ class Weapon(pygame.sprite.Sprite):
 		self.collidable = False
 		self.acted = False
 		self.damage = int(weapon_data[self.player.weapon]['damage'] + (0.1 * player.strength))
+
+		super().__init__(groups)
 
 		self.update()
 

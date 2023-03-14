@@ -15,7 +15,6 @@ from server_files_normal.structures import Point
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, enemy_name: str, pos: (int, int), groups, entity_id: int, obstacle_sprites: pygame.sprite.Group,
                  item_sprites, create_explosion, create_bullet, get_free_item_id, enemies_info=enemy_data):
-        super().__init__(groups)
 
         self.entity_id = entity_id
 
@@ -71,6 +70,8 @@ class Enemy(pygame.sprite.Sprite):
         self.get_free_item_id = get_free_item_id
 
         self.dt = 1
+
+        super().__init__(groups)
 
     def import_graphics(self, name: str):
         self.animations = {'move': []}
