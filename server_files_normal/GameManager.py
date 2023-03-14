@@ -50,6 +50,7 @@ class GameManager(threading.Thread):
         self.weapons: pygame.sprite.Group = pygame.sprite.Group()
         self.items: pygame.sprite.Group = pygame.sprite.Group()
         self.magnetic_players: pygame.sprite.Group = pygame.sprite.Group()
+        self.barriers = pygame.sprite.Group()
 
         self.players_updates: List[Client.Output.PlayerUpdate] = []
         self.enemy_changes: List[Client.Output.EnemyUpdate] = []
@@ -57,7 +58,7 @@ class GameManager(threading.Thread):
 
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
         self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
-        # self.initialize_obstacle_sprites()
+        self.initialize_obstacle_sprites()
 
         self.sock_to_login: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_to_LB: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -142,7 +143,7 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='white_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers,
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -159,7 +160,7 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='green_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers,
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -176,7 +177,7 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='red_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers,
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -190,7 +191,7 @@ class GameManager(threading.Thread):
                 if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='yellow_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles, item_sprites=self.items,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers, item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
                     break
@@ -280,7 +281,7 @@ class GameManager(threading.Thread):
                 if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
                     x: int = col_index * TILESIZE
                     y: int = row_index * TILESIZE
-                    Barrier((x, y), (self.obstacle_sprites, self.all_obstacles))
+                    Barrier((x, y), (self.barriers, ))
 
     def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
         while True:
@@ -396,7 +397,7 @@ class GameManager(threading.Thread):
                         print("######################")
                         enemy = Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
                                       groups=tuple(),
-                                      entity_id=enemy_details.entity_id, obstacle_sprites=self.all_obstacles,
+                                      entity_id=enemy_details.entity_id, obstacle_sprites=self.barriers,
                                       item_sprites=self.items,
                                       create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                                       get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
