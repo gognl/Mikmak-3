@@ -80,13 +80,13 @@ EXPLOSION_SPEED = 1.3
 EXPLOSION_RADIUS = 150
 
 enemy_data = {
-    'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 400,
+    'other_player': {'health': 100, 'damage': 20, 'speed': 10, 'resistance': 0, 'attack_radius': 0, 'notice_radius': 600,
                      'stop_radius': 100, 'move_cooldown': 0, 'death_items': ['grave_player'], 'xp': 0},
-    'red_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 0, 'attack_radius': 100, 'notice_radius': 500,
+    'red_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 0, 'attack_radius': 100, 'notice_radius': 600,
                 'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_red'], 'xp': 40},
-    'green_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 50, 'attack_radius': 55, 'notice_radius': 400,
+    'green_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 50, 'attack_radius': 55, 'notice_radius': 600,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_green'], 'xp': 20},
-    'white_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 400,
+    'white_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 10, 'attack_radius': 55, 'notice_radius': 600,
                   'move_cooldown': 0, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_white'], 'xp': 15},
     'yellow_cow': {'health': 100, 'damage': 1, 'speed': 10, 'resistance': 20, 'attack_radius': 350, 'notice_radius': 600,
                    'move_cooldown': 24, 'death_items': ['heal', 'strength', 'kettle', 'shield', 'spawn_yellow'], 'xp': 30}

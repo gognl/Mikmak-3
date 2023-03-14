@@ -145,7 +145,7 @@ class GameManager(threading.Thread):
                           entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
-                          get_free_item_id=self.get_free_item_id)
+                          get_free_item_id=self.get_free_item_id, layout=self.layout)
                     break
 
         for _ in range(50):
@@ -162,7 +162,7 @@ class GameManager(threading.Thread):
                           entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
-                          get_free_item_id=self.get_free_item_id)
+                          get_free_item_id=self.get_free_item_id, layout=self.layout)
                     break
 
         for _ in range(50):
@@ -179,7 +179,7 @@ class GameManager(threading.Thread):
                           entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles,
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
-                          get_free_item_id=self.get_free_item_id)
+                          get_free_item_id=self.get_free_item_id, layout=self.layout)
                     break
 
         for _ in range(50):
@@ -192,7 +192,7 @@ class GameManager(threading.Thread):
                     Enemy(enemy_name='yellow_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
                           entity_id=next(self.generate_entity_id), obstacle_sprites=self.all_obstacles, item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
-                          get_free_item_id=self.get_free_item_id)
+                          get_free_item_id=self.get_free_item_id, layout=self.layout)
                     break
 
         def generate_item_id():
@@ -399,7 +399,7 @@ class GameManager(threading.Thread):
                                       entity_id=enemy_details.entity_id, obstacle_sprites=self.all_obstacles,
                                       item_sprites=self.items,
                                       create_explosion=self.create_explosion, create_bullet=self.create_bullet,
-                                      get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
+                                      get_free_item_id=self.get_free_item_id, layout=self.layout, enemies_info=enemy_info)
                         groups = [self.enemies, self.all_obstacles, self.alive_entities]
                         for group in groups:
                             group.add(enemy)
