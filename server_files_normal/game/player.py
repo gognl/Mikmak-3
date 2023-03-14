@@ -1,9 +1,11 @@
 from collections import deque
+from time import time
 
 import pygame
+from pygame.math import Vector2
+
 from server_files_normal import ClientManager
 from server_files_normal.game.settings import *
-from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.item import Item
 
@@ -120,12 +122,24 @@ class Player(pygame.sprite.Sprite):
 
         self.free_item_ids = []
 
+        self.time_since_last_update = time()
+
         super().__init__(groups)
 
     def process_client_updates(self, update: Client.Input.PlayerUpdate):
 
         if self.dead:
             return
+
+        # Anti-cheat
+        pos = Vector2(self.rect.topleft)
+        current_time = time()
+        speed = pos.distance_to(update.pos)/(current_time - self.time_since_last_update)
+        if (speed > MAX_SPEED and not self.is_fast) or (speed > self.speed_skill_factor*MAX_SPEED and self.is_fast):
+            pass
+        self.time_since_last_update = current_time
+
+        self.update_pos(update.pos)
 
         self.status = update.status
 
@@ -160,7 +174,7 @@ class Player(pygame.sprite.Sprite):
                             self.switch_weapon(0)
 
         for item_action in update.item_actions:
-            if item_action.action_type == 'use':  # TODO remove from the pool counter
+            if item_action.action_type == 'use':
                 item_name = item_action.item_name
                 used = True
                 if item_name == "heal":
@@ -200,7 +214,7 @@ class Player(pygame.sprite.Sprite):
                             self.switch_weapon(0)
                         del self.inventory_items[item_action.item_name]
                 else:
-                    pass  # add to hack points
+                    pass  # TODO add to hack points
 
             elif item_action.action_type == 'skill':
                 if item_action.item_id == 1 and self.can_speed and self.energy >= self.speed_cost:  # speed
@@ -226,8 +240,6 @@ class Player(pygame.sprite.Sprite):
                     self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=2, direction=(0, 0)))
                     self.energy -= self.lightning_cost
                     self.can_energy = False
-
-        self.update_pos(update.pos)
 
     def die(self):
         self.dead = True
