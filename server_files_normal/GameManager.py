@@ -57,23 +57,11 @@ class GameManager(threading.Thread):
         self.enemy_changes: List[Client.Output.EnemyUpdate] = []
         self.item_changes: List[Client.Output.ItemUpdate] = []
 
-        self.layout: Dict[str, List[List[str]]] = {
-            'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
-            'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
-            'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
-        }
-
-        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
-        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
-        self.barriers = pygame.sprite.Group()
-        self.initialize_obstacle_sprites()
-
         self.sock_to_login: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_to_LB: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_to_other_normals: list[socket.socket] = [socket.socket(socket.AF_INET, socket.SOCK_DGRAM) for _ in
                                                            range(4)]
 
-        self.my_server_index = my_server_index
         self.other_server_indices = [i for i in range(4) if i != my_server_index]
 
         for i in self.other_server_indices:
@@ -134,6 +122,17 @@ class GameManager(threading.Thread):
 
         self.id_info_dict: dict[int: InfoData] = {}
 
+        self.layout: Dict[str, List[List[str]]] = {
+            'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
+            'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
+            'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
+        }
+
+        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
+        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
+        self.barriers = pygame.sprite.Group()
+        self.initialize_obstacle_sprites()
+
         for _ in range(50):
             while True:
                 pos_x = random.randrange(my_server_index % 2 * self.center.x,
@@ -145,7 +144,7 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='white_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -162,7 +161,7 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='green_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -179,7 +178,7 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='red_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -193,7 +192,7 @@ class GameManager(threading.Thread):
                 if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='yellow_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=self.barriers, item_sprites=self.items,
+                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()), item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
                     break
@@ -236,6 +235,9 @@ class GameManager(threading.Thread):
             self.center.x = center.x
             self.center.y = center.y
 
+            # Update the obstacles
+            self.initialize_obstacle_sprites()
+
             item_details_to_servers: list[list[NormalServer.ItemDetails]] = [[], [], [], []]
             for item in self.items:
                 transferred = False
@@ -275,21 +277,74 @@ class GameManager(threading.Thread):
         return self.obstacle_sprites
 
     def initialize_obstacle_sprites(self):
-        for style_index, (style, layout) in enumerate(self.layout.items()):
-            for row_index in range(self.my_server_index*ROW_TILES//2, self.my_server_index*ROW_TILES//2+ROW_TILES//2):
-                if 0 <= row_index < ROW_TILES:
-                    row = layout[row_index]
-                    for col_index in range(self.my_server_index*COL_TILES//2, self.my_server_index*COL_TILES//2+COL_TILES//2):
-                        if 0 <= col_index < COL_TILES:
-                            col = row[col_index]
-                            if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
-                                x: int = col_index * TILESIZE
-                                y: int = row_index * TILESIZE
+        self.barriers = pygame.sprite.Group()
 
-                                if style == 'objects':
-                                    Barrier((x, y), (self.barriers, ))
-                                elif style == 'boundary':
-                                    Barrier((x, y), (self.barriers, ))
+        if self.my_server_index == 0:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(0, self.center.y//64+1):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(0, self.center.x//64+1):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
+                                if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
+
+                                    if style == 'objects':
+                                        Barrier((x, y), (self.barriers, ))
+                                    elif style == 'boundary':
+                                        Barrier((x, y), (self.barriers, ))
+        elif self.my_server_index == 1:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(0, self.center.y//64+1):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(self.center.x // 64, COL_TILES):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
+                                if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
+
+                                    if style == 'objects':
+                                        Barrier((x, y), (self.barriers,))
+                                    elif style == 'boundary':
+                                        Barrier((x, y), (self.barriers,))
+
+        elif self.my_server_index == 2:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(self.center.y // 64, ROW_TILES):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(self.center.x // 64, COL_TILES):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
+                                if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
+
+                                    if style == 'objects':
+                                        Barrier((x, y), (self.barriers,))
+                                    elif style == 'boundary':
+                                        Barrier((x, y), (self.barriers,))
+
+        elif self.my_server_index == 3:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(self.center.y // 64, ROW_TILES):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(0, self.center.x//64+1):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
+                                if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
+
+                                    if style == 'objects':
+                                        Barrier((x, y), (self.barriers,))
+                                    elif style == 'boundary':
+                                        Barrier((x, y), (self.barriers,))
 
     def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
         while True:
@@ -405,7 +460,7 @@ class GameManager(threading.Thread):
                         print("######################")
                         enemy = Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
                                       groups=tuple(),
-                                      entity_id=enemy_details.entity_id, obstacle_sprites=self.barriers,
+                                      entity_id=enemy_details.entity_id, obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
                                       item_sprites=self.items,
                                       create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                                       get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
@@ -726,7 +781,7 @@ class GameManager(threading.Thread):
                 Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
                       groups=(self.enemies, self.all_obstacles, self.alive_entities),
                       entity_id=next(self.generate_entity_id),
-                      obstacle_sprites=self.all_obstacles, item_sprites=self.items,
+                      obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()), item_sprites=self.items,
                       create_explosion=self.create_explosion,
                       create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
                 break
