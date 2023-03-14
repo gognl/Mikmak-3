@@ -1,9 +1,11 @@
 from collections import deque
+from time import time
 
 import pygame
+from pygame.math import Vector2
+
 from server_files_normal import ClientManager
 from server_files_normal.game.settings import *
-from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.item import Item
 
@@ -12,7 +14,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, groups, entity_id: int, pos: (int, int), health, resistance,
                  strength, xp, inventory, create_bullet, create_kettle, weapons_group,
                  create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg,
-                 magnetic_players, activate_lightning):
+                 magnetic_players, activate_lightning, layout):
                  
         self.client_manager: ClientManager = None
         self.entity_id = entity_id
@@ -118,12 +120,34 @@ class Player(pygame.sprite.Sprite):
 
         self.dt = 1
 
+        self.free_item_ids = []
+
+        self.time_since_last_update = time()
+
+        self.layout = layout
+
         super().__init__(groups)
 
     def process_client_updates(self, update: Client.Input.PlayerUpdate):
 
         if self.dead:
             return
+
+        # Anti-cheat
+        pos = Vector2(self.rect.topleft)
+        current_time = time()
+        speed = pos.distance_to(update.pos)/(current_time - self.time_since_last_update)
+        if (speed > MAX_SPEED and not self.is_fast) or (speed > self.speed_skill_factor*MAX_SPEED and self.is_fast):
+            self.client_manager.hack_points -= 1
+        self.time_since_last_update = current_time
+
+        # Check that the player isn't on water or obstacles
+        player_center_tile = ((update.pos[0]+32)//64, (update.pos[1]+32)//64)
+        if int(self.layout['floor'][player_center_tile[1]][player_center_tile[0]]) in SPAWNABLE_TILES and int(
+                self.layout['objects'][player_center_tile[1]][player_center_tile[0]]) == -1:
+            self.update_pos(update.pos)
+        else:
+            self.client_manager.hack_points -= 2
 
         self.status = update.status
 
@@ -133,20 +157,22 @@ class Player(pygame.sprite.Sprite):
             if attack.attack_type == 0:  # switch
                 self.switch_weapon(attack.weapon_id)
             elif attack.attack_type == 1:  # attack
+                if self.attacking:
+                    self.client_manager.hack_points -= 0.5
                 if self.weapon_index not in self.on_screen:
                     self.attacks.append(Client.Output.AttackUpdate(weapon_id=self.weapon_index, attack_type=1, direction=(0, 0)))
                     self.create_attack(self)
                     self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
+                    self.attack_time = 0
                 else:
                     if self.weapon_index == 1:
                         if self.can_shoot:
                             self.create_bullet(self, self.current_weapon.rect.center, attack.direction)
                             self.can_shoot = False
-                            self.shoot_time = pygame.time.get_ticks()
+                            self.shoot_time = 0
                     elif self.weapon_index == 2:
                         self.attacking = True
-                        self.attack_time = pygame.time.get_ticks()
+                        self.attack_time = 0
 
                         self.create_kettle(self, self.current_weapon.rect.center, attack.direction)
 
@@ -168,7 +194,7 @@ class Player(pygame.sprite.Sprite):
                 elif item_name == "strength":
                     self.strength += 1
                 elif item_name == "kettle":
-                    if self.can_switch_weapon and not self.attacking and self.weapon_index != 2:
+                    if self.weapon_index != 2:
                         self.switch_weapon(2)
                     used = False
                 elif item_name == "shield":
@@ -189,40 +215,50 @@ class Player(pygame.sprite.Sprite):
                         del self.inventory_items[item_action.item_name]
 
             elif item_action.action_type == 'drop' and self.inventory_items[item_action.item_name] > 0:
-                # TODO check that the item_id is actually in the player's inventory items pool
-                self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
-                self.inventory_items[item_action.item_name] -= 1
-                if self.inventory_items[item_action.item_name] == 0:
-                    if item_action.item_name == "kettle" and self.weapon_index == 2:
-                        self.switch_weapon(0)
-                    del self.inventory_items[item_action.item_name]
+                if item_action.item_id in self.free_item_ids:
+                    self.free_item_ids.remove(item_action.item_id)
+                    self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
+                    self.inventory_items[item_action.item_name] -= 1
+                    if self.inventory_items[item_action.item_name] == 0:
+                        if item_action.item_name == "kettle" and self.weapon_index == 2:
+                            self.switch_weapon(0)
+                        del self.inventory_items[item_action.item_name]
+                else:
+                    self.client_manager.hack_points -= 3
 
             elif item_action.action_type == 'skill':
-                if item_action.item_id == 1 and self.can_speed and self.energy >= self.speed_cost:  # speed
-                    self.can_speed = False
-                    self.is_fast = True
-                    self.speed *= self.speed_skill_factor
-                    self.speed_start = 0
-                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=4, direction=(0, 0)))
-                    self.energy -= self.speed_cost
-                    self.can_energy = False
-                elif item_action.item_id == 2 and self.can_magnet and self.energy >= self.magnet_cost:  # magnet
-                    self.can_magnet = False
-                    self.add(self.magnetic_players)
-                    self.is_magnet = True
-                    self.magnet_start = 0
-                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=3, direction=(0, 0)))
-                    self.energy -= self.magnet_cost
-                    self.can_energy = False
-                elif item_action.item_id == 3 and self.can_lightning and self.energy >= self.lightning_cost:  # damage
-                    self.can_lightning = False
-                    self.lightning_start = 0
-                    self.activate_lightning(self)
-                    self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=2, direction=(0, 0)))
-                    self.energy -= self.lightning_cost
-                    self.can_energy = False
-
-        self.update_pos(update.pos)
+                if item_action.item_id == 1:  # speed
+                    if self.can_speed and self.energy >= self.speed_cost:
+                        self.can_speed = False
+                        self.is_fast = True
+                        self.speed *= self.speed_skill_factor
+                        self.speed_start = 0
+                        self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=4, direction=(0, 0)))
+                        self.energy -= self.speed_cost
+                        self.can_energy = False
+                    else:
+                        self.client_manager.hack_points -= 1
+                elif item_action.item_id == 2:  # magnet
+                    if self.can_magnet and self.energy >= self.magnet_cost:
+                        self.can_magnet = False
+                        self.add(self.magnetic_players)
+                        self.is_magnet = True
+                        self.magnet_start = 0
+                        self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=3, direction=(0, 0)))
+                        self.energy -= self.magnet_cost
+                        self.can_energy = False
+                    else:
+                        self.client_manager.hack_points -= 1
+                elif item_action.item_id == 3:  # damage
+                    if self.can_lightning and self.energy >= self.lightning_cost:
+                        self.can_lightning = False
+                        self.lightning_start = 0
+                        self.activate_lightning(self)
+                        self.attacks.append(Client.Output.AttackUpdate(weapon_id=0, attack_type=2, direction=(0, 0)))
+                        self.energy -= self.lightning_cost
+                        self.can_energy = False
+                    else:
+                        self.client_manager.hack_points -= 1
 
     def die(self):
         self.dead = True
@@ -342,7 +378,7 @@ class Player(pygame.sprite.Sprite):
             self.destroy_attack()
 
         self.can_switch_weapon = False
-        self.weapon_switch_time = pygame.time.get_ticks()
+        self.weapon_switch_time = 0
         self.weapon_index = weapon_id
         self.weapon = list(weapon_data.keys())[self.weapon_index]
 
@@ -382,7 +418,7 @@ class Player(pygame.sprite.Sprite):
                         item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                         self.xp += 1
                         item.die = True
-                    elif item.name == "grave_player" or item.name == "grave_pet":
+                    elif item.name == "grave_player":
                         if len(self.inventory_items) < INVENTORY_ITEMS:
                             item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                             self.inventory_items[item.name + f'({len(self.inventory_items)})'] = 1
@@ -396,6 +432,7 @@ class Player(pygame.sprite.Sprite):
                             item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                             self.inventory_items[item.name] = 1
                             item.die = True
+                    self.free_item_ids.append(item.item_id)
 
     def create_dropped_item(self, name, pos, item_id):
         new_item = Item(name, (self.item_sprites,), pos, item_id)
