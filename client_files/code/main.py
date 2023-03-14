@@ -1,5 +1,6 @@
 import socket  # Socket
 import hashlib
+import struct
 import sys
 import threading
 
@@ -83,6 +84,9 @@ def get_server_pkt() -> bytes:
         else:
             pygame.quit()
             exit()
+    except struct.error:
+        pygame.quit()
+        exit()
 
 
 def handle_server_pkts(updates_queue: Queue) -> None:

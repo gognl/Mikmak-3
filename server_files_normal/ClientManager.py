@@ -40,11 +40,19 @@ class ClientManager(threading.Thread):
                 break  # kill this thread
             self.queue.append((self, Client.Input.ClientCMD(ser=data)))
             self.cmd_semaphore.release()
-
-        self.client_sock.close()
+        try:
+            self.client_sock.close()
+        except socket.error:
+            pass
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
+        if self.player.dead:
+            self.player.disconnected = True
+            self.connected = False
+            self.client_sock.close()
+            self.disconnect(self, self.DH_key)
+            return b''
         try:
             size: int = unpack("<H", self.client_sock.recv(2))[0]
             data = self.client_sock.recv(size)
@@ -53,6 +61,8 @@ class ClientManager(threading.Thread):
         except socket.error:
             self.player.dead = True
             self.player.disconnected = True
+            self.connected = False
+            self.client_sock.close()
             self.disconnect(self, self.DH_key)
             return b''
         return data
@@ -66,6 +76,8 @@ class ClientManager(threading.Thread):
         except socket.error:
             self.player.dead = True
             self.player.disconnected = True
+            self.connected = False
+            self.client_sock.close()
             self.disconnect(self, self.DH_key)
 
     def send_msg(self, changes: Client.Output.StateUpdateNoAck):
