@@ -107,7 +107,6 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             updates_queue.put(msg)
         elif prefix == 1:
             msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
-            print(msg.server.addr())
             global want_to_change_server, amount_server_changes
             want_to_change_server = True
             amount_server_changes += 1
