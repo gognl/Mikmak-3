@@ -11,7 +11,6 @@ from server_files_normal.game.settings import *
 from central_server_files.encryption import *
 from _struct import unpack, pack
 from central_server_files.Constant import MAX_ENTITY_ID_SIZE, DH_p, DH_g, LOGIN_PORT_TO_CLIENT
-from base64 import urlsafe_b64encode as b64
 
 PROTOCOL_LEN = 2
 DATA_MAX_LENGTH = 510
@@ -52,7 +51,7 @@ def DH_with_normal(normal_sock: socket.socket, server: Server):
     x = pow(DH_g, a, DH_p)
     normal_sock.send(x.to_bytes(128, 'little'))
     y = normal_sock.recv(1024)
-    DH_normal_keys[server] = b64(pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little'))
+    DH_normal_keys[server] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
 def find_normal_server(ip: str):
     for server in NORMAL_SERVERS:
@@ -129,7 +128,6 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
             next_item_id += item_count
 
         encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_data, item_ids=item_ids).serialize(), DH_normal_keys[msg.server])
-
         size = pack("<H", len(encrypted_package_info))
 
         server_serverSocket_dict[msg.server].send(size)

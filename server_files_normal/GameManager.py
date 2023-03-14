@@ -79,8 +79,8 @@ class GameManager(threading.Thread):
         self.sock_to_LB.connect(LB_SERVER.addr())
         self.sock_to_LB.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_index].port.to_bytes(2, 'little'))
 
-        self.DH_keys: list[bytes] = [bytes(0) for _ in range(4)]
-        self.DH_login_key: bytes = bytes(0)
+        self.DH_keys: list[bytes] = [bytes(1) for _ in range(4)]
+        self.DH_login_key: bytes = bytes(1)
         a = random.randrange(DH_p)
 
         def DH_with_normal(server_index: int, keys_list: list[bytes]):
@@ -233,6 +233,7 @@ class GameManager(threading.Thread):
         while True:
             size = unpack('<H', self.sock_to_login.recv(2))[0]
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
+            print(self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
             self.id_info_dict[info_from_login.client_id] = info_from_login.info
             self.id_item_ids_dict[info_from_login.client_id] = info_from_login.item_ids
@@ -474,7 +475,6 @@ class GameManager(threading.Thread):
                                                                      enemy_details.notice_radius,
                                                                  'death_items': enemy_details.death_items,
                                                                  'move_cooldown': enemy_details.move_cooldown}}
-                        print("######################")
                         enemy = Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
                                       groups=tuple(),
                                       entity_id=enemy_details.entity_id, obstacle_sprites=pygame.sprite.Group(

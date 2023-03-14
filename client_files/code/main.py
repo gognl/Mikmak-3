@@ -119,10 +119,8 @@ def handle_server_pkts(updates_queue: Queue) -> None:
                     global server_socket
                     server_socket.close()
                     server_socket = socket.socket()
-                    print(msg.server.addr())
                     server_socket.connect(msg.server.addr())
 
-                    print(msg.src_server_index)
                     hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
                     server_socket.send(hello_msg.serialize())
 
