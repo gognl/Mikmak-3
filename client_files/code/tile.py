@@ -20,7 +20,4 @@ class Tile(pygame.sprite.Sprite):
         self.height: int = height
 
         # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
-        if self.sprite_type != "barrier":  # Barrier tiles don't get inflated collision boxes
-            self.hitbox = self.rect.inflate(0, -10)
-        else:
-            self.hitbox = self.rect.inflate(0, 26)  # Undo player collision box inflation
+        self.hitbox = self.rect.inflate(0, -10)
