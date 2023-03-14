@@ -239,7 +239,6 @@ def run_game(*args) -> None:
     # Connection with login
     login_addr: (str, int) = (login_host, login_port)
     login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    login_socket.settimeout(0.05)
 
     # Unpack the arguments
     screen: pygame.Surface = args[0]
@@ -315,7 +314,7 @@ def run_game(*args) -> None:
             inventory_items[item_name] = inventory_slot
 
     world.player.inventory_items = inventory_items
-
+    login_socket.settimeout(0.05)
     # The main game loop
     running: bool = True
     while running:
@@ -339,7 +338,8 @@ def run_game(*args) -> None:
             login_socket.send(chat_msgs_lst.serialize())
         try:
             size = unpack('<H', login_socket.recv(2))[0]
-            chat_msgs_lst_recvd = ChatMsgsLst(ser=login_socket.recv(size))
+            chat_msgs_lst_recvd = ChatMsgsLst(ser=login_socket.recv(size)).msg_lst
+            print(chat_msgs_lst_recvd)
             world.ui.recv_msgs.extend(chat_msgs_lst_recvd)
         except socket.timeout:
             pass

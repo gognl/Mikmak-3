@@ -1,5 +1,6 @@
 import random
 import threading
+from threading import Lock
 import time
 from collections import deque
 import socket
@@ -35,6 +36,10 @@ def login_main(new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_l
 
     handle_disconnect_Thread = threading.Thread(target=handle_disconnect, args=(db,))
     threads.append(handle_disconnect_Thread)
+
+    chat_lock = Lock()
+    handle_chat_Thread = threading.Thread(target=handle_chat_msgs, args=(chat_lock,))
+    threads.append(handle_chat_Thread)
 
     for thread in threads:
         thread.start()
@@ -167,22 +172,25 @@ def handle_disconnect(db: SQLDataBase):
             update_user_info(db, player_data)
 
 
-def handle_chat_msgs():
+def handle_chat_msgs(chat_lock: Lock):
     while True:
-        for client_id in id_socket_dict:
-            client_sock: socket.socket = id_socket_dict[client_id]
+        with chat_lock:
+            dict_copy = dict(id_socket_dict)
+            for client_id in dict_copy:
+                client_sock: socket.socket = dict_copy[client_id]
 
-            try:
-                size = unpack('<H', client_sock.recv(2))[0]
-            except socket.timeout:
-                continue
-
-            msgs_lst = ChatMsgsLst(ser=get_msg_from_timeout_socket(client_sock, size))
-
-            for id2 in id_socket_dict:
-                if client_id == id2:
+                try:
+                    size = unpack('<H', client_sock.recv(2))[0]
+                except socket.timeout:
                     continue
-                client_sock2 = id_socket_dict[id2]
-                client_sock2.send(pack('<H', len(msgs_lst.serialize())))
-                client_sock2.send(msgs_lst.serialize())
+
+                msgs_lst = ChatMsgsLst(ser=get_msg_from_timeout_socket(client_sock, size))
+
+                for id2 in dict_copy:
+                    if client_id == id2:
+                        continue
+                    client_sock2 = dict_copy[id2]
+                    client_sock2.send(pack('<H', len(msgs_lst.serialize())))
+                    client_sock2.send(msgs_lst.serialize())
+
 
