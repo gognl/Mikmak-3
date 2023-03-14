@@ -118,6 +118,8 @@ class Player(pygame.sprite.Sprite):
 
         self.dt = 1
 
+        self.free_item_ids = []
+
         super().__init__(groups)
 
     def process_client_updates(self, update: Client.Input.PlayerUpdate):
@@ -158,7 +160,7 @@ class Player(pygame.sprite.Sprite):
                             self.switch_weapon(0)
 
         for item_action in update.item_actions:
-            if item_action.action_type == 'use':
+            if item_action.action_type == 'use':  # TODO remove from the pool counter
                 item_name = item_action.item_name
                 used = True
                 if item_name == "heal":
@@ -189,13 +191,16 @@ class Player(pygame.sprite.Sprite):
                         del self.inventory_items[item_action.item_name]
 
             elif item_action.action_type == 'drop' and self.inventory_items[item_action.item_name] > 0:
-                # TODO check that the item_id is actually in the player's inventory items pool
-                self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
-                self.inventory_items[item_action.item_name] -= 1
-                if self.inventory_items[item_action.item_name] == 0:
-                    if item_action.item_name == "kettle" and self.weapon_index == 2:
-                        self.switch_weapon(0)
-                    del self.inventory_items[item_action.item_name]
+                if item_action.item_id in self.free_item_ids:
+                    self.free_item_ids.remove(item_action.item_id)
+                    self.create_dropped_item(item_action.item_name, (self.rect.centerx, self.rect.centery), item_action.item_id)
+                    self.inventory_items[item_action.item_name] -= 1
+                    if self.inventory_items[item_action.item_name] == 0:
+                        if item_action.item_name == "kettle" and self.weapon_index == 2:
+                            self.switch_weapon(0)
+                        del self.inventory_items[item_action.item_name]
+                else:
+                    pass  # add to hack points
 
             elif item_action.action_type == 'skill':
                 if item_action.item_id == 1 and self.can_speed and self.energy >= self.speed_cost:  # speed
@@ -382,7 +387,7 @@ class Player(pygame.sprite.Sprite):
                         item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                         self.xp += 1
                         item.die = True
-                    elif item.name == "grave_player" or item.name == "grave_pet":
+                    elif item.name == "grave_player":
                         if len(self.inventory_items) < INVENTORY_ITEMS:
                             item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                             self.inventory_items[item.name + f'({len(self.inventory_items)})'] = 1
@@ -396,6 +401,7 @@ class Player(pygame.sprite.Sprite):
                             item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='pickup'))
                             self.inventory_items[item.name] = 1
                             item.die = True
+                    self.free_item_ids.append(item.item_id)
 
     def create_dropped_item(self, name, pos, item_id):
         new_item = Item(name, (self.item_sprites,), pos, item_id)
