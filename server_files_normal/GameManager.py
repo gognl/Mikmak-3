@@ -300,7 +300,8 @@ class GameManager(threading.Thread):
                       self.id_info_dict[entity_id].info[3],
                       self.id_info_dict[entity_id].info[5], self.id_info_dict[entity_id].info[6],
                       self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
-                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning)
+                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning,
+                      self.layout)
 
     @staticmethod
     def get_player_data(player: Player):

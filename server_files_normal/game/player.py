@@ -14,7 +14,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, groups, entity_id: int, pos: (int, int), health, resistance,
                  strength, xp, inventory, create_bullet, create_kettle, weapons_group,
                  create_attack, item_sprites, get_free_item_id, spawn_enemy_from_egg,
-                 magnetic_players, activate_lightning):
+                 magnetic_players, activate_lightning, layout):
                  
         self.client_manager: ClientManager = None
         self.entity_id = entity_id
@@ -124,6 +124,8 @@ class Player(pygame.sprite.Sprite):
 
         self.time_since_last_update = time()
 
+        self.layout = layout
+
         super().__init__(groups)
 
     def process_client_updates(self, update: Client.Input.PlayerUpdate):
@@ -139,7 +141,12 @@ class Player(pygame.sprite.Sprite):
             self.client_manager.hack_points -= 1
         self.time_since_last_update = current_time
 
-        self.update_pos(update.pos)
+        # Check that the player isn't on water or obstacles
+        if int(self.layout['floor'][update.pos[1]][update.pos[0]]) in SPAWNABLE_TILES and int(
+                self.layout['objects'][update.pos[1]][update.pos[0]]) == -1:
+            self.update_pos(update.pos)
+        else:
+            self.client_manager.hack_points -= 2
 
         self.status = update.status
 
