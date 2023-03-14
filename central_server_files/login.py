@@ -111,19 +111,26 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
         msg: LB_to_login_msg = LB_to_login_q.pop()
         info_data = InfoData(info=load_player_data(db, msg.client_id))  # list of the info
         client_id_bytes = msg.client_id.to_bytes(6, 'little')
-        encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_data).serialize(), DH_normal_keys[msg.server])
+
+        inventory_from_info: dict[str, int] = info_data.info[6]
+        inventory: dict[str, tuple[list[int], int]] = {}
+        global next_item_id
+        item_ids = []
+        for item_name, item_count in inventory_from_info.items():
+            current_item_ids = [next_item_id+i for i in range(item_count)]
+            item_ids.extend(current_item_ids)
+            inventory[item_name] = (current_item_ids, item_count)
+            next_item_id += item_count
+
+        encrypted_package_info = encrypt(InfoMsgToNormal(client_id=msg.client_id, info_list=info_data, item_ids=item_ids).serialize(), DH_normal_keys[msg.server])
+
         size = pack("<H", len(encrypted_package_info))
 
         server_serverSocket_dict[msg.server].send(size)
         server_serverSocket_dict[msg.server].send(encrypted_package_info)
 
         client_sock: socket.socket = id_socket_dict[msg.client_id]
-        inventory_from_info: dict[str, int] = info_data.info[6]
-        inventory: dict[str, tuple[list[int], int]] = {}
-        global next_item_id
-        for item_name, item_count in inventory_from_info.items():
-            inventory[item_name] = ([next_item_id+i for i in range(item_count)], item_count)
-            next_item_id += item_count
+
 
         data_to_client = DataToClient(pos_x=info_data.info[0], pos_y=info_data.info[1], health=info_data.info[2],
                                       strength=info_data.info[3], resistance=info_data.info[4], xp=info_data.info[5], inventory=inventory)

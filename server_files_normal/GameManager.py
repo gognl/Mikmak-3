@@ -111,7 +111,8 @@ class GameManager(threading.Thread):
             thread.join()
 
         self.read_only_players = pygame.sprite.Group()
-        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {}, {}]  # in index i are the (id, update) pairs to server i
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
+                                                                                               {}]  # in index i are the (id, update) pairs to server i
         self.output_overlapped_items_updates: list[dict[int, Client.Output.ItemUpdate]] = [{}, {}, {}, {}]
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
         self.change_ids: list[int] = []
@@ -121,6 +122,7 @@ class GameManager(threading.Thread):
         threading.Thread(target=self.recv_from_LB).start()
 
         self.id_info_dict: dict[int: InfoData] = {}
+        self.id_item_ids_dict: dict[int, list[int]] = {}
 
         self.layout: Dict[str, List[List[str]]] = {
             'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
@@ -144,7 +146,8 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='white_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -161,7 +164,8 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='green_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -178,7 +182,8 @@ class GameManager(threading.Thread):
                         self.layout['objects'][pos_y][pos_y]) == -1:
                     Enemy(enemy_name='red_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                           item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
@@ -186,13 +191,18 @@ class GameManager(threading.Thread):
 
         for _ in range(50):
             while True:
-                pos_x = random.randrange(my_server_index % 2 * self.center.x, (my_server_index % 2 + 1) * self.center.x) // 64
-                pos_y = random.randrange(my_server_index // 2 * self.center.y, (my_server_index // 2 + 1) * self.center.y) // 64
-                pos = (pos_x*64, pos_y*64)
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
                 if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
                         self.layout['objects'][pos_y][pos_y]) == -1:
-                    Enemy(enemy_name='yellow_cow', pos=pos, groups=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_id=next(self.generate_entity_id), obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()), item_sprites=self.items,
+                    Enemy(enemy_name='yellow_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
+                          item_sprites=self.items,
                           create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                           get_free_item_id=self.get_free_item_id)
                     break
@@ -206,9 +216,9 @@ class GameManager(threading.Thread):
         for _ in range(100):
             while True:
                 random_x = random.randrange(my_server_index % 2 * self.center.x,
-                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                                            (my_server_index % 2 + 1) * self.center.x) // 64
                 random_y = random.randrange(my_server_index // 2 * self.center.y,
-                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                                            (my_server_index // 2 + 1) * self.center.y) // 64
                 name = item_names[int(random.randint(0, len(item_names) - 1))]
 
                 if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
@@ -219,13 +229,13 @@ class GameManager(threading.Thread):
                                                                        pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
 
-
     def recv_from_login(self):
         while True:
             size = unpack('<H', self.sock_to_login.recv(2))[0]
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
             self.id_info_dict[info_from_login.client_id] = info_from_login.info
+            self.id_item_ids_dict[info_from_login.client_id] = info_from_login.item_ids
 
     def recv_from_LB(self):
         while True:
@@ -268,7 +278,8 @@ class GameManager(threading.Thread):
 
             for i in self.other_server_indices:
                 if len(item_details_to_servers[i]) != 0:
-                    self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(item_details_list=item_details_to_servers[i]).serialize())
+                    self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(
+                        item_details_list=item_details_to_servers[i]).serialize())
 
     def get_free_item_id(self):
         return next(self.item_id_generator)
@@ -281,10 +292,10 @@ class GameManager(threading.Thread):
 
         if self.my_server_index == 0:
             for style_index, (style, layout) in enumerate(self.layout.items()):
-                for row_index in range(0, self.center.y//64+1):
+                for row_index in range(0, self.center.y // 64 + 1):
                     if 0 <= row_index < ROW_TILES:
                         row = layout[row_index]
-                        for col_index in range(0, self.center.x//64+1):
+                        for col_index in range(0, self.center.x // 64 + 1):
                             if 0 <= col_index < COL_TILES:
                                 col = row[col_index]
                                 if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
@@ -292,12 +303,12 @@ class GameManager(threading.Thread):
                                     y: int = row_index * TILESIZE
 
                                     if style == 'objects':
-                                        Barrier((x, y), (self.barriers, ))
+                                        Barrier((x, y), (self.barriers,))
                                     elif style == 'boundary':
-                                        Barrier((x, y), (self.barriers, ))
+                                        Barrier((x, y), (self.barriers,))
         elif self.my_server_index == 1:
             for style_index, (style, layout) in enumerate(self.layout.items()):
-                for row_index in range(0, self.center.y//64+1):
+                for row_index in range(0, self.center.y // 64 + 1):
                     if 0 <= row_index < ROW_TILES:
                         row = layout[row_index]
                         for col_index in range(self.center.x // 64, COL_TILES):
@@ -334,7 +345,7 @@ class GameManager(threading.Thread):
                 for row_index in range(self.center.y // 64, ROW_TILES):
                     if 0 <= row_index < ROW_TILES:
                         row = layout[row_index]
-                        for col_index in range(0, self.center.x//64+1):
+                        for col_index in range(0, self.center.x // 64 + 1):
                             if 0 <= col_index < COL_TILES:
                                 col = row[col_index]
                                 if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
@@ -359,13 +370,18 @@ class GameManager(threading.Thread):
 
     def add_player(self, entity_id: int):
         pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
-        return Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
-                      self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
-                      self.id_info_dict[entity_id].info[3],
-                      self.id_info_dict[entity_id].info[5], self.id_info_dict[entity_id].info[6],
-                      self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
-                      self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players, self.activate_lightning,
-                      self.layout)
+        player = Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
+                        self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
+                        self.id_info_dict[entity_id].info[3],
+                        self.id_info_dict[entity_id].info[5], self.id_info_dict[entity_id].info[6],
+                        self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
+                        self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
+                        self.activate_lightning,
+                        self.layout)
+        player.free_item_ids = self.id_item_ids_dict[entity_id]
+        self.id_info_dict.pop(entity_id)
+        self.id_item_ids_dict.pop(entity_id)
+        return player
 
     @staticmethod
     def get_player_data(player: Player):
@@ -420,7 +436,7 @@ class GameManager(threading.Thread):
         # Update the player
         player.update_pos(player_update.pos)
         player.status = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle',
-                                        6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(player_update.status)
+                         6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(player_update.status)
         player.health = player_update.health
 
     def receive_from_another_normal_servers(self):
@@ -461,7 +477,8 @@ class GameManager(threading.Thread):
                         print("######################")
                         enemy = Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
                                       groups=tuple(),
-                                      entity_id=enemy_details.entity_id, obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()),
+                                      entity_id=enemy_details.entity_id, obstacle_sprites=pygame.sprite.Group(
+                                self.barriers.sprites() + self.enemies.sprites()),
                                       item_sprites=self.items,
                                       create_explosion=self.create_explosion, create_bullet=self.create_bullet,
                                       get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
@@ -473,11 +490,12 @@ class GameManager(threading.Thread):
                         item_details_list = NormalServer.ItemDetailsList(ser=data).item_details_list
                         for item_details in item_details_list:
                             item = Item(item_details.name, tuple(), item_details.pos, item_details.id)
-                            item.actions.append(Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
+                            item.actions.append(
+                                Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
                             self.items.add(item)
 
                     elif prefix == 3:  # details about player moving to my region
-                        player_data = PlayerData(ser=data)
+                        player_data = NormalServer.PlayerDataToNormal(ser=data)
                         print(f"{player_data.entity_id} should connect")
                         for player in self.read_only_players:
                             if player_data.entity_id == player.entity_id:
@@ -489,12 +507,14 @@ class GameManager(threading.Thread):
                                 player.inventory_items = player_data.inventory
                                 break
                         else:
-                            Player((self.read_only_players,), player_data.entity_id, player_data.pos,
-                                   player_data.health, player_data.resistance,
-                                   player_data.strength, player_data.xp, player_data.inventory, self.create_bullet,
-                                   self.create_kettle, self.weapons, self.create_attack, self.items,
-                                   self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
-                                   self.activate_lightning)
+                            player = Player((self.read_only_players,), player_data.entity_id, player_data.pos,
+                                            player_data.health, player_data.resistance,
+                                            player_data.strength, player_data.xp, player_data.inventory,
+                                            self.create_bullet,
+                                            self.create_kettle, self.weapons, self.create_attack, self.items,
+                                            self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
+                                            self.activate_lightning, self.layout)
+                        player.free_item_ids = player_data.item_ids
 
     def add_overlapped_update(self,
                               update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
@@ -534,7 +554,6 @@ class GameManager(threading.Thread):
         time.sleep(3)
         self.change_ids.remove(client_manager.player.entity_id)
 
-
     def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
         for cmd in cmds:
             client_manager = cmd[0]
@@ -562,14 +581,16 @@ class GameManager(threading.Thread):
                 print('bye')
                 encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'),
                                               self.DH_keys[suitable_server_index])
-                player_data = PlayerData(entity_id=player.entity_id, pos=(player_pos.x, player_pos.y), health=player.health,
-                                         strength=player.strength, resistance=player.resistance,
-                                         xp=player.xp, inventory=player.inventory_items)
+                player_data = NormalServer.PlayerDataToNormal(entity_id=player.entity_id,
+                                                              pos=(player_pos.x, player_pos.y), health=player.health,
+                                                              strength=player.strength, resistance=player.resistance,
+                                                              xp=player.xp, inventory=player.inventory_items, item_ids=player.free_item_ids)
 
                 self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
 
                 self.change_ids.append(player.entity_id)
-                threading.Thread(target=self.send_change_server, args=(client_manager, Client.Output.ChangeServerMsg(NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id, self.my_server_index))).start()
+                threading.Thread(target=self.send_change_server, args=(client_manager, Client.Output.ChangeServerMsg(
+                    NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id, self.my_server_index))).start()
 
                 self.players.remove(player)
                 self.alive_entities.remove(player)
@@ -658,7 +679,7 @@ class GameManager(threading.Thread):
                 for i in self.other_server_indices:
                     if len(self.output_overlapped_players_updates[i]) + len(
                             self.output_overlapped_enemies_updates[i]) + len(
-                            self.output_overlapped_items_updates[i]) != 0:
+                        self.output_overlapped_items_updates[i]) != 0:
                         state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
                             player_changes=tuple(self.output_overlapped_players_updates[i].values()),
                             enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
@@ -782,7 +803,8 @@ class GameManager(threading.Thread):
                 Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
                       groups=(self.enemies, self.all_obstacles, self.alive_entities),
                       entity_id=next(self.generate_entity_id),
-                      obstacle_sprites=pygame.sprite.Group(self.barriers.sprites()+self.enemies.sprites()), item_sprites=self.items,
+                      obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
+                      item_sprites=self.items,
                       create_explosion=self.create_explosion,
                       create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
                 break

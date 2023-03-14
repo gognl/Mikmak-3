@@ -291,6 +291,34 @@ class Client:
 
 
 class NormalServer:
+    class PlayerDataToNormal(Serializable):
+        def __init__(self, **kwargs):
+            s: bytes = kwargs.pop('ser', b'')
+            super().__init__(ser=s)
+            if s != b'':
+                return
+            self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
+
+            self.pos = kwargs.pop('pos')
+
+            self.health = kwargs.pop('health')  # 1 byte unsigned integer
+            self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
+            self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
+            self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
+
+            self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
+            self.item_ids = kwargs.pop('item_ids')
+
+        def _get_attr(self) -> dict:
+            return {'entity_id': (int, 'u_6'),
+                    'pos': (tuple, (int, 'u_2')),
+                    'health': (int, 'u_1'),
+                    'strength': (int, 'u_1'),
+                    'resistance': (int, 'u_1'),
+                    'xp': (int, 'u_2'),
+                    'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1'))),
+                    'item_ids': (list, (int, 'u_3'))}
+
     class EnemyDetails(Serializable):
         def __init__(self, **kwargs):
             s: bytes = kwargs.pop('ser', b'')
@@ -460,9 +488,10 @@ class InfoMsgToNormal(Serializable):
 
         self.client_id: int = kwargs['client_id']
         self.info: InfoData = kwargs['info_list']
+        self.item_ids: list[int] = kwargs['item_ids']
 
     def _get_attr(self) -> dict:
-        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o')}
+        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_ids': (list, (int, 'u_3'))}
 
 
 class PlayerData(Serializable):
