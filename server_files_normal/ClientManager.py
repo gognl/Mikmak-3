@@ -49,7 +49,6 @@ class ClientManager(threading.Thread):
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
-        # print(self.hack_points)
         if self.player.dead or self.hack_points <= 0:
             self.player.dead = True
             self.player.disconnected = True

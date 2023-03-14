@@ -351,7 +351,7 @@ class GameManager(threading.Thread):
                             None, None, None, self.create_bullet, self.create_kettle, self.weapons, self.create_attack,
                             self.items,
                             self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
-                            self.activate_lightning)
+                            self.activate_lightning, self.layout)
 
         # Update the player
         player.update_pos(player_update.pos)

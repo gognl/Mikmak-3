@@ -142,8 +142,9 @@ class Player(pygame.sprite.Sprite):
         self.time_since_last_update = current_time
 
         # Check that the player isn't on water or obstacles
-        if int(self.layout['floor'][update.pos[1]][update.pos[0]]) in SPAWNABLE_TILES and int(
-                self.layout['objects'][update.pos[1]][update.pos[0]]) == -1:
+        player_center_tile = ((update.pos[0]+32)//64, (update.pos[1]+32)//64)
+        if int(self.layout['floor'][player_center_tile[1]][player_center_tile[0]]) in SPAWNABLE_TILES and int(
+                self.layout['objects'][player_center_tile[1]][player_center_tile[0]]) == -1:
             self.update_pos(update.pos)
         else:
             self.client_manager.hack_points -= 2
