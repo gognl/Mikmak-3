@@ -30,6 +30,12 @@ from server_files_normal.encryption import encrypt, decrypt
 class GameManager(threading.Thread):
     def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, my_server_index: int):
         super().__init__()
+        self.layout: Dict[str, List[List[str]]] = {
+            'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
+            'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
+            'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
+        }
+
         self.client_managers: deque[ClientManager] = client_managers
         self.cmd_queue: Queue[Tuple[ClientManager, Client.Input.ClientCMD]] = Queue()
         threading.Thread(target=self.add_messages_to_queue, args=(cmd_semaphore,)).start()
@@ -123,12 +129,6 @@ class GameManager(threading.Thread):
 
         self.id_info_dict: dict[int: InfoData] = {}
         self.id_item_ids_dict: dict[int, list[int]] = {}
-
-        self.layout: Dict[str, List[List[str]]] = {
-            'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
-            'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
-            'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
-        }
 
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
         self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls

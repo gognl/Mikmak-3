@@ -165,7 +165,6 @@ def handle_disconnect(db: SQLDataBase):
                 continue
 
             player_data = PlayerData(ser=decrypt(get_msg_from_timeout_socket(normal_sock, size), DH_normal_keys[server]))
-            print(player_data)
 
             disconnected_client_sock = id_socket_dict[player_data.entity_id]
             disconnected_client_sock.close()

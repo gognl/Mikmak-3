@@ -317,7 +317,7 @@ class NormalServer:
                     'resistance': (int, 'u_1'),
                     'xp': (int, 'u_2'),
                     'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1'))),
-                    'item_ids': (list, (int, 'u_3'))}
+                    'item_ids': (list, (int, 'u_4'))}
 
     class EnemyDetails(Serializable):
         def __init__(self, **kwargs):
@@ -482,7 +482,7 @@ class InfoData(Serializable):
 class InfoMsgToNormal(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
-        super().__init__(ser)
+        super().__init__(ser=ser)
         if ser != b'':
             return
 
@@ -491,7 +491,7 @@ class InfoMsgToNormal(Serializable):
         self.item_ids: list[int] = kwargs['item_ids']
 
     def _get_attr(self) -> dict:
-        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_ids': (list, (int, 'u_3'))}
+        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_ids': (list, (int, 'u_4'))}
 
 
 class PlayerData(Serializable):
