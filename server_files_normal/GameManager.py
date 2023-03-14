@@ -34,6 +34,8 @@ class GameManager(threading.Thread):
         self.cmd_queue: Queue[Tuple[ClientManager, Client.Input.ClientCMD]] = Queue()
         threading.Thread(target=self.add_messages_to_queue, args=(cmd_semaphore,)).start()
 
+        self.my_server_index = my_server_index
+
         def generate_enemy_id():
             for i in range(AMOUNT_ENEMIES_PER_SERVER):
                 yield my_server_index * AMOUNT_ENEMIES_PER_SERVER + i
@@ -50,14 +52,20 @@ class GameManager(threading.Thread):
         self.weapons: pygame.sprite.Group = pygame.sprite.Group()
         self.items: pygame.sprite.Group = pygame.sprite.Group()
         self.magnetic_players: pygame.sprite.Group = pygame.sprite.Group()
-        self.barriers = pygame.sprite.Group()
 
         self.players_updates: List[Client.Output.PlayerUpdate] = []
         self.enemy_changes: List[Client.Output.EnemyUpdate] = []
         self.item_changes: List[Client.Output.ItemUpdate] = []
 
+        self.layout: Dict[str, List[List[str]]] = {
+            'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
+            'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
+            'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
+        }
+
         self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
         self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
+        self.barriers = pygame.sprite.Group()
         self.initialize_obstacle_sprites()
 
         self.sock_to_login: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -125,12 +133,6 @@ class GameManager(threading.Thread):
         threading.Thread(target=self.recv_from_LB).start()
 
         self.id_info_dict: dict[int: InfoData] = {}
-
-        self.layout: Dict[str, List[List[str]]] = {
-            'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
-            'objects': import_csv_layout('./graphics/map/map_Objects.csv'),
-            'boundary': import_csv_layout('./graphics/map/map_Barriers.csv'),
-        }
 
         for _ in range(50):
             while True:
@@ -273,15 +275,21 @@ class GameManager(threading.Thread):
         return self.obstacle_sprites
 
     def initialize_obstacle_sprites(self):
-        layout = import_csv_layout('./graphics/map/map_Barriers.csv')
-        for row_index in range(0, ROW_TILES):
-            row = layout[row_index]
-            for col_index in range(0, COL_TILES):
-                col = row[col_index]
-                if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
-                    x: int = col_index * TILESIZE
-                    y: int = row_index * TILESIZE
-                    Barrier((x, y), (self.barriers, ))
+        for style_index, (style, layout) in enumerate(self.layout.items()):
+            for row_index in range(self.my_server_index*ROW_TILES//2, self.my_server_index*ROW_TILES//2+ROW_TILES//2):
+                if 0 <= row_index < ROW_TILES:
+                    row = layout[row_index]
+                    for col_index in range(self.my_server_index*COL_TILES//2, self.my_server_index*COL_TILES//2+COL_TILES//2):
+                        if 0 <= col_index < COL_TILES:
+                            col = row[col_index]
+                            if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
+                                x: int = col_index * TILESIZE
+                                y: int = row_index * TILESIZE
+
+                                if style == 'objects':
+                                    Barrier((x, y), (self.barriers, ))
+                                elif style == 'boundary':
+                                    Barrier((x, y), (self.barriers, ))
 
     def add_messages_to_queue(self, cmd_semaphore: threading.Semaphore):
         while True:

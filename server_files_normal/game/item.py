@@ -8,7 +8,6 @@ from server_files_normal.structures import Client
 
 class Item(pygame.sprite.Sprite):
     def __init__(self, name, groups, pos, item_id):
-        super().__init__(groups)
 
         self.item_id = item_id
         self.actions: deque = deque()
@@ -40,6 +39,8 @@ class Item(pygame.sprite.Sprite):
         self.dt = 1
 
         self.speed = 10
+
+        super().__init__(groups)
 
     def update_movement(self, magnetic_players):
         if len(magnetic_players) != 0:
