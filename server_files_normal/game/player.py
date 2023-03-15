@@ -136,10 +136,11 @@ class Player(pygame.sprite.Sprite):
         # Anti-cheat
         pos = Vector2(self.rect.topleft)
         current_time = time()
-        speed = pos.distance_to(update.pos)/(current_time - self.time_since_last_update)
-        if (speed > MAX_SPEED and not self.is_fast) or (speed > self.speed_skill_factor*MAX_SPEED and self.is_fast):
-            self.client_manager.hack_points -= 1
-        self.time_since_last_update = current_time
+        if current_time != self.time_since_last_update:
+            speed = pos.distance_to(update.pos)/(current_time - self.time_since_last_update)
+            if (speed > MAX_SPEED and not self.is_fast) or (speed > self.speed_skill_factor*MAX_SPEED and self.is_fast):
+                self.client_manager.hack_points -= 1
+            self.time_since_last_update = current_time
 
         # Check that the player isn't on water or obstacles
         player_center_tile = ((update.pos[0]+32)//64, (update.pos[1]+32)//64)
