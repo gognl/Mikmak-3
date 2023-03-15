@@ -29,3 +29,21 @@ DEFAULT_Y = 800
 DEFAULT_STRENGTH = 0
 DEFAULT_RESISTANCE = 0
 DEFAULT_XP = 0
+
+TILESIZE = 64
+ROW_TILES: int = 450
+COL_TILES: int = 800
+MAP_WIDTH = TILESIZE * COL_TILES
+MAP_HEIGHT = TILESIZE * ROW_TILES
+
+from structures import ServerSer, Server
+
+with open("../server_files_normal/game/normal_ips.txt", 'r') as f:
+    lines = f.readlines()
+    for i in range(5):
+        lines[i] = lines[i][:-1]
+
+    NORMAL_SERVERS = [Server(lines[0], 13412), Server(lines[1], 32142), Server(lines[2], 18123), Server(lines[3], 19413)]
+    NORMAL_SERVERS_FOR_CLIENT = [Server(lines[0], 14760), Server(lines[1], 14767), Server(lines[2], 15876), Server(lines[3], 17120)]
+    LOGIN_SERVER = Server(lines[4], 12304)
+    LB_SERVER = Server(lines[4], 12328)

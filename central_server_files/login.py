@@ -1,4 +1,5 @@
 import random
+import struct
 import threading
 from threading import Lock
 import time
@@ -7,10 +8,10 @@ import socket
 from central_server_files.structures import *
 from central_server_files.db_utils import load_info_by_id, is_user_in_db, add_new_to_db, get_current_id, update_id_table, update_user_info, load_player_data, get_id_by_name
 from central_server_files.SQLDataBase import SQLDataBase
-from server_files_normal.game.settings import *
+from central_server_files.Constant import *
 from central_server_files.encryption import *
 from _struct import unpack, pack
-from central_server_files.Constant import MAX_ENTITY_ID_SIZE, DH_p, DH_g, LOGIN_PORT_TO_CLIENT
+from central_server_files.Constant import DH_p, DH_g, LOGIN_PORT_TO_CLIENT
 
 PROTOCOL_LEN = 2
 DATA_MAX_LENGTH = 510
@@ -61,7 +62,7 @@ def find_normal_server(ip: str):
 
 def initialize_conn_with_normals(sock_to_normals: socket.socket):
     amount_connected = 0
-    while amount_connected < 2:
+    while amount_connected < 4:
         normal_sock, addr = sock_to_normals.accept()
         port = int.from_bytes(normal_sock.recv(2), 'little')
         server = Server(addr[0], port)
@@ -185,7 +186,7 @@ def handle_chat_msgs(chat_lock: Lock):
 
                 try:
                     size = unpack('<H', client_sock.recv(2))[0]
-                except socket.timeout:
+                except (socket.timeout, struct.error):
                     continue
                 except OSError:
                     continue

@@ -1,7 +1,6 @@
 import socket
 import threading
 from collections import deque
-from server_files_normal.game.settings import *
 from central_server_files.Constant import *
 import central_server_files.LB as LB
 import central_server_files.login as login

@@ -3,7 +3,7 @@ import threading
 import time
 from collections import deque
 from central_server_files.structures import *
-from server_files_normal.game.settings import *
+from Constant import *
 
 center = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 players: dict[int, PlayerCentral] = {}
@@ -11,7 +11,7 @@ normal_sockets: dict[Server, socket.socket] = {}
 
 def initialize_conn_with_normals(sock_to_normals: socket.socket):
     amount_connected = 0
-    while amount_connected < 2:
+    while amount_connected < 4:
         normal_sock, addr = sock_to_normals.accept()
         port = int.from_bytes(normal_sock.recv(2), 'little')
         server = Server(addr[0], port)

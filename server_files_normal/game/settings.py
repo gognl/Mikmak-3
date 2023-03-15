@@ -38,11 +38,15 @@ class Server:
         return hash(self.addr())
 
 
-# TODO: get this list in the starting of the server
-NORMAL_SERVERS = [Server('127.0.0.1', 13412), Server('127.0.0.1', 32142), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
-NORMAL_SERVERS_FOR_CLIENT = [Server('127.0.0.1', 14760), Server('127.0.0.1', 14767), Server('192.168.172.117', 14769), Server('192.168.172.117', 14769)]
-LOGIN_SERVER = Server('127.0.0.1', 12304)
-LB_SERVER = Server('127.0.0.1', 12328)
+with open("../server_files_normal/game/normal_ips.txt", 'r') as f:
+    lines = f.readlines()
+    for i in range(5):
+        lines[i] = lines[i][:-1]
+
+    NORMAL_SERVERS = [Server(lines[0], 13412), Server(lines[1], 32142), Server(lines[2], 18123), Server(lines[3], 19413)]
+    NORMAL_SERVERS_FOR_CLIENT = [Server(lines[0], 14760), Server(lines[1], 14767), Server(lines[2], 15876), Server(lines[3], 17120)]
+    LOGIN_SERVER = Server(lines[4], 12304)
+    LB_SERVER = Server(lines[4], 12328)
 
 weapon_data = {
     'sword': {'damage': 100, 'graphic': './graphics/weapons/sword/full.png'},

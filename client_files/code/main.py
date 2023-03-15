@@ -341,7 +341,6 @@ def run_game(*args) -> None:
         state_update: NormalServer.Output.StateUpdate
         screen, clock, world, tick_update, state_update, msg_lst = game_tick(screen, clock, world)
         if msg_lst:
-            print(msg_lst)
             chat_msgs_lst: ChatMsgsLst = ChatMsgsLst(msg_lst=msg_lst)
             size = pack('<H', len(chat_msgs_lst.serialize()))
             login_socket.send(size)
@@ -349,7 +348,6 @@ def run_game(*args) -> None:
         try:
             size = unpack('<H', login_socket.recv(2))[0]
             chat_msgs_lst_recvd = ChatMsgsLst(ser=get_msg_from_timeout_socket(login_socket, size)).msg_lst
-            print(chat_msgs_lst_recvd)
             world.ui.recv_msgs.extend(chat_msgs_lst_recvd)
         except socket.timeout:
             pass
@@ -389,8 +387,7 @@ login_port: int
 
 def main():
     global login_host, login_port
-    # login_host, login_port = sys.argv[1], sys.argv[2]
-    login_host, login_port = '127.0.0.1', LOGIN_PORT_TO_CLIENT
+    login_host, login_port = sys.argv[1], LOGIN_PORT_TO_CLIENT
 
     # Initialize the game
     screen, clock, world = initialize_game()

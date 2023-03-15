@@ -104,8 +104,6 @@ class GameManager(threading.Thread):
 
         DH_threads: list[threading.Thread] = []
         for i in self.other_server_indices:
-            if i > 1:
-                continue
             DH_threads.append(threading.Thread(target=DH_with_normal, args=(i, self.DH_keys)))
 
         DH_threads.append(threading.Thread(target=DH_with_login))
@@ -233,7 +231,6 @@ class GameManager(threading.Thread):
         while True:
             size = unpack('<H', self.sock_to_login.recv(2))[0]
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
-            print(self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
             self.id_info_dict[info_from_login.client_id] = info_from_login.info
             self.id_item_ids_dict[info_from_login.client_id] = info_from_login.item_ids
@@ -449,7 +446,6 @@ class GameManager(threading.Thread):
                 except socket.timeout:
                     continue
                 except ConnectionResetError:
-                    print(i)
                     continue
                 if Server(addr[0], addr[1] - self.my_server_index) == NORMAL_SERVERS[i]:
                     data = decrypt(data, self.DH_keys[i])
@@ -496,7 +492,6 @@ class GameManager(threading.Thread):
 
                     elif prefix == 3:  # details about player moving to my region
                         player_data = NormalServer.PlayerDataToNormal(ser=data)
-                        print(f"{player_data.entity_id} should connect")
                         for player in self.read_only_players:
                             if player_data.entity_id == player.entity_id:
                                 player: Player
@@ -578,7 +573,6 @@ class GameManager(threading.Thread):
             player_pos = player.get_pos()
             suitable_server_index = self.find_suitable_server_index(player_pos)
             if suitable_server_index != self.my_server_index:
-                print('bye')
                 encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'),
                                               self.DH_keys[suitable_server_index])
                 player_data = NormalServer.PlayerDataToNormal(entity_id=player.entity_id,

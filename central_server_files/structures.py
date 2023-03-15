@@ -71,7 +71,7 @@ class Server:
         return self.ip, self.port
 
     def __eq__(self, other):
-        assert isinstance(other, Server)
+        assert isinstance(other, Server) or isinstance(other, ServerSer)
         return self.ip == other.ip and self.port == other.port
 
     def __hash__(self):

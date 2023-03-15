@@ -76,7 +76,7 @@ def disconnect_client_manager(client_manager: ClientManager, DH_key):
 client_managers: deque[ClientManager]
 game_manager: GameManager
 def main():
-    server_index = 0
+    server_index = int(input("Enter the index of the server (like in the normal_ips files): "))
     server_sock: socket.socket = socket.socket()
     server_sock.bind(('0.0.0.0', NORMAL_SERVERS_FOR_CLIENT[server_index].port))
     server_sock.listen()
