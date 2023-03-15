@@ -242,7 +242,9 @@ class UI:
         pygame.draw.rect(self.display_surface, color, input_box, 0, 4)
 
         last_lines = 0
-        for i, (user, raw_message) in enumerate(self.messages):
+        lines_counter = 0
+        print(self.recv_msgs)
+        for i, (user, raw_message) in enumerate(self.recv_msgs):
             i += 1
 
             if user not in self.user_color_dict:
@@ -258,6 +260,9 @@ class UI:
             self.display_surface.blit(username_surface, (input_box.x, 100 + i * UI_FONT_SIZE + last_lines * 8))
 
             last_lines += len(message) - 1
+            lines_counter += len(message)
+        if lines_counter > MAX_CHAT_LINES:
+            self.recv_msgs = self.recv_msgs[1:]
 
         if self.text_active and not self.text_done:
             if pygame.mouse.get_pressed()[0]:
@@ -266,26 +271,27 @@ class UI:
                     self.text_done = True
                     self.text_active = False
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        self.text_done = True
-                        self.text_active = False
-                    elif event.key == pygame.K_BACKSPACE:
-                        self.raw_text = self.raw_text[:-1]
+            keys: Sequence[pygame.Key] = pygame.key.get_pressed()
+            if keys[pygame.K_ESCAPE]:
+                self.text_done = True
+                self.text_active = False
+            elif keys[pygame.K_BACKSPACE]:
+                self.raw_text = self.raw_text[:-1]
+                self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
+            elif keys[pygame.K_RETURN]:
+                if self.raw_text != r'':
+                    self.recv_msgs.append((player.name, self.raw_text))
+                    self.new_messages.append((player.name, self.raw_text))
+                    self.raw_text = r''
+                    self.text = r''
+            elif sum([len(line) for line in self.raw_text]) < CHAT_TEXT_TOTAL_LENGTH:
+                keys_list = (pygame.K_a, pygame.K_b, pygame.K_c, pygame.K_d, pygame.K_e, pygame.K_f, pygame.K_g, pygame.K_h, pygame.K_i, pygame.K_j, pygame.K_k, pygame.K_l, pygame.K_m, pygame.K_n, pygame.K_o, pygame.K_p, pygame.K_q, pygame.K_r, pygame.K_s, pygame.K_t, pygame.K_u, pygame.K_v, pygame.K_w, pygame.K_x, pygame.K_y, pygame.K_z, pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_QUESTION, pygame.K_EXCLAIM, pygame.K_PERIOD, pygame.K_COMMA, pygame.K_SPACE)
+                pressed_keys = [k for k in keys_list if keys[k]]
+                for event in pressed_keys:
+                    char = chr(event)
+                    if 'a' <= char <= 'z' or 'A' <= char <= 'Z' or char in ' ?!.,' or '0' <= char <= '9':
+                        self.raw_text += char
                         self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
-                    elif event.key == pygame.K_RETURN:
-                        if self.raw_text != r'':
-                            self.messages.append((player.name, self.raw_text))
-                            self.new_messages.append((player.name, self.raw_text))
-                            self.raw_text = r''
-                            self.text = r''
-                    elif sum([len(line) for line in self.raw_text]) < CHAT_TEXT_TOTAL_LENGTH:
-                        if 'a' <= event.unicode <= 'z' or 'A' <= event.unicode <= 'Z' or event.unicode in ' ?!.,' or '0' <= event.unicode <= '9':
-                            self.raw_text += event.unicode
-                            self.text = [self.raw_text[i: i+CHAT_TEXT_LENGTH] for i in range(0, len(self.raw_text), CHAT_TEXT_LENGTH)]
 
             pygame.draw.rect(self.display_surface, color, input_box, 0, 4)
             for l, line in enumerate(self.text):
@@ -313,12 +319,6 @@ class UI:
         head_rect.x = x + player.rect.x / 50 - head_rect.height / 2
         head_rect.y = y + player.rect.y / 50 - head_rect.width / 2
         self.display_surface.blit(head_image, head_rect)
-
-    def add_msg(self, msg):
-        self.messages.append(msg)
-
-    def send_msg(self, msg):  # TODO GONI
-        self.add_msg(msg)
 
 
 class NameTag:
