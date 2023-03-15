@@ -341,7 +341,7 @@ def run_game(*args) -> None:
         try:
             size = unpack('<H', login_socket.recv(2))[0]
             chat_msgs_lst_recvd = ChatMsgsLst(ser=login_socket.recv(size)).msg_lst
-            print(chat_msgs_lst_recvd)
+            #  print(chat_msgs_lst_recvd)
             world.ui.recv_msgs.extend(chat_msgs_lst_recvd)
         except socket.timeout:
             pass
