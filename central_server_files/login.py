@@ -187,6 +187,8 @@ def handle_chat_msgs(chat_lock: Lock):
                 size = unpack('<H', client_sock.recv(2))[0]
             except socket.timeout:
                 continue
+            except OSError:
+                continue
 
             msgs_lst = ChatMsgsLst(ser=get_msg_from_timeout_socket(client_sock, size))
 

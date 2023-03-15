@@ -224,4 +224,4 @@ class ChatMsgsLst(Serializable):
         self.msg_lst: list[str] = kwargs.get('msg_lst')
 
     def _get_attr(self) -> dict:
-        return {'msg_lst': (list, (str, 'str'))}
+        return {'msg_lst': (list, (tuple, (str, 'str')))}

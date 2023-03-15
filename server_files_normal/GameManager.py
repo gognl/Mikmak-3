@@ -445,7 +445,7 @@ class GameManager(threading.Thread):
             for i in self.other_server_indices:
                 sock = self.sock_to_other_normals[i]
                 try:
-                    data, addr = sock.recvfrom(4096)
+                    data, addr = sock.recvfrom(8192)
                 except socket.timeout:
                     continue
                 except ConnectionResetError:
