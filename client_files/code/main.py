@@ -226,6 +226,13 @@ def hash_and_salt(password: str) -> str:
     hasher = hashlib.sha256((SALT + password).encode())
     return hasher.hexdigest()
 
+def get_msg_from_timeout_socket(sock: socket.socket, size: int):
+    while True:
+        try:
+            data = sock.recv(size)
+            return data
+        except socket.timeout:
+            continue
 
 def run_game(*args) -> None:
     """
@@ -334,14 +341,15 @@ def run_game(*args) -> None:
         state_update: NormalServer.Output.StateUpdate
         screen, clock, world, tick_update, state_update, msg_lst = game_tick(screen, clock, world)
         if msg_lst:
+            print(msg_lst)
             chat_msgs_lst: ChatMsgsLst = ChatMsgsLst(msg_lst=msg_lst)
             size = pack('<H', len(chat_msgs_lst.serialize()))
             login_socket.send(size)
             login_socket.send(chat_msgs_lst.serialize())
         try:
             size = unpack('<H', login_socket.recv(2))[0]
-            chat_msgs_lst_recvd = ChatMsgsLst(ser=login_socket.recv(size)).msg_lst
-            #  print(chat_msgs_lst_recvd)
+            chat_msgs_lst_recvd = ChatMsgsLst(ser=get_msg_from_timeout_socket(login_socket, size)).msg_lst
+            print(chat_msgs_lst_recvd)
             world.ui.recv_msgs.extend(chat_msgs_lst_recvd)
         except socket.timeout:
             pass

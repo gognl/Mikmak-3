@@ -243,7 +243,7 @@ class UI:
 
         last_lines = 0
         lines_counter = 0
-        print(self.recv_msgs)
+
         for i, (user, raw_message) in enumerate(self.recv_msgs):
             i += 1
 

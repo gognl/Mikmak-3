@@ -180,23 +180,35 @@ def handle_chat_msgs(chat_lock: Lock):
     while True:
         with chat_lock:
             dict_copy = dict(id_socket_dict)
-        for client_id in dict_copy:
-            client_sock: socket.socket = dict_copy[client_id]
+            for client_id in dict_copy:
+                client_sock: socket.socket = dict_copy[client_id]
 
-            try:
-                size = unpack('<H', client_sock.recv(2))[0]
-            except socket.timeout:
-                continue
-            except OSError:
-                continue
-
-            msgs_lst = ChatMsgsLst(ser=get_msg_from_timeout_socket(client_sock, size))
-
-            for id2 in dict_copy:
-                if client_id == id2:
+                try:
+                    size = unpack('<H', client_sock.recv(2))[0]
+                except socket.timeout:
                     continue
-                client_sock2 = dict_copy[id2]
-                client_sock2.send(pack('<H', len(msgs_lst.serialize())))
-                client_sock2.send(msgs_lst.serialize())
+                except OSError:
+                    continue
+
+                ser = get_msg_from_timeout_socket(client_sock, size)
+                msgs_lst = ChatMsgsLst(ser=ser)
+                if(msgs_lst.serialize() != ser):
+                    print("problem")
+
+                for id2 in dict_copy:
+                    if client_id == id2:
+                        continue
+                    client_sock2 = dict_copy[id2]
+                    try:
+                        client_sock2.send(pack('<H', len(ser)))
+                        client_sock2.send(ser)
+                    except OSError:
+                        continue
+                    #size2 = pack('<H', len(msgs_lst.serialize()))
+                    #if size2 == size:
+                    #    client_sock2.send(size2)
+                    #    client_sock2.send(msgs_lst.serialize())
+                    #else:
+                    #    print('problem')
 
 

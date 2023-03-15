@@ -1,6 +1,5 @@
 from central_server_files.serializable import Serializable
 
-
 class Point:
     def __init__(self, x: int, y: int):
         self.x: int = x
@@ -23,7 +22,6 @@ class Point:
         assert isinstance(other, Point) or isinstance(other, PointSer)
         return (self.x - other.x) ** 2 + (self.y - other.y) ** 2
 
-
 class PointSer(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
@@ -37,7 +35,6 @@ class PointSer(Serializable):
     def _get_attr(self) -> dict:
         return {'x': (int, 'u_2'),
                 'y': (int, 'u_2')}
-
 
 class PlayerCentral(Serializable):
     def __init__(self, **kwargs):
@@ -53,7 +50,6 @@ class PlayerCentral(Serializable):
         return {'pos': (PointSer, 'o'),
                 'id': (int, 'u_6')}
 
-
 class PlayerCentralList(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
@@ -65,7 +61,6 @@ class PlayerCentralList(Serializable):
 
     def _get_attr(self) -> dict:
         return {'players': (list, (PlayerCentral, 'o'))}
-
 
 class Server:
     def __init__(self, ip, port):
@@ -82,7 +77,6 @@ class Server:
     def __hash__(self):
         return hash(self.addr())
 
-
 class ServerSer(Serializable, Server):
     def __init__(self, **kwargs):
         ser = kwargs.get("ser", b'')
@@ -94,7 +88,6 @@ class ServerSer(Serializable, Server):
     def _get_attr(self) -> dict:
         return {'ip': (str, 'str'),
                 'port': (int, 'u_2')}
-
 
 class LB_to_login_msg:
     def __init__(self, client_id: int, server: Server):
@@ -142,7 +135,6 @@ class LoginResponseToClient(Serializable):
         return {'encrypted_client_id': (bytes, 'by'),
                 'server': (ServerSer, 'o'), 'data_to_client': (DataToClient, 'o')}
 
-
 class InfoData(Serializable):
     def __init__(self, **kwargs):
         ser = kwargs.get('ser', b'')
@@ -155,7 +147,6 @@ class InfoData(Serializable):
     def _get_attr(self) -> dict:
         return {'info': (list, (int, 'u_2'), (int, 'u_2'), (int, 'u_1'), (int, 'u_2'), (int, 'u_2'), (int, 'u_2'),
                          (dict, (tuple, (str, 'str'), (int, 'u_2'))))}
-
 
 class InfoMsgToNormal(Serializable):
     def __init__(self, **kwargs):
@@ -171,7 +162,6 @@ class InfoMsgToNormal(Serializable):
     def _get_attr(self) -> dict:
         return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_ids': (list, (int, 'u_4'))}
 
-
 class Rect:
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
         self.x1: int = x1
@@ -182,7 +172,6 @@ class Rect:
     def __contains__(self, item):
         assert isinstance(item, Point)
         return self.x1 <= item.x <= self.x2 and self.y1 <= item.y <= self.y2
-
 
 class PlayerData(Serializable):
     def __init__(self, **kwargs):
@@ -224,4 +213,6 @@ class ChatMsgsLst(Serializable):
         self.msg_lst: list[tuple[str]] = kwargs.get('msg_lst')
 
     def _get_attr(self) -> dict:
-        return {'msg_lst': (list, (tuple, (str, 'str')))}
+        return {'msg_lst': (list, (tuple, (str, 'str'), (str, 'str')))}
+
+
