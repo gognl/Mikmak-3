@@ -133,7 +133,7 @@ class GameManager(threading.Thread):
         self.barriers = pygame.sprite.Group()
         self.initialize_obstacle_sprites()
 
-        for _ in range(50):
+        for _ in range(WHITE_COWS):
             while True:
                 pos_x = random.randrange(my_server_index % 2 * self.center.x,
                                          (my_server_index % 2 + 1) * self.center.x) // 64
@@ -141,7 +141,7 @@ class GameManager(threading.Thread):
                                          (my_server_index // 2 + 1) * self.center.y) // 64
                 pos = (pos_x * 64, pos_y * 64)
                 if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
-                        self.layout['objects'][pos_y][pos_y]) == -1:
+                        self.layout['objects'][pos_y][pos_x]) == -1:
                     Enemy(enemy_name='white_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
                           entity_id=next(self.generate_entity_id),
@@ -151,7 +151,7 @@ class GameManager(threading.Thread):
                           get_free_item_id=self.get_free_item_id)
                     break
 
-        for _ in range(50):
+        for _ in range(GREEN_COWS):
             while True:
                 pos_x = random.randrange(my_server_index % 2 * self.center.x,
                                          (my_server_index % 2 + 1) * self.center.x) // 64
@@ -159,7 +159,7 @@ class GameManager(threading.Thread):
                                          (my_server_index // 2 + 1) * self.center.y) // 64
                 pos = (pos_x * 64, pos_y * 64)
                 if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
-                        self.layout['objects'][pos_y][pos_y]) == -1:
+                        self.layout['objects'][pos_y][pos_x]) == -1:
                     Enemy(enemy_name='green_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
                           entity_id=next(self.generate_entity_id),
@@ -169,7 +169,7 @@ class GameManager(threading.Thread):
                           get_free_item_id=self.get_free_item_id)
                     break
 
-        for _ in range(50):
+        for _ in range(RED_COWS):
             while True:
                 pos_x = random.randrange(my_server_index % 2 * self.center.x,
                                          (my_server_index % 2 + 1) * self.center.x) // 64
@@ -177,7 +177,7 @@ class GameManager(threading.Thread):
                                          (my_server_index // 2 + 1) * self.center.y) // 64
                 pos = (pos_x * 64, pos_y * 64)
                 if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
-                        self.layout['objects'][pos_y][pos_y]) == -1:
+                        self.layout['objects'][pos_y][pos_x]) == -1:
                     Enemy(enemy_name='red_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
                           entity_id=next(self.generate_entity_id),
@@ -187,7 +187,7 @@ class GameManager(threading.Thread):
                           get_free_item_id=self.get_free_item_id)
                     break
 
-        for _ in range(50):
+        for _ in range(YELLOW_COWS):
             while True:
                 pos_x = random.randrange(my_server_index % 2 * self.center.x,
                                          (my_server_index % 2 + 1) * self.center.x) // 64
@@ -195,7 +195,7 @@ class GameManager(threading.Thread):
                                          (my_server_index // 2 + 1) * self.center.y) // 64
                 pos = (pos_x * 64, pos_y * 64)
                 if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
-                        self.layout['objects'][pos_y][pos_y]) == -1:
+                        self.layout['objects'][pos_y][pos_x]) == -1:
                     Enemy(enemy_name='yellow_cow', pos=pos,
                           groups=(self.enemies, self.all_obstacles, self.alive_entities),
                           entity_id=next(self.generate_entity_id),
@@ -211,7 +211,7 @@ class GameManager(threading.Thread):
 
         self.item_id_generator = generate_item_id()
 
-        for _ in range(100):
+        for _ in range(ITEMS):
             while True:
                 random_x = random.randrange(my_server_index % 2 * self.center.x,
                                             (my_server_index % 2 + 1) * self.center.x) // 64
