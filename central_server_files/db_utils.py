@@ -1,7 +1,6 @@
 from central_server_files.SQLDataBase import SQLDataBase
 from sqlalchemy import select, delete, update
 from sqlalchemy.dialects.mysql import insert
-from central_server_files.encryption import hash_and_salt
 from central_server_files.Constant import *
 from central_server_files.structures import PlayerData
 

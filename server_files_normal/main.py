@@ -40,7 +40,6 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
         else:
             key = game_manager.DH_keys[hello_msg.src_server_index]
             client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
-            print(f"welcome {client_id}")
 
         for player in game_manager.read_only_players:
             if player.entity_id == client_id:
@@ -64,8 +63,6 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
 
 def disconnect_client_manager(client_manager: ClientManager, DH_key):
     player_data = PlayerData(**game_manager.get_player_data(client_manager.player))
-    print(f'disconnected client. data:\n\t{player_data.__dict__}')
-
 
     size = pack("<H", len(encrypt(player_data.serialize(), DH_key)))
     game_manager.sock_to_login.send(size)
