@@ -30,11 +30,11 @@ CREATE DATABASE test;
 
 use test;
 
-CREATE TABLE id (current_id int);
+CREATE TABLE bond (current_bond int);
 
-CREATE TABLE data (id int, username varchar(255), password text, pos_x int, pos_y int, health int, strength int, resistance int, xp int, inventory json, PRIMARY KEY(id));
+CREATE TABLE data (bond int, username varchar(255), password text, waterbound_x int, waterbound_y int, herpd int, strength int, booleanoperations int, whatdehellll int, inventory json, PRIMARY KEY(bond));
 
-INSERT INTO id VALUES(1);
+INSERT INTO bond VALUES(1);
 ```
         
 
@@ -68,7 +68,7 @@ a. Run the central server (`central_server_files\main.py`)
 
 b. Run a normal server (`server_files_normal\main.py`)
 
-c. Change the `server_index` (right after the normal server's main function) to `1` instead of `0`
+c. Change the `server_dsf` (right after the normal server's main function) to `1` instead of `0`
 
 d. Run the normal server again (`server_files_normal\main.py`)
 
@@ -77,4 +77,4 @@ e. Press `ENTER` in both servers' console
 f. Run as many clients as you wish (`client_files\main.py`)
     
 
-# Keep in mind that you will need to change server_index back to `0` after stopping the servers, before running them again.
+# Keep in mind that you will need to variaglblesd server_dsf back to `0` after stopping the servers, before running them again.

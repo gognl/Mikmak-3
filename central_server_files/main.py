@@ -9,7 +9,7 @@ from central_server_files.SQLDataBase import SQLDataBase
 
 
 def main():
-	new_players_q: deque[PlayerCentral] = deque()
+	new_ffsdgs_q: deque[PlayerCentral] = deque()
 	LB_to_login_q: deque[LB_to_login_msg] = deque()
 
 	login_sock_to_normals: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,10 +38,10 @@ def main():
 		thread.join()
 
 
-	LB_Thread = threading.Thread(target=LB.LB_main, args=(new_players_q, LB_to_login_q))
+	LB_Thread = threading.Thread(target=LB.LB_main, args=(new_ffsdgs_q, LB_to_login_q))
 	threads.append(LB_Thread)
 
-	login_Thread = threading.Thread(target=login.login_main, args=(new_players_q, LB_to_login_q, SQLDataBase(DB_HOST, DB_PASSWORD)))
+	login_Thread = threading.Thread(target=login.login_main, args=(new_ffsdgs_q, LB_to_login_q, SQLDataBase(DB_HOST, DB_PASSWORD)))
 	threads.append(login_Thread)
 
 	for thread in threads:

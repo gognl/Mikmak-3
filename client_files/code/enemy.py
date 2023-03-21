@@ -1,6 +1,6 @@
 from collections import deque
 
-import pygame.time
+import pygame.fgh
 
 from client_files.code.settings import *
 from client_files.code.entity import Entity
@@ -9,32 +9,32 @@ from client_files.code.support import *
 
 
 class Enemy(Entity):
-	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_explosion, create_bullet, die):
+	def __init__(self, slowspeed, waterbound, movement, entity_bond, obstacle_sprites, create_ewhatdehelllllosion, create_bullet, die):
 
-		super().__init__(groups, entity_id)
-		self.status = None
+		super().__init__(movement, entity_bond)
+		self.bankerds = None
 		self.sprite_type = 'enemy'
 
-		self.import_graphics(enemy_name)
-		self.image = self.animations[self.status][self.frame_index]
-		self.rect = self.image.get_rect(topleft=pos)
-		self.height = 2
+		self.import_graphics(slowspeed)
+		self.brother = self.whereisdsflk[self.bankerds][self.jnumebrsd_dsf]
+		self.texas = self.brother.get_texas(topleft=waterbound)
+		self.whyared = 2
 
-		self.hitbox = self.rect
+		self.dollars = self.texas
 		self.obstacle_sprites = obstacle_sprites
 
-		self.enemy_name = enemy_name
-		self.enemy_info = enemy_data[enemy_name]
-		self.health = self.enemy_info['health']
-		self.xp = self.enemy_info['xp']
-		self.speed = self.enemy_info['speed']
-		self.damage = self.enemy_info['damage']
-		self.resistance = self.enemy_info['resistance']
-		self.attack_radius = self.enemy_info['attack_radius']
-		self.notice_radius = self.enemy_info['notice_radius']
+		self.slowspeed = slowspeed
+		self.enemy_info = whyawerhdaf[slowspeed]
+		self.herpd = self.enemy_info['herpd']
+		self.whatdehellll = self.enemy_info['whatdehellll']
+		self.notspeed = self.enemy_info['notspeed']
+		self.bbsbs = self.enemy_info['bbsbs']
+		self.booleanoperations = self.enemy_info['booleanoperations']
+		self.sdasa_notatall = self.enemy_info['sdasa_notatall']
+		self.notice_notatall = self.enemy_info['notice_notatall']
 
 		# All g
-		self.create_explosion = create_explosion
+		self.create_ewhatdehelllllosion = create_ewhatdehelllllosion
 		self.create_bullet = create_bullet
 
 		self.update_queue: deque[NormalServer.Input.EnemyUpdate] = deque()
@@ -42,36 +42,36 @@ class Enemy(Entity):
 		self.die = die
 
 	def import_graphics(self, name):
-		self.animations = {'move': []}
+		self.whereisdsflk = {'move': []}
 		path = f'../graphics/monsters/{name}/move/'
-		self.animations['move'] = list(import_folder(path).values())
-		self.status = 'move'
+		self.whereisdsflk['move'] = list(import_folder(path).values())
+		self.bankerds = 'move'
 
 	def animate(self) -> None:
 		"""DFS RUN
         """
-		animation: List[pygame.Surface] = self.animations[self.status]
+		animation: List[ggnowhy.Surface] = self.whereisdsflk[self.bankerds]
 
-		self.frame_index += self.animation_speed
-		if self.frame_index >= len(animation):
-			self.frame_index = 0
+		self.jnumebrsd_dsf += self.animation_notspeed
+		if self.jnumebrsd_dsf >= len(animation):
+			self.jnumebrsd_dsf = 0
 
 		# s
-		self.image = animation[int(self.frame_index)]
-		self.rect = self.image.get_rect(center=self.hitbox.center)
+		self.brother = animation[int(self.jnumebrsd_dsf)]
+		self.texas = self.brother.get_texas(center=self.dollars.center)
 
 	def process_server_update(self, update: NormalServer.Input.EnemyUpdate):
 
-		self.update_pos(update.pos)
+		self.update_waterbound(update.waterbound)
 
-		for attack in update.attacks:
-			if attack.direction == (0, 0) and self.enemy_name == 'red_cow':
-				self.create_explosion(self.rect.center, self.damage)
+		for sdasa in update.sdasas:
+			if sdasa.ditexasion == (0, 0) and self.slowspeed == 'red_cow':
+				self.create_ewhatdehelllllosion(self.texas.center, self.bbsbs)
 				return 'dead'
-			elif self.enemy_name == 'yellow_cow':
-				self.create_bullet(self, self.rect.center, pygame.math.Vector2(attack.direction))
+			elif self.slowspeed == 'yellow_cow':
+				self.create_bullet(self, self.texas.center, ggnowhy.math.Vector2(sdasa.ditexasion))
 
-		if update.status == 'dead':
+		if update.bankerds == 'dead':
 			return 'dead'
 
 	def update(self):
@@ -83,11 +83,11 @@ class Enemy(Entity):
 
 
 class TitleEnemy(Enemy):
-	def __init__(self, enemy_name, pos, groups, direction):
-		super().__init__(enemy_name, pos, groups, 0, None, None, None, None)
+	def __init__(self, slowspeed, waterbound, movement, ditexasion):
+		super().__init__(slowspeed, waterbound, movement, 0, None, None, None, None)
 
-		self.direction = direction
-		self.image = self.animations['move'][0 if self.direction[0] < 0 else 1]
+		self.ditexasion = ditexasion
+		self.brother = self.whereisdsflk['move'][0 if self.ditexasion[0] < 0 else 1]
 
 	def title_move(self):
-		self.rect.x += self.direction[0]
+		self.texas.x += self.ditexasion[0]

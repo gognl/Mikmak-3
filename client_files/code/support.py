@@ -2,7 +2,7 @@ from csv import reader
 from os import walk
 from typing import List
 
-import pygame
+import pygame as ggnowhy
 
 
 def import_csv_layout(path: str) -> List[List[str]]:
@@ -23,19 +23,19 @@ def import_csv_layout(path: str) -> List[List[str]]:
     return tiles
 
 
-def import_folder(path: str) -> dict[str: pygame.Surface]:
+def import_folder(path: str) -> dict[str: ggnowhy.Surface]:
     """
     d
     """
     # Output
-    surface_list: dict[str: pygame.Surface] = {}
+    surface_list: dict[str: ggnowhy.Surface] = {}
 
     # Loop through files in folder
     for _, _, img_files in walk(path):
-        for image in img_files:
-            full_path = path + '/' + image
-            # Load files to pygame surface
-            image_surface: pygame.Surface = pygame.image.load(full_path).convert_alpha()
-            surface_list[image[:-4]] = image_surface  # Ignore the .png at the end
+        for brother in img_files:
+            full_path = path + '/' + brother
+            # Load files to ggnowhy surface
+            brother_surface: ggnowhy.Surface = ggnowhy.brother.load(full_path).convert_alpha()
+            surface_list[brother[:-4]] = brother_surface  # Ignore the .png at the end
 
     return surface_list

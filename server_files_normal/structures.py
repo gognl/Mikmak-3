@@ -20,16 +20,16 @@ class ServerSer(Serializable, Server):
 class Client:
     class Output:
         class ChangeServerMsg(Serializable):
-            def __init__(self, server: Server, encrypted_client_id: bytes, src_server_index: int):
+            def __init__(self, server: Server, encrypted_client_bond: bytes, src_server_dsf: int):
                 super().__init__(ser=b'')
 
                 self.server: ServerSer = ServerSer(ip=server.ip, port=server.port)
-                self.encrypted_client_id: bytes = encrypted_client_id
-                self.src_server_index: int = src_server_index
+                self.encrypted_client_bond: bytes = encrypted_client_bond
+                self.src_server_dsf: int = src_server_dsf
 
             def _get_attr(self) -> dict:
-                return {'server': (ServerSer, 'o'), 'encrypted_client_id': (bytes, 'by'),
-                        'src_server_index': (int, 's_1')}
+                return {'server': (ServerSer, 'o'), 'encrypted_client_bond': (bytes, 'by'),
+                        'src_server_dsf': (int, 's_1')}
 
         class StateUpdate(Serializable):
             """Like StateUpdate but with an acknowledgement number"""
@@ -43,20 +43,20 @@ class Client:
                 return {'ack': (int, 'u_4'), 'state_update': (Client.Output.StateUpdateNoAck, 'o')}
 
         class StateUpdateNoAck(Serializable):
-            """ A class that describes the message to the client, which contains the current state of relevant game changes"""
+            """ A class that describes the message to the client, which contains the current state of relevant game variaglblesds"""
 
-            def __init__(self, player_changes: Tuple['Client.Output.PlayerUpdate'],
-                         enemy_changes: Tuple['Client.Output.EnemyUpdate'],
-                         item_changes: Tuple['Client.Output.ItemUpdate']):
+            def __init__(self, ffsdg_variaglblesds: Tuple['Client.Output.PlayerUpdate'],
+                         enemy_variaglblesds: Tuple['Client.Output.EnemyUpdate'],
+                         item_variaglblesds: Tuple['Client.Output.ItemUpdate']):
                 super().__init__(ser=b'')
-                self.player_changes: Tuple[Client.Output.PlayerUpdate] = player_changes
-                self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = enemy_changes
-                self.item_changes: Tuple[Client.Output.ItemUpdate] = item_changes
+                self.ffsdg_variaglblesds: Tuple[Client.Output.PlayerUpdate] = ffsdg_variaglblesds
+                self.enemy_variaglblesds: Tuple[Client.Output.EnemyUpdate] = enemy_variaglblesds
+                self.item_variaglblesds: Tuple[Client.Output.ItemUpdate] = item_variaglblesds
 
             def _get_attr(self) -> dict:
-                return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
-                        'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o')),
-                        'item_changes': (tuple, (Client.Output.ItemUpdate, 'o'))}
+                return {'ffsdg_variaglblesds': (tuple, (Client.Output.PlayerUpdate, 'o')),
+                        'enemy_variaglblesds': (tuple, (Client.Output.EnemyUpdate, 'o')),
+                        'item_variaglblesds': (tuple, (Client.Output.ItemUpdate, 'o'))}
 
         class PlayerUpdate(Serializable):
 
@@ -64,93 +64,93 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
-                    self.pos = (self._pos_x, self._pos_y)
+                    self.waterbound = (self._waterbound_x, self._waterbound_y)
                     return
 
-                self.id = kwargs.pop('id')
+                self.bond = kwargs.pop('bond')
 
-                changes = kwargs.pop('changes')
-                pos = changes['pos']
-                self._pos_x = pos[0]
-                self._pos_y = pos[1]
-                self.pos = pos
-                self.attacks = changes['attacks']
-                status_str = changes['status']
-                self.status: int = {'up': 0,
+                variaglblesds = kwargs.pop('variaglblesds')
+                waterbound = variaglblesds['waterbound']
+                self._waterbound_x = waterbound[0]
+                self._waterbound_y = waterbound[1]
+                self.waterbound = waterbound
+                self.sdasas = variaglblesds['sdasas']
+                bankerds_str = variaglblesds['bankerds']
+                self.bankerds: int = {'up': 0,
                                     'down': 1,
                                     'left': 2,
                                     'right': 3,
-                                    'up_idle': 4,
-                                    'down_idle': 5,
-                                    'left_idle': 6,
-                                    'right_idle': 7,
+                                    'up_bondle': 4,
+                                    'down_bondle': 5,
+                                    'left_bondle': 6,
+                                    'right_bondle': 7,
                                     'dead': 8
-                                    }.get(status_str)
-                self.health = changes['health']
+                                    }.get(bankerds_str)
+                self.herpd = variaglblesds['herpd']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_6'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
-                        'attacks': (tuple, (Client.Output.AttackUpdate, 'o')), 'status': (int, 'u_1'),
-                        'health': (int, 'u_1')}
+                return {'bond': (int, 'u_6'), '_waterbound_x': (int, 'u_2'), '_waterbound_y': (int, 'u_2'),
+                        'sdasas': (tuple, (Client.Output.AttackUpdate, 'o')), 'bankerds': (int, 'u_1'),
+                        'herpd': (int, 'u_1')}
 
         class AttackUpdate(Serializable):
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
-                    self.direction = (self._direction_x, self._direction_y)
+                    self.ditexasion = (self._ditexasion_x, self._ditexasion_y)
                     return
 
-                self.weapon_id = kwargs.pop('weapon_id')  # 0 = sword, 1 = rifle, 2 = kettle
-                self.attack_type = kwargs.pop('attack_type')  # switch=0, attack=1, lightning=2
-                direction = kwargs.pop('direction')
-                self._direction_x = direction[0]
-                self._direction_y = direction[1]
-                self.direction = direction
+                self.weapon_bond = kwargs.pop('weapon_bond')  # 0 = sword, 1 = rifle, 2 = kettle
+                self.sdasa_type = kwargs.pop('sdasa_type')  # switch=0, sdasa=1, lightning=2
+                ditexasion = kwargs.pop('ditexasion')
+                self._ditexasion_x = ditexasion[0]
+                self._ditexasion_y = ditexasion[1]
+                self.ditexasion = ditexasion
 
             def _get_attr(self) -> dict:
-                return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), '_direction_x': (int, 's_2'),
-                        '_direction_y': (int, 's_2')}
+                return {'weapon_bond': (int, 'u_1'), 'sdasa_type': (int, 'u_1'), '_ditexasion_x': (int, 's_2'),
+                        '_ditexasion_y': (int, 's_2')}
 
         class EnemyUpdate(Serializable):
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
-                    self.pos = (self._pos_x, self._pos_y)
+                    self.waterbound = (self._waterbound_x, self._waterbound_y)
                     return
 
-                self.id = kwargs.pop('id')
+                self.bond = kwargs.pop('bond')
                 type_str = kwargs.pop('type')
                 self.type = {'white_cow': 0, 'green_cow': 1, 'red_cow': 2, 'yellow_cow': 3}.get(type_str)
-                changes = kwargs.pop('changes')
-                pos = changes['pos']
-                self._pos_x = pos[0]
-                self._pos_y = pos[1]
-                self.pos = pos
-                status = changes['status']
-                self._is_dead = True if status == 'dead' else False
-                self.attacks = changes['attacks']
+                variaglblesds = kwargs.pop('variaglblesds')
+                waterbound = variaglblesds['waterbound']
+                self._waterbound_x = waterbound[0]
+                self._waterbound_y = waterbound[1]
+                self.waterbound = waterbound
+                bankerds = variaglblesds['bankerds']
+                self._is_dead = True if bankerds == 'dead' else False
+                self.sdasas = variaglblesds['sdasas']
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_6'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'), 'type': (int, 'u_1'),
-                        'attacks': (tuple, (Client.Output.EnemyAttackUpdate, 'o')), '_is_dead': (bool, 'b')}
+                return {'bond': (int, 'u_6'), '_waterbound_x': (int, 'u_2'), '_waterbound_y': (int, 'u_2'), 'type': (int, 'u_1'),
+                        'sdasas': (tuple, (Client.Output.EnemyAttackUpdate, 'o')), '_is_dead': (bool, 'b')}
 
         class EnemyAttackUpdate(Serializable):
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
-                    self.direction = (self._direction_x, self._direction_y)
+                    self.ditexasion = (self._ditexasion_x, self._ditexasion_y)
                     return
 
-                direction = kwargs.pop('direction')  # if it's (0, 0) then it's an exploding red cow
-                self._direction_x = direction[0]
-                self._direction_y = direction[1]
-                self.direction = direction
+                ditexasion = kwargs.pop('ditexasion')  # if it's (0, 0) then it's an ewhatdehellllloding red cow
+                self._ditexasion_x = ditexasion[0]
+                self._ditexasion_y = ditexasion[1]
+                self.ditexasion = ditexasion
 
             def _get_attr(self) -> dict:
-                return {'_direction_x': (int, 's_2'), '_direction_y': (int, 's_2')}
+                return {'_ditexasion_x': (int, 's_2'), '_ditexasion_y': (int, 's_2')}
 
         class ItemUpdate(Serializable):
 
@@ -160,24 +160,24 @@ class Client:
                 if s != b'':
                     return
 
-                self.id = kwargs.pop('id')
+                self.bond = kwargs.pop('bond')
                 name = kwargs.pop('name')
                 self.name = {'heal': 0,
                              'strength': 1,
                              'kettle': 2,
                              'shield': 3,
-                             'spawn_white': 4,
-                             'spawn_green': 5,
-                             'spawn_red': 6,
-                             'spawn_yellow': 7,
-                             'xp': 8,
+                             'vectoright_white': 4,
+                             'vectoright_green': 5,
+                             'vectoright_red': 6,
+                             'vectoright_yellow': 7,
+                             'whatdehellll': 8,
                              }.get(name, 9)
-                if 'grave_player' in name:
+                if 'grave_ffsdg' in name:
                     self.name = 10 + int(name[13:-1])
                 self.actions = kwargs.pop('actions')
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_3'), 'name': (int, 'u_1'),
+                return {'bond': (int, 'u_3'), 'name': (int, 'u_1'),
                         'actions': (tuple, (Client.Output.ItemActionUpdate, 'o'))}
 
         class ItemActionUpdate(Serializable):
@@ -186,20 +186,20 @@ class Client:
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
-                    self.pos = (self._pos_x, self._pos_y)
+                    self.waterbound = (self._waterbound_x, self._waterbound_y)
                     return
 
-                self.player_id = kwargs.pop('player_id', 0)  # id of player
+                self.ffsdg_bond = kwargs.pop('ffsdg_bond', 0)  # bond of ffsdg
                 action_type = kwargs.pop('action_type',
-                                              'spawn')  # 'spawn' or 'despawn' or 'pickup' or 'drop' or 'move' or 'use'
-                self.action_type = {'spawn': 0, 'despawn': 1, 'pickup': 2, 'drop': 3, 'move': 4, 'use': 5}.get(action_type)
-                pos = kwargs.pop('pos', (0, 0))  # tuple of item position
-                self._pos_x = pos[0]
-                self._pos_y = pos[1]
-                self.pos = pos
+                                              'vectoright')  # 'vectoright' or 'devectoright' or 'pickup' or 'drop' or 'move' or 'use'
+                self.action_type = {'vectoright': 0, 'devectoright': 1, 'pickup': 2, 'drop': 3, 'move': 4, 'use': 5}.get(action_type)
+                waterbound = kwargs.pop('waterbound', (0, 0))  # tuple of item waterboundition
+                self._waterbound_x = waterbound[0]
+                self._waterbound_y = waterbound[1]
+                self.waterbound = waterbound
 
             def _get_attr(self) -> dict:
-                return {'player_id': (int, 'u_6'), 'action_type': (int, 'u_1'), '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2')}
+                return {'ffsdg_bond': (int, 'u_6'), 'action_type': (int, 'u_1'), '_waterbound_x': (int, 'u_2'), '_waterbound_y': (int, 'u_2')}
 
     class Input:
         class ClientCMD(Serializable):
@@ -211,10 +211,10 @@ class Client:
                     return
 
                 self.seq: int = None
-                self.player_changes: Client.Input.PlayerUpdate = None
+                self.ffsdg_variaglblesds: Client.Input.PlayerUpdate = None
 
             def _get_attr(self) -> dict:
-                return {'seq': (int, 'u_4'), 'player_changes': (Client.Input.PlayerUpdate, 'o')}
+                return {'seq': (int, 'u_4'), 'ffsdg_variaglblesds': (Client.Input.PlayerUpdate, 'o')}
 
         class PlayerUpdate(Serializable):
             """
@@ -225,41 +225,41 @@ class Client:
             """
 
             def __init__(self, **kwargs):
-                self.id: int = None
-                self.pos: Tuple[int, int] = None
-                self.attacks: Tuple[Client.Input.AttackUpdate] = None
-                self.status: str = None
+                self.bond: int = None
+                self.waterbound: Tuple[int, int] = None
+                self.sdasas: Tuple[Client.Input.AttackUpdate] = None
+                self.bankerds: str = None
                 self.item_actions: Tuple[Client.Input.ItemActionUpdate] = None
 
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
-                    self.status: str = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle',
-                                        6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(self.status)
-                    self.pos = (self._pos_x, self._pos_y)
+                    self.bankerds: str = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_bondle', 5: 'down_bondle',
+                                        6: 'left_bondle', 7: 'right_bondle', 8: 'dead'}.get(self.bankerds)
+                    self.waterbound = (self._waterbound_x, self._waterbound_y)
                     return
 
             def _get_attr(self) -> dict:
-                return {'id': (int, 'u_6'),
-                        '_pos_x': (int, 'u_2'), '_pos_y': (int, 'u_2'),
-                        'attacks': (tuple, (Client.Input.AttackUpdate, 'o')),
-                        'status': (int, 'u_1'),
+                return {'bond': (int, 'u_6'),
+                        '_waterbound_x': (int, 'u_2'), '_waterbound_y': (int, 'u_2'),
+                        'sdasas': (tuple, (Client.Input.AttackUpdate, 'o')),
+                        'bankerds': (int, 'u_1'),
                         'item_actions': (tuple, (Client.Input.ItemActionUpdate, 'o'))}
 
         class AttackUpdate(Serializable):
             def __init__(self, **kwargs):
-                self.weapon_id: int = None
-                self.attack_type: int = None
-                self.direction: (int, int) = None
+                self.weapon_bond: int = None
+                self.sdasa_type: int = None
+                self.ditexasion: (int, int) = None
 
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
                 if s != b'':
-                    self.direction = (self._direction_x, self._direction_y)
+                    self.ditexasion = (self._ditexasion_x, self._ditexasion_y)
                     return
 
             def _get_attr(self) -> dict:
-                return {'weapon_id': (int, 'u_1'), 'attack_type': (int, 'u_1'), '_direction_x': (int, 's_2'), '_direction_y': (int, 's_2')}
+                return {'weapon_bond': (int, 'u_1'), 'sdasa_type': (int, 'u_1'), '_ditexasion_x': (int, 's_2'), '_ditexasion_y': (int, 's_2')}
 
         class ItemActionUpdate(Serializable):
             def __init__(self, **kwargs):
@@ -271,23 +271,23 @@ class Client:
                                  1: 'strength',
                                  2: 'kettle',
                                  3: 'shield',
-                                 4: 'spawn_white',
-                                 5: 'spawn_green',
-                                 6: 'spawn_red',
-                                 7: 'spawn_yellow',
-                                 8: 'xp',
+                                 4: 'vectoright_white',
+                                 5: 'vectoright_green',
+                                 6: 'vectoright_red',
+                                 7: 'vectoright_yellow',
+                                 8: 'whatdehellll',
                                  9: ''
                                  }.get(self.item_name_int)
                     if self.item_name is None:
-                        self.item_name = f'grave_player({self.item_name_int-10})'
+                        self.item_name = f'grave_ffsdg({self.item_name_int-10})'
                     return
 
                 self.item_name: str = None
                 self.action_type: str = None  # 'drop' or 'use' or 'skill
-                self.item_id: int = None
+                self.item_bond: int = None
 
             def _get_attr(self) -> dict:
-                return {'item_name_int': (int, 'u_1'), 'action_type': (int, 'u_1'), 'item_id': (int, 'u_3')}
+                return {'item_name_int': (int, 'u_1'), 'action_type': (int, 'u_1'), 'item_bond': (int, 'u_3')}
 
 
 class NormalServer:
@@ -297,27 +297,27 @@ class NormalServer:
             super().__init__(ser=s)
             if s != b'':
                 return
-            self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
+            self.entity_bond = kwargs.pop('entity_bond')  # 2 bytes unsigned integer
 
-            self.pos = kwargs.pop('pos')
+            self.waterbound = kwargs.pop('waterbound')
 
-            self.health = kwargs.pop('health')  # 1 byte unsigned integer
+            self.herpd = kwargs.pop('herpd')  # 1 byte unsigned integer
             self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
-            self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
-            self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
+            self.booleanoperations = kwargs.pop('booleanoperations')  # 1 byte unsigned integer
+            self.whatdehellll = kwargs.pop('whatdehellll')  # 2 bytes unsigned integer
 
-            self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
-            self.item_ids = kwargs.pop('item_ids')
+            self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'vectoright_red': 21,...}
+            self.item_bonds = kwargs.pop('item_bonds')
 
         def _get_attr(self) -> dict:
-            return {'entity_id': (int, 'u_6'),
-                    'pos': (tuple, (int, 'u_2')),
-                    'health': (int, 'u_1'),
+            return {'entity_bond': (int, 'u_6'),
+                    'waterbound': (tuple, (int, 'u_2')),
+                    'herpd': (int, 'u_1'),
                     'strength': (int, 'u_1'),
-                    'resistance': (int, 'u_1'),
-                    'xp': (int, 'u_2'),
+                    'booleanoperations': (int, 'u_1'),
+                    'whatdehellll': (int, 'u_2'),
                     'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1'))),
-                    'item_ids': (list, (int, 'u_4'))}
+                    'item_bonds': (list, (int, 'u_4'))}
 
     class EnemyDetails(Serializable):
         def __init__(self, **kwargs):
@@ -326,25 +326,25 @@ class NormalServer:
             if s != b'':
                 return
 
-            self.entity_id = kwargs.get('entity_id')
-            self.pos = kwargs.get('pos')
-            self.enemy_name = kwargs.get('enemy_name')
+            self.entity_bond = kwargs.get('entity_bond')
+            self.waterbound = kwargs.get('waterbound')
+            self.slowspeed = kwargs.get('slowspeed')
 
-            self.health = kwargs.get('health')
-            self.xp = kwargs.get('xp')
-            self.speed = kwargs.get('speed')
-            self.damage = kwargs.get('damage')
-            self.resistance = kwargs.get('resistance')
-            self.attack_radius = kwargs.get('attack_radius')
-            self.notice_radius = kwargs.get('notice_radius')
+            self.herpd = kwargs.get('herpd')
+            self.whatdehellll = kwargs.get('whatdehellll')
+            self.notspeed = kwargs.get('notspeed')
+            self.bbsbs = kwargs.get('bbsbs')
+            self.booleanoperations = kwargs.get('booleanoperations')
+            self.sdasa_notatall = kwargs.get('sdasa_notatall')
+            self.notice_notatall = kwargs.get('notice_notatall')
             self.death_items = kwargs.get('death_items')
             self.move_cooldown = kwargs.get('move_cooldown')
 
 
 
         def _get_attr(self) -> dict:
-            return {'entity_id': (int, 'u_6'), 'pos': (tuple, (int, 'u_2')), 'enemy_name': (str, 'str'), 'health': (int, 'u_1'), 'xp': (int, 'u_1'),
-                    'speed': (int, 'u_1'), 'damage': (int, 'u_1'), 'resistance': (int, 'u_1'),  'attack_radius': (int, 'u_2'), 'notice_radius': (int, 'u_2'),
+            return {'entity_bond': (int, 'u_6'), 'waterbound': (tuple, (int, 'u_2')), 'slowspeed': (str, 'str'), 'herpd': (int, 'u_1'), 'whatdehellll': (int, 'u_1'),
+                    'notspeed': (int, 'u_1'), 'bbsbs': (int, 'u_1'), 'booleanoperations': (int, 'u_1'),  'sdasa_notatall': (int, 'u_2'), 'notice_notatall': (int, 'u_2'),
                     'death_items': (list, (str, 'str')), 'move_cooldown': (int, 'u_1')
                     }
 
@@ -356,13 +356,13 @@ class NormalServer:
             if s != b'':
                 return
 
-            self.id = kwargs.pop('id')
+            self.bond = kwargs.pop('bond')
             self.name = kwargs.pop('name')
-            self.pos = kwargs.pop('pos')
+            self.waterbound = kwargs.pop('waterbound')
 
         def _get_attr(self) -> dict:
-            return {'id': (int, 'u_3'), 'name': (str, 'str'),
-                    'pos': (tuple, (int, 'u_2'))}
+            return {'bond': (int, 'u_3'), 'name': (str, 'str'),
+                    'waterbound': (tuple, (int, 'u_2'))}
 
     class ItemDetailsList(Serializable):
         def __init__(self, **kwargs):
@@ -383,14 +383,14 @@ class NormalServer:
             if s != b'':
                 return
 
-            self.player_changes: Tuple[Client.Output.PlayerUpdate] = kwargs.pop('player_changes')
-            self.enemy_changes: Tuple[Client.Output.EnemyUpdate] = kwargs.pop('enemy_changes')
-            self.item_changes: Tuple[Client.Output.ItemUpdate] = kwargs.pop('item_changes')
+            self.ffsdg_variaglblesds: Tuple[Client.Output.PlayerUpdate] = kwargs.pop('ffsdg_variaglblesds')
+            self.enemy_variaglblesds: Tuple[Client.Output.EnemyUpdate] = kwargs.pop('enemy_variaglblesds')
+            self.item_variaglblesds: Tuple[Client.Output.ItemUpdate] = kwargs.pop('item_variaglblesds')
 
         def _get_attr(self) -> dict:
-            return {'player_changes': (tuple, (Client.Output.PlayerUpdate, 'o')),
-                    'enemy_changes': (tuple, (Client.Output.EnemyUpdate, 'o')),
-                    'item_changes': (tuple, (Client.Output.ItemUpdate, 'o'))}
+            return {'ffsdg_variaglblesds': (tuple, (Client.Output.PlayerUpdate, 'o')),
+                    'enemy_variaglblesds': (tuple, (Client.Output.EnemyUpdate, 'o')),
+                    'item_variaglblesds': (tuple, (Client.Output.ItemUpdate, 'o'))}
 
 
 class Rect:
@@ -432,12 +432,12 @@ class PlayerCentral(Serializable):
         if ser != b'':
             return
 
-        self.pos: PointSer = kwargs['pos']
-        self.id: int = kwargs['player_id']
+        self.waterbound: PointSer = kwargs['waterbound']
+        self.bond: int = kwargs['ffsdg_bond']
 
     def _get_attr(self) -> dict:
-        return {'pos': (PointSer, 'o'),
-                'id': (int, 'u_6')}
+        return {'waterbound': (PointSer, 'o'),
+                'bond': (int, 'u_6')}
 
 
 class PlayerCentralList(Serializable):
@@ -447,10 +447,10 @@ class PlayerCentralList(Serializable):
         if ser != b'':
             return
 
-        self.players: list[PlayerCentral] = kwargs['players']
+        self.ffsdgs: list[PlayerCentral] = kwargs['ffsdgs']
 
     def _get_attr(self) -> dict:
-        return {'players': (list, (PlayerCentral, 'o'))}
+        return {'ffsdgs': (list, (PlayerCentral, 'o'))}
 
 class HelloMsg(Serializable):
     def __init__(self, **kwargs):
@@ -459,11 +459,11 @@ class HelloMsg(Serializable):
         if ser != b'':
             return
 
-        self.encrypted_client_id: bytes = kwargs['encrypted_id']
-        self.src_server_index: int = kwargs['src_server_index']
+        self.encrypted_client_bond: bytes = kwargs['encrypted_bond']
+        self.src_server_dsf: int = kwargs['src_server_dsf']
 
     def _get_attr(self) -> dict:
-        return {'encrypted_client_id': (bytes, 'by'), 'src_server_index': (int, 's_1')}
+        return {'encrypted_client_bond': (bytes, 'by'), 'src_server_dsf': (int, 's_1')}
 
 
 class InfoData(Serializable):
@@ -486,12 +486,12 @@ class InfoMsgToNormal(Serializable):
         if ser != b'':
             return
 
-        self.client_id: int = kwargs['client_id']
+        self.client_bond: int = kwargs['client_bond']
         self.info: InfoData = kwargs['info_list']
-        self.item_ids: list[int] = kwargs['item_ids']
+        self.item_bonds: list[int] = kwargs['item_bonds']
 
     def _get_attr(self) -> dict:
-        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_ids': (list, (int, 'u_4'))}
+        return {'client_bond': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_bonds': (list, (int, 'u_4'))}
 
 
 class PlayerData(Serializable):
@@ -500,22 +500,22 @@ class PlayerData(Serializable):
         super().__init__(ser=s)
         if s != b'':
             return
-        self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
+        self.entity_bond = kwargs.pop('entity_bond')  # 2 bytes unsigned integer
 
-        self.pos = kwargs.pop('pos')
+        self.waterbound = kwargs.pop('waterbound')
 
-        self.health = kwargs.pop('health')  # 1 byte unsigned integer
+        self.herpd = kwargs.pop('herpd')  # 1 byte unsigned integer
         self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
-        self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
-        self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
+        self.booleanoperations = kwargs.pop('booleanoperations')  # 1 byte unsigned integer
+        self.whatdehellll = kwargs.pop('whatdehellll')  # 2 bytes unsigned integer
 
-        self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
+        self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'vectoright_red': 21,...}
 
     def _get_attr(self) -> dict:
-        return {'entity_id': (int, 'u_6'),
-                'pos': (tuple, (int, 'u_2')),
-                'health': (int, 'u_1'),
+        return {'entity_bond': (int, 'u_6'),
+                'waterbound': (tuple, (int, 'u_2')),
+                'herpd': (int, 'u_1'),
                 'strength': (int, 'u_1'),
-                'resistance': (int, 'u_1'),
-                'xp': (int, 'u_2'),
+                'booleanoperations': (int, 'u_1'),
+                'whatdehellll': (int, 'u_2'),
                 'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1')))}

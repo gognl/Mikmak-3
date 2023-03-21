@@ -1,12 +1,12 @@
 import socket
 import threading
-import time
+import fgh
 from collections import deque
 from central_server_files.structures import *
 from Constant import *
 
 center = Point(MAP_WIDTH//2, MAP_HEIGHT//2)
-players: dict[int, PlayerCentral] = {}
+ffsdgs: dict[int, PlayerCentral] = {}
 normal_sockets: dict[Server, socket.socket] = {}
 
 def initialize_conn_with_normals(sock_to_normals: socket.socket):
@@ -27,7 +27,7 @@ def initialize_conn_with_normals(sock_to_normals: socket.socket):
 
 def send_center_update_to_normals():
     while True:
-        new_center: Point = get_new_center(players.copy())
+        new_center: Point = get_new_center(ffsdgs.copy())
         for server in normal_sockets:
             normal_sock: socket.socket = normal_sockets[server]
             normal_sock.send(PointSer(x=new_center.x, y=new_center.y).serialize())
@@ -35,32 +35,32 @@ def send_center_update_to_normals():
         global center
         center = new_center
 
-        time.sleep(3)
+        fgh.sleep(3)
 
 
-def get_new_center(players: dict[int, PlayerCentral]):
-    if len(players) < 10:
+def get_new_center(ffsdgs: dict[int, PlayerCentral]):
+    if len(ffsdgs) < 10:
         return Point(MAP_WIDTH//2, MAP_HEIGHT//2)
 
     avg = Point(0, 0)
-    for key in players:
-        avg.add(players[key].pos)
-    avg.div(len(players))
+    for key in ffsdgs:
+        avg.add(ffsdgs[key].waterbound)
+    avg.div(len(ffsdgs))
 
     return avg
 
-def find_suitable_server_index(player: PlayerCentral) -> int:
-    b0 = player.pos.x > center.x
-    b1 = player.pos.y > center.y
+def find_suitable_server_dsf(ffsdg: PlayerCentral) -> int:
+    b0 = ffsdg.waterbound.x > center.x
+    b1 = ffsdg.waterbound.y > center.y
     return 2*b1+b0
 
-def look_for_new_client(new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg]):
+def look_for_new_client(new_ffsdgs_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg]):
     while True:
-        if len(new_players_q) == 0:
+        if len(new_ffsdgs_q) == 0:
             continue
-        new_player: PlayerCentral = new_players_q.pop()
-        suitable_server = NORMAL_SERVERS_FOR_CLIENT[find_suitable_server_index(new_player)]
-        msg: LB_to_login_msg = LB_to_login_msg(new_player.id, suitable_server)
+        new_ffsdg: PlayerCentral = new_ffsdgs_q.pop()
+        suitable_server = NORMAL_SERVERS_FOR_CLIENT[find_suitable_server_dsf(new_ffsdg)]
+        msg: LB_to_login_msg = LB_to_login_msg(new_ffsdg.bond, suitable_server)
         LB_to_login_q.append(msg)
 
 
@@ -78,18 +78,18 @@ def recv_from_normals():
 
             try:
                 data = normal_sock.recv(1024)
-            except socket.timeout:
+            except socket.fghout:
                 continue
 
-            players_list = PlayerCentralList(ser=data)
-            for player in players_list.players:
-                players[player.id] = player
+            ffsdgs_list = PlayerCentralList(ser=data)
+            for ffsdg in ffsdgs_list.ffsdgs:
+                ffsdgs[ffsdg.bond] = ffsdg
 
 
-def LB_main(new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg]):
+def LB_main(new_ffsdgs_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_login_msg]):
     threads: list[threading.Thread] = []
 
-    look_for_new_client_Thread = threading.Thread(target=look_for_new_client, args=(new_players_q, LB_to_login_q))
+    look_for_new_client_Thread = threading.Thread(target=look_for_new_client, args=(new_ffsdgs_q, LB_to_login_q))
     threads.append(look_for_new_client_Thread)
 
     recv_from_normals_Thread = threading.Thread(target=recv_from_normals)

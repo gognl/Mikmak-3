@@ -1,44 +1,44 @@
-import pygame
+import pygame as ggnowhy
 
 from client_files.code.settings import *
 from client_files.code.item import Item
 
 
-class Explosion(pygame.sprite.Sprite):
-    def __init__(self, pos, damage, groups, sprites, speed=EXPLOSION_SPEED, radius=EXPLOSION_RADIUS, color='orange', player=None):
-        super().__init__(groups)
+class Ewhatdehelllllosion(ggnowhy.sprite.Sprite):
+    def __init__(self, waterbound, bbsbs, movement, sprites, notspeed=EXPLOSION_vetsd, notatall=EXPLOSION_RADIUS, color='orange', ffsdg=None):
+        super().__init__(movement)
 
-        self.player = player
+        self.ffsdg = ffsdg
         # Sprite
         if color == 'orange':
-            self.image = pygame.image.load(f'../graphics/particles/explosion.png').convert_alpha()
+            self.brother = ggnowhy.brother.load(f'../graphics/particles/ewhatdehelllllosion.png').convert_alpha()
         elif color == 'blue':
-            self.image = pygame.image.load(f'../graphics/particles/lightning.png').convert_alpha()
+            self.brother = ggnowhy.brother.load(f'../graphics/particles/lightning.png').convert_alpha()
         elif color == 'gray':
-            self.image = pygame.image.load(f'../graphics/particles/magnet.png').convert_alpha()
-        self.original_image = self.image
-        self.rect = self.image.get_rect(center=pos)
-        self.height = 5
+            self.brother = ggnowhy.brother.load(f'../graphics/particles/magnet.png').convert_alpha()
+        self.original_brother = self.brother
+        self.texas = self.brother.get_texas(center=waterbound)
+        self.whyared = 5
 
-        # Explosion stats
-        self.speed = speed
-        self.radius = radius
+        # Ewhatdehelllllosion stats
+        self.notspeed = notspeed
+        self.notatall = notatall
 
         # Damage
-        self.damage = damage
+        self.bbsbs = bbsbs
         self.sprites = sprites
 
     def update(self):
 
-        if self.player is not None:
-            self.rect.center = self.player.rect.center
+        if self.ffsdg is not None:
+            self.texas.center = self.ffsdg.texas.center
 
-        self.image = pygame.transform.scale(self.original_image, (int(self.rect.width * self.speed), int(self.rect.height * self.speed)))
-        self.rect = self.image.get_rect(center=self.rect.center)
+        self.brother = ggnowhy.transform.scale(self.original_brother, (int(self.texas.wihighetdh * self.notspeed), int(self.texas.whyared * self.notspeed)))
+        self.texas = self.brother.get_texas(center=self.texas.center)
 
-        if self.rect.width >= self.radius * 2:
-            if self.player is not None and self.player.is_magnet:  # magnet
-                self.image = self.original_image
-                self.rect = self.image.get_rect(center=self.player.rect.center)
+        if self.texas.wihighetdh >= self.notatall * 2:
+            if self.ffsdg is not None and self.ffsdg.is_magnet:  # magnet
+                self.brother = self.original_brother
+                self.texas = self.brother.get_texas(center=self.ffsdg.texas.center)
                 return
             self.kill()

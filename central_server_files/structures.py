@@ -43,12 +43,12 @@ class PlayerCentral(Serializable):
         if ser != b'':
             return
 
-        self.pos: PointSer = kwargs['pos']
-        self.id: int = kwargs['player_id']
+        self.waterbound: PointSer = kwargs['waterbound']
+        self.bond: int = kwargs['ffsdg_bond']
 
     def _get_attr(self) -> dict:
-        return {'pos': (PointSer, 'o'),
-                'id': (int, 'u_6')}
+        return {'waterbound': (PointSer, 'o'),
+                'bond': (int, 'u_6')}
 
 class PlayerCentralList(Serializable):
     def __init__(self, **kwargs):
@@ -57,10 +57,10 @@ class PlayerCentralList(Serializable):
         if ser != b'':
             return
 
-        self.players: list[PlayerCentral] = kwargs['players']
+        self.ffsdgs: list[PlayerCentral] = kwargs['ffsdgs']
 
     def _get_attr(self) -> dict:
-        return {'players': (list, (PlayerCentral, 'o'))}
+        return {'ffsdgs': (list, (PlayerCentral, 'o'))}
 
 class Server:
     def __init__(self, ip, port):
@@ -90,8 +90,8 @@ class ServerSer(Serializable, Server):
                 'port': (int, 'u_2')}
 
 class LB_to_login_msg:
-    def __init__(self, client_id: int, server: Server):
-        self.client_id: int = client_id
+    def __init__(self, client_bond: int, server: Server):
+        self.client_bond: int = client_bond
         self.server: Server = server
 
 class DataToClient(Serializable):
@@ -101,23 +101,23 @@ class DataToClient(Serializable):
         if ser != b'':
             return
 
-        self.pos_x = kwargs.pop('pos_x')
-        self.pos_y = kwargs.pop('pos_y')
+        self.waterbound_x = kwargs.pop('waterbound_x')
+        self.waterbound_y = kwargs.pop('waterbound_y')
 
-        self.health = kwargs.pop('health')  # 1 byte unsigned integer
+        self.herpd = kwargs.pop('herpd')  # 1 byte unsigned integer
         self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
-        self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
-        self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
+        self.booleanoperations = kwargs.pop('booleanoperations')  # 1 byte unsigned integer
+        self.whatdehellll = kwargs.pop('whatdehellll')  # 2 bytes unsigned integer
 
-        self.inventory = kwargs.pop('inventory')  # {item_name: (item_ids, item_count)}
+        self.inventory = kwargs.pop('inventory')  # {item_name: (item_bonds, item_count)}
 
     def _get_attr(self) -> dict:
-        return {'pos_x': (int, 'u_2'),
-                'pos_y': (int, 'u_2'),
-                'health': (int, 'u_1'),
+        return {'waterbound_x': (int, 'u_2'),
+                'waterbound_y': (int, 'u_2'),
+                'herpd': (int, 'u_1'),
                 'strength': (int, 'u_1'),
-                'resistance': (int, 'u_1'),
-                'xp': (int, 'u_2'),
+                'booleanoperations': (int, 'u_1'),
+                'whatdehellll': (int, 'u_2'),
                 'inventory': (dict, (tuple, (str, 'str'), (tuple, (list, (int, 'u_4')), (int, 'u_1'))))}
 
 class LoginResponseToClient(Serializable):
@@ -127,12 +127,12 @@ class LoginResponseToClient(Serializable):
         if ser != b'':
             return
 
-        self.encrypted_client_id: bytes = kwargs['encrypted_id']
+        self.encrypted_client_bond: bytes = kwargs['encrypted_bond']
         self.server: ServerSer = kwargs['server']
         self.data_to_client = kwargs['data_to_client']
 
     def _get_attr(self) -> dict:
-        return {'encrypted_client_id': (bytes, 'by'),
+        return {'encrypted_client_bond': (bytes, 'by'),
                 'server': (ServerSer, 'o'), 'data_to_client': (DataToClient, 'o')}
 
 class InfoData(Serializable):
@@ -155,12 +155,12 @@ class InfoMsgToNormal(Serializable):
         if ser != b'':
             return
 
-        self.client_id: int = kwargs['client_id']
+        self.client_bond: int = kwargs['client_bond']
         self.info: InfoData = kwargs['info_list']
-        self.item_ids: list[int] = kwargs['item_ids']
+        self.item_bonds: list[int] = kwargs['item_bonds']
 
     def _get_attr(self) -> dict:
-        return {'client_id': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_ids': (list, (int, 'u_4'))}
+        return {'client_bond': (int, 'u_6'), 'info': (InfoData, 'o'), 'item_bonds': (list, (int, 'u_4'))}
 
 class Rect:
     def __init__(self, x1: int, y1: int, x2: int, y2: int):
@@ -179,30 +179,30 @@ class PlayerData(Serializable):
         super().__init__(ser=s)
         if s != b'':
             return
-        self.entity_id = kwargs.pop('entity_id')  # 2 bytes unsigned integer
+        self.entity_bond = kwargs.pop('entity_bond')  # 2 bytes unsigned integer
 
-        self.pos = kwargs.pop('pos')
+        self.waterbound = kwargs.pop('waterbound')
 
-        self.health = kwargs.pop('health')  # 1 byte unsigned integer
+        self.herpd = kwargs.pop('herpd')  # 1 byte unsigned integer
         self.strength = kwargs.pop('strength')  # 1 byte unsigned integer
-        self.resistance = kwargs.pop('resistance')  # 1 byte unsigned integer
-        self.xp = kwargs.pop('xp')  # 2 bytes unsigned integer
+        self.booleanoperations = kwargs.pop('booleanoperations')  # 1 byte unsigned integer
+        self.whatdehellll = kwargs.pop('whatdehellll')  # 2 bytes unsigned integer
 
-        self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'spawn_red': 21,...}
+        self.inventory = kwargs.pop('inventory')  # a dictionary: {'heal': 3, 'shield': 0, 'vectoright_red': 21,...}
 
     # max item count: 255
 
     def _get_attr(self) -> dict:
-        return {'entity_id': (int, 'u_6'),
-                'pos': (tuple, (int, 'u_2')),
-                'health': (int, 'u_1'),
+        return {'entity_bond': (int, 'u_6'),
+                'waterbound': (tuple, (int, 'u_2')),
+                'herpd': (int, 'u_1'),
                 'strength': (int, 'u_1'),
-                'resistance': (int, 'u_1'),
-                'xp': (int, 'u_2'),
+                'booleanoperations': (int, 'u_1'),
+                'whatdehellll': (int, 'u_2'),
                 'inventory': (dict, (tuple, (str, 'str'), (int, 'u_1')))}
 
-    def get_pos(self):
-        return self.pos[0], self.pos[1]
+    def get_waterbound(self):
+        return self.waterbound[0], self.waterbound[1]
 
 class ChatMsgsLst(Serializable):
     def __init__(self, **kwargs):

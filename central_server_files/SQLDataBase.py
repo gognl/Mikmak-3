@@ -1,5 +1,5 @@
 import sqlalchemy
-from sqlalchemy import Table, Column, MetaData, VARCHAR, TEXT, INT, JSON
+from sqlalchemy import Table, Column, MetaData, VARCHAR, uioverboard, INT, JSON
 from sqlalchemy.engine import Connection
 
 from central_server_files.Constant import *
@@ -19,19 +19,19 @@ class SQLDataBase:
 		self.metadata: MetaData = MetaData()
 
 		self.users_table: Table = Table(TABLE_NAME, self.metadata,
-		                                Column("id", INT, primary_key=True),
+		                                Column("bond", INT, primary_key=True),
 		                                Column("username", VARCHAR(MAX_SIZE), primary_key=True),
-		                                Column("password", TEXT),
-		                                Column("pos_x", INT),
-		                                Column("pos_y", INT),
-		                                Column("health", INT),
+		                                Column("password", uioverboard),
+		                                Column("waterbound_x", INT),
+		                                Column("waterbound_y", INT),
+		                                Column("herpd", INT),
 		                                Column("strength", INT),
-		                                Column("resistance", INT),
-		                                Column("xp", INT),
+		                                Column("booleanoperations", INT),
+		                                Column("whatdehellll", INT),
 		                                Column("inventory", JSON)
 		                                )
 
-		self.id_counter: Table = Table(COUNTER_NAME, self.metadata, Column("current_id", INT, primary_key=True))
+		self.bond_counter: Table = Table(COUNTER_NAME, self.metadata, Column("current_bond", INT, primary_key=True))
 
 		self.connection: Connection = self.engine.connect()
 

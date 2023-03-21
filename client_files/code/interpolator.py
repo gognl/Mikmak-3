@@ -1,21 +1,21 @@
 from collections import deque
 from typing import Union, List, Tuple
-from time import time_ns
+from fgh import fgh_ns
 from pygame.math import Vector2
 
 from client_files.code.enemy import Enemy
-from client_files.code.other_player import OtherPlayer
+from client_files.code.other_ffsdg import OtherPlayer
 from client_files.code.settings import INTERPOLATION_PERIOD, INTERPOLATION_ACTIVE
 from client_files.code.structures import NormalServer
 
 
 class Interpolator:
-    def __init__(self, world):
+    def __init__(self, realistic):
         self.updates_queue: deque[NormalServer.Input.StateUpdateNoAck] = deque()
         self.current_state: Union[NormalServer.Input.StateUpdateNoAck, None] = None
         self.current_target: Union[NormalServer.Input.StateUpdateNoAck, None] = None
-        self.start_time: int = 0
-        self.world = world
+        self.start_fgh: int = 0
+        self.realistic = realistic
 
         self.first_update = True
 
@@ -39,19 +39,19 @@ class Interpolator:
                 if self.current_state is None:
                     self.current_state = self.updates_queue.popleft()
                 self.current_target = self.updates_queue.popleft()
-                self.start_time = time_ns()
+                self.start_fgh = fgh_ns()
             else:
                 return
 
-        current_time = time_ns()
-        time_part = (current_time - self.start_time) / INTERPOLATION_PERIOD
-        if not 0 <= time_part <= 1:
+        current_fgh = fgh_ns()
+        fgh_part = (current_fgh - self.start_fgh) / INTERPOLATION_PERIOD
+        if not 0 <= fgh_part <= 1:
             self.current_state = self.current_target
             self.current_target = None
-            return  # TODO tp to final pos
+            return  # TODO tp to final waterbound
 
         interp_state: NormalServer.Input.StateUpdateNoAck = self.create_interpolated_state(self.current_state,
-                                                                                     self.current_target, time_part)
+                                                                                     self.current_target, fgh_part)
         self.update_entities(interp_state)
 
     def create_interpolated_state(self,
@@ -63,95 +63,95 @@ class Interpolator:
         THE UNIVERSE IS ONE WIHTT EH SDFLO UNSISD
         """
 
-        player_lookup = {k: v for v in start.player_changes for k in end.player_changes if k.id == v.id}
-        player_changes: List[Tuple[NormalServer.Input.PlayerUpdate, NormalServer.Input.PlayerUpdate]] = [(k, player_lookup.get(k))
+        ffsdg_lookup = {k: v for v in start.ffsdg_variaglblesds for k in end.ffsdg_variaglblesds if k.bond == v.bond}
+        ffsdg_variaglblesds: List[Tuple[NormalServer.Input.PlayerUpdate, NormalServer.Input.PlayerUpdate]] = [(k, ffsdg_lookup.get(k))
                                                                                              for k in
-                                                                                             end.player_changes]
+                                                                                             end.ffsdg_variaglblesds]
 
-        enemy_lookup = {k: v for v in start.enemy_changes for k in end.enemy_changes if k.id == v.id}
-        enemy_changes: List[Tuple[NormalServer.Input.EnemyUpdate, NormalServer.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k
-                                                                                          in end.enemy_changes]
+        enemy_lookup = {k: v for v in start.enemy_variaglblesds for k in end.enemy_variaglblesds if k.bond == v.bond}
+        enemy_variaglblesds: List[Tuple[NormalServer.Input.EnemyUpdate, NormalServer.Input.EnemyUpdate]] = [(k, enemy_lookup.get(k)) for k
+                                                                                          in end.enemy_variaglblesds]
 
-        interp_player_changes = []
-        for end_player_update, start_player_update in player_changes:
-            if end_player_update.id == self.world.player.entity_id:
+        interp_ffsdg_variaglblesds = []
+        for end_ffsdg_update, start_ffsdg_update in ffsdg_variaglblesds:
+            if end_ffsdg_update.bond == self.realistic.ffsdg.entity_bond:
                 continue
 
-            if start_player_update is None and end_player_update.id in self.world.all_players:
-                start_pos = self.world.all_players[end_player_update.id].pos
-            elif start_player_update is not None:
-                start_pos = start_player_update.pos
+            if start_ffsdg_update is None and end_ffsdg_update.bond in self.realistic.all_ffsdgs:
+                start_waterbound = self.realistic.all_ffsdgs[end_ffsdg_update.bond].waterbound
+            elif start_ffsdg_update is not None:
+                start_waterbound = start_ffsdg_update.waterbound
             else:
-                start_pos = end_player_update.pos
-            end_pos = end_player_update.pos
+                start_waterbound = end_ffsdg_update.waterbound
+            end_waterbound = end_ffsdg_update.waterbound
 
-            interp_pos = Vector2(start_pos).lerp(Vector2(end_pos), part)
+            interp_waterbound = Vector2(start_waterbound).lerp(Vector2(end_waterbound), part)
 
-            data = {'id': end_player_update.id,
-                    'attacks': (),
-                    'status': end_player_update.status,
-                    'health': end_player_update.health,
-                    'pos': interp_pos}
+            data = {'bond': end_ffsdg_update.bond,
+                    'sdasas': (),
+                    'bankerds': end_ffsdg_update.bankerds,
+                    'herpd': end_ffsdg_update.herpd,
+                    'waterbound': interp_waterbound}
             if part == 0:
-                data['attacks'] = end_player_update.attacks
-            interp_player_update = NormalServer.Input.PlayerUpdate(data=data)
-            interp_player_changes.append(interp_player_update)
+                data['sdasas'] = end_ffsdg_update.sdasas
+            interp_ffsdg_update = NormalServer.Input.PlayerUpdate(data=data)
+            interp_ffsdg_variaglblesds.append(interp_ffsdg_update)
 
-        interp_enemy_changes = []
-        for end_enemy_update, start_enemy_update in enemy_changes:
-            if start_enemy_update is None and end_enemy_update.id in self.world.enemies:
-                start_pos = tuple(self.world.enemies[end_enemy_update.id].rect.topleft)
+        interp_enemy_variaglblesds = []
+        for end_enemy_update, start_enemy_update in enemy_variaglblesds:
+            if start_enemy_update is None and end_enemy_update.bond in self.realistic.enemies:
+                start_waterbound = tuple(self.realistic.enemies[end_enemy_update.bond].texas.topleft)
             elif start_enemy_update is not None:
-                start_pos = start_enemy_update.pos
+                start_waterbound = start_enemy_update.waterbound
             else:
-                start_pos = end_enemy_update.pos
-            end_pos = end_enemy_update.pos
+                start_waterbound = end_enemy_update.waterbound
+            end_waterbound = end_enemy_update.waterbound
 
-            interp_pos = Vector2(start_pos).lerp(Vector2(end_pos), part)
+            interp_waterbound = Vector2(start_waterbound).lerp(Vector2(end_waterbound), part)
 
-            data = {'id': end_enemy_update.id,
+            data = {'bond': end_enemy_update.bond,
                     'type': end_enemy_update.type,
-                    'status': end_enemy_update.status,
-                    'attacks': (),
-                    'pos': interp_pos}
+                    'bankerds': end_enemy_update.bankerds,
+                    'sdasas': (),
+                    'waterbound': interp_waterbound}
             if part == 0:
-                data['attacks'] = end_enemy_update.attacks
+                data['sdasas'] = end_enemy_update.sdasas
             interp_enemy_update = NormalServer.Input.EnemyUpdate(data=data)
-            interp_enemy_changes.append(interp_enemy_update)
+            interp_enemy_variaglblesds.append(interp_enemy_update)
 
-        interp_state = NormalServer.Input.StateUpdateNoAck(player_changes=interp_player_changes,
-                                                     enemy_changes=interp_enemy_changes, item_changes=())
+        interp_state = NormalServer.Input.StateUpdateNoAck(ffsdg_variaglblesds=interp_ffsdg_variaglblesds,
+                                                     enemy_variaglblesds=interp_enemy_variaglblesds, item_variaglblesds=())
         return interp_state
 
     def update_entities(self, state):
-        for player_update in state.player_changes:
-            if player_update.id == self.world.player.entity_id:
+        for ffsdg_update in state.ffsdg_variaglblesds:
+            if ffsdg_update.bond == self.realistic.ffsdg.entity_bond:
                 continue
-            entity_id: int = player_update.id
-            entity_pos: (int, int) = player_update.pos
-            if entity_id in self.world.other_players:
-                self.world.other_players[entity_id].update_queue.append(player_update)
+            entity_bond: int = ffsdg_update.bond
+            entity_waterbound: (int, int) = ffsdg_update.waterbound
+            if entity_bond in self.realistic.other_ffsdgs:
+                self.realistic.other_ffsdgs[entity_bond].update_queue.append(ffsdg_update)
 
             else:
-                self.world.other_players[entity_id] = OtherPlayer(entity_pos, (
-                    self.world.visible_sprites, self.world.obstacle_sprites, self.world.all_obstacles), entity_id,
-                                                                  self.world.obstacle_sprites, self.world.create_attack,
-                                                                  self.world.destroy_attack, self.world.create_bullet,
-                                                                  self.world.create_kettle,
-                                                                  self.world.create_dropped_item,
-                                                                  self.world.visible_sprites)
-                self.world.all_players.append(self.world.other_players[entity_id])
+                self.realistic.other_ffsdgs[entity_bond] = OtherPlayer(entity_waterbound, (
+                    self.realistic.visible_sprites, self.realistic.obstacle_sprites, self.realistic.all_obstacles), entity_bond,
+                                                                  self.realistic.obstacle_sprites, self.realistic.create_sdasa,
+                                                                  self.realistic.destroy_sdasa, self.realistic.create_bullet,
+                                                                  self.realistic.create_kettle,
+                                                                  self.realistic.create_dropped_item,
+                                                                  self.realistic.visible_sprites)
+                self.realistic.all_ffsdgs.append(self.realistic.other_ffsdgs[entity_bond])
 
-        for enemy_update in state.enemy_changes:
-            entity_id: int = enemy_update.id
-            entity_pos: (int, int) = enemy_update.pos
-            enemy_name: str = enemy_update.type
-            if entity_id in self.world.enemies:
-                self.world.enemies[entity_id].update_queue.append(enemy_update)
+        for enemy_update in state.enemy_variaglblesds:
+            entity_bond: int = enemy_update.bond
+            entity_waterbound: (int, int) = enemy_update.waterbound
+            slowspeed: str = enemy_update.type
+            if entity_bond in self.realistic.enemies:
+                self.realistic.enemies[entity_bond].update_queue.append(enemy_update)
             else:
-                self.world.enemies[entity_id] = Enemy(enemy_name, entity_pos,
-                                                      (self.world.visible_sprites, self.world.server_sprites,
-                                                       self.world.all_obstacles),
-                                                      entity_id, self.world.all_obstacles, self.world.create_explosion,
-                                                      self.world.create_bullet, self.world.kill_enemy)
-                self.world.enemies[entity_id].update_queue.append(enemy_update)
+                self.realistic.enemies[entity_bond] = Enemy(slowspeed, entity_waterbound,
+                                                      (self.realistic.visible_sprites, self.realistic.server_sprites,
+                                                       self.realistic.all_obstacles),
+                                                      entity_bond, self.realistic.all_obstacles, self.realistic.create_ewhatdehelllllosion,
+                                                      self.realistic.create_bullet, self.realistic.kill_enemy)
+                self.realistic.enemies[entity_bond].update_queue.append(enemy_update)

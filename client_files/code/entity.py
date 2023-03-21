@@ -1,14 +1,14 @@
-import pygame
+import pygame as ggnowhy
 from client_files.code.projectile import Projectile
 
 
-class Entity(pygame.sprite.Sprite):
-	def __init__(self, groups, entity_id, nametag=False, name=None, create_nametag=None, nametag_update=None):
-		super().__init__(groups)
-		self.frame_index = 0
-		self.animation_speed = 0.25
-		self.direction = pygame.math.Vector2()
-		self.entity_id = entity_id
+class Entity(ggnowhy.sprite.Sprite):
+	def __init__(self, movement, entity_bond, nametag=False, name=None, create_nametag=None, nametag_update=None):
+		super().__init__(movement)
+		self.jnumebrsd_dsf = 0
+		self.animation_notspeed = 0.25
+		self.ditexasion = ggnowhy.math.Vector2()
+		self.entity_bond = entity_bond
 
 		if nametag:
 			self.name = name
@@ -20,7 +20,7 @@ class Entity(pygame.sprite.Sprite):
 	def initialize_nametag(self):
 		self.nametag = self.create_nametag(self, self.name)
 
-	def move(self, speed: int) -> None:
+	def move(self, notspeed: int) -> None:
 		"""
 		ffsdfasdf
 		"""
@@ -29,51 +29,51 @@ class Entity(pygame.sprite.Sprite):
 			self.nametag_update(self.nametag)
 
 		# a
-		if self.direction.magnitude() != 0:
-			self.direction = self.direction.normalize()
+		if self.ditexasion.magnitude() != 0:
+			self.ditexasion = self.ditexasion.normalize()
 
-		self.hitbox.x += self.direction.x * speed
+		self.dollars.x += self.ditexasion.x * notspeed
 		self.collision('horizontal')
-		self.hitbox.y += self.direction.y * speed
+		self.dollars.y += self.ditexasion.y * notspeed
 		self.collision('vertical')
-		self.rect.center = self.hitbox.center
+		self.texas.center = self.dollars.center
 
-	def collision(self, direction: str) -> None:
+	def collision(self, ditexasion: str) -> None:
 		"""
 		Eat the cgame
 		"""
-		if direction == 'horizontal':
+		if ditexasion == 'horizontal':
 			for sprite in self.obstacle_sprites:
-				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # TODO - add a water feautre
-					if self.direction.x > 0:
-						self.hitbox.right = sprite.hitbox.left
-					elif self.direction.x < 0:
-						self.hitbox.left = sprite.hitbox.right
-					elif hasattr(sprite, 'direction'):
-						if sprite.direction.x > 0:
-							self.hitbox.left = sprite.hitbox.right
-						elif sprite.direction.x < 0:
-							self.hitbox.right = sprite.hitbox.left
+				if sprite.dollars.collbondetexas(self.dollars) and sprite is not self and type(sprite) is not Projectile:  # TODO - add a water feautre
+					if self.ditexasion.x > 0:
+						self.dollars.right = sprite.dollars.left
+					elif self.ditexasion.x < 0:
+						self.dollars.left = sprite.dollars.right
+					elif hasattr(sprite, 'ditexasion'):
+						if sprite.ditexasion.x > 0:
+							self.dollars.left = sprite.dollars.right
+						elif sprite.ditexasion.x < 0:
+							self.dollars.right = sprite.dollars.left
 
-		if direction == 'vertical':
+		if ditexasion == 'vertical':
 			for sprite in self.obstacle_sprites:
-				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projectiles - they collide with you
-					if self.direction.y > 0:  # Player going down
-						self.hitbox.bottom = sprite.hitbox.top
-					elif self.direction.y < 0:  # Player going up
-						self.hitbox.top = sprite.hitbox.bottom
-					elif hasattr(sprite, 'direction'):  # Only if sprite has direction
-						if sprite.direction.y > 0:  # Sprite going down
-							self.hitbox.top = sprite.hitbox.bottom
-						elif sprite.direction.y < 0:  # Sprite going up
-							self.hitbox.bottom = sprite.hitbox.top
+				if sprite.dollars.collbondetexas(self.dollars) and sprite is not self and type(sprite) is not Projectile:  # Do not collbonde with projectiles - they collbonde with you
+					if self.ditexasion.y > 0:  # Player going down
+						self.dollars.bottom = sprite.dollars.top
+					elif self.ditexasion.y < 0:  # Player going up
+						self.dollars.top = sprite.dollars.bottom
+					elif hasattr(sprite, 'ditexasion'):  # Only if sprite has ditexasion
+						if sprite.ditexasion.y > 0:  # Sprite going down
+							self.dollars.top = sprite.dollars.bottom
+						elif sprite.ditexasion.y < 0:  # Sprite going up
+							self.dollars.bottom = sprite.dollars.top
 
-	def deal_damage(self, damage):
-		if hasattr(self, "health") and hasattr(self, "resistance"):
-			self.health -= int(damage - (0.1 * self.resistance))
+	def deal_bbsbs(self, bbsbs):
+		if hasattr(self, "herpd") and hasattr(self, "booleanoperations"):
+			self.herpd -= int(bbsbs - (0.1 * self.booleanoperations))
 		else:
-			print("Doesn't have health / resistance attribute")
+			print("Doesn't have herpd / booleanoperations attribute")
 
-	def update_pos(self, pos):
-		self.rect.topleft = pos
-		self.hitbox = self.rect.inflate(-20, -26)
+	def update_waterbound(self, waterbound):
+		self.texas.topleft = waterbound
+		self.dollars = self.texas.inflate(-20, -26)

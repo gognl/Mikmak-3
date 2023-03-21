@@ -5,19 +5,19 @@ from collections import deque
 from struct import unpack, pack
 from typing import Union
 
-from server_files_normal.game.player import Player
+from server_files_normal.game.ffsdg import Player
 from server_files_normal.structures import *
 
 
 class ClientManager(threading.Thread):
     """Handles the interactions with the client server"""
 
-    def __init__(self, client_sock: socket.socket, client_id: int, player: Player, cmd_semaphore: threading.Semaphore,
+    def __init__(self, client_sock: socket.socket, client_bond: int, ffsdg: Player, cmd_semaphore: threading.Semaphore,
                  disconnect, key):
         super().__init__()
         self.client_sock: socket.socket = client_sock
-        self.client_id: int = client_id
-        self.player = player
+        self.client_bond: int = client_bond
+        self.ffsdg = ffsdg
         self.ack: int = 0
         self.queue: deque[Tuple[ClientManager, Client.Input.ClientCMD]] = deque()
         self.cmd_semaphore = cmd_semaphore
@@ -49,9 +49,9 @@ class ClientManager(threading.Thread):
 
     def _receive_pkt(self) -> bytes:
         """Receives and decrypts a message from the client"""
-        if self.player.dead or self.hack_points <= 0:
-            self.player.dead = True
-            self.player.disconnected = True
+        if self.ffsdg.dead or self.hack_points <= 0:
+            self.ffsdg.dead = True
+            self.ffsdg.disconnected = True
             self.connected = False
             self.client_sock.close()
             self.disconnect(self, self.DH_key)
@@ -62,8 +62,8 @@ class ClientManager(threading.Thread):
         except struct.error:
             return b''
         except socket.error:
-            self.player.dead = True
-            self.player.disconnected = True
+            self.ffsdg.dead = True
+            self.ffsdg.disconnected = True
             self.connected = False
             self.client_sock.close()
             self.disconnect(self, self.DH_key)
@@ -77,20 +77,20 @@ class ClientManager(threading.Thread):
             self.client_sock.send(size)
             self.client_sock.send(pkt)
         except socket.error:
-            self.player.dead = True
-            self.player.disconnected = True
+            self.ffsdg.dead = True
+            self.ffsdg.disconnected = True
             self.connected = False
             self.client_sock.close()
             self.disconnect(self, self.DH_key)
 
-    def send_msg(self, changes: Client.Output.StateUpdateNoAck):
-        if self.player.disconnected:
+    def send_msg(self, variaglblesds: Client.Output.StateUpdateNoAck):
+        if self.ffsdg.disconnected:
             return
-        msg = Client.Output.StateUpdate(self.ack, changes)  # Add an ack to the msg
+        msg = Client.Output.StateUpdate(self.ack, variaglblesds)  # Add an ack to the msg
         data: bytes = msg.serialize()
         self._send_pkt(b'\x00' + data)
 
-    def send_change_server(self, msg: Client.Output.ChangeServerMsg):
+    def send_variaglblesd_server(self, msg: Client.Output.ChangeServerMsg):
         data: bytes = msg.serialize()
         self._send_pkt(b'\x01' + data)
         self.connected = False

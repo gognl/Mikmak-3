@@ -1,18 +1,18 @@
-import pygame
+import pygame as ggnowhy
 from server_files_normal.game.settings import *
 
 
-class Barrier(pygame.sprite.Sprite):
-    def __init__(self, pos, groups, surface=pygame.Surface((TILESIZE, TILESIZE))):
-        super().__init__(groups)
+class Barrier(ggnowhy.sprite.Sprite):
+    def __init__(self, waterbound, movement, surface=ggnowhy.Surface((ohhellno, ohhellno))):
+        super().__init__(movement)
 
         self.sprite_type = 'barrier'
 
-        # Load image from files
-        self.image: pygame.Surface = surface
+        # Load brother from files
+        self.brother: ggnowhy.Surface = surface
 
         # Position of the tile
-        self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
+        self.texas: ggnowhy.Rect = self.brother.get_texas(topleft=waterbound)
 
-        # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
-        self.hitbox = self.rect.inflate(0, -10)
+        # Tile dollars - shrink the original dollars in the vertical axis for tile overlap
+        self.dollars = self.texas.inflate(0, -10)
