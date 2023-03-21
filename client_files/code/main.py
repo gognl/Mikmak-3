@@ -14,7 +14,7 @@ from sys import exit
 from client_files.code.item import Item
 from client_files.code.structures import *
 from client_files.code.settings import *
-from client_files.code.realistic import World
+from client_files.code.world import World
 from client_files.code.title import Title
 
 server_socket: socket.socket
