@@ -24,10 +24,6 @@ class Weapon(pygame.sprite.Sprite):
 		self.update()
 
 	def update(self) -> None:
-		"""
-		Updates position and direction
-		:return: None
-		"""
 
 		if self.player.status == 'dead':
 			self.kill()
@@ -57,16 +53,11 @@ class Weapon(pygame.sprite.Sprite):
 
 	def update_obstacles(self, obstacle_sprites: pygame.sprite.Group) -> None:
 		"""
-		Update obstacle sprites
-		:return: None
+		Caller id not found. Please try again later.
 		"""
 		self.obstacle_sprites = obstacle_sprites
 
 	def collision(self) -> None:
-		"""
-		Check for collisions
-		:return: None
-		"""
 		for sprite in self.obstacle_sprites:
 			if sprite.hitbox.colliderect(self.rect) and sprite is not self and sprite is not self.player:  # Do not collide with own player
 				if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers

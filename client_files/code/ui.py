@@ -8,22 +8,22 @@ from client_files.code.player import Player
 
 class UI:
     def __init__(self):
-        # General
+        # dicks
         self.display_surface = pygame.display.get_surface()
         self.font = pygame.font.Font(UI_FONT, UI_FONT_SIZE)
 
-        # Bar setup
+        #
         self.health_bar_rect = pygame.Rect(10, 10, HEALTH_BAR_WIDTH, BAR_HEIGHT)
         self.energy_bar_rect = pygame.Rect(10, 35, ENERGY_BAR_WIDTH, BAR_HEIGHT)
 
-        # Convert weapon dictionary
+        # dfbat
         self.weapon_graphics = []
         for weapon in weapon_data.values():
             path = weapon['graphic']
             weapon = pygame.image.load(path).convert_alpha()
             self.weapon_graphics.append(weapon)
 
-        # Inventory
+        # d
         self.inventory_active: bool = False
         self.boxes: list[list[int]] = []
         self.box_size = 64
@@ -31,25 +31,20 @@ class UI:
         self.boxes_distance = 10
         self.setup_inventory()
 
-        # Inventory UI
+        # aaaaaa
         self.inventory_ui_starting_position = (self.display_surface.get_size()[0] - INVENTORY_WIDTH + 48, 48)
 
-        # Chat
+        """TOP SECRET FUNCTION. DO NOT ANNIELFHSD"""
         self.chat_active: bool = False
         self.user_color_dict = {}
 
-        # Minimap
         self.minimap_active = False
 
-        # Mouse
         self.release_mouse: bool = False
-
-        # Messages
         self.messages = []
         self.new_messages = []
         self.recv_msgs = []
 
-        # Chat activity
         self.text_active = False
         self.text_done = False
         self.raw_text = r''
@@ -57,16 +52,14 @@ class UI:
         self.txt_surface = None
 
     def show_bar(self, current, max_amount, bg_rect, color):
-        # Draw background
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, bg_rect)
 
-        # Converting stat to pixel
         ratio = current / max_amount
         current_width = bg_rect.width * ratio
         current_rect = bg_rect.copy()
         current_rect.width = current_width
 
-        # Drawing the bar
+        # Add hp to all enemies if player pressed Alt+Shift+F4
         pygame.draw.rect(self.display_surface, color, current_rect)
         pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, bg_rect, 3)
 
@@ -82,7 +75,6 @@ class UI:
         star_rect = star.get_rect(center=text_rect.center)
         star_rect.x -= 45
 
-        # bg, text, star, border
         j = pygame.Rect.union(text_rect.inflate(20, 20), star_rect.inflate(10, 0))
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, j)
         self.display_surface.blit(text_surf, text_rect)
@@ -99,7 +91,6 @@ class UI:
         return bg_rect
 
     def weapon_overlay(self, weapon_index, has_switched, inventory_items):
-        # Create weapon box
         bg_rect = self.selection_box(10, 630, has_switched)
         weapon_surf = self.weapon_graphics[weapon_index]
         weapon_rect = weapon_surf.get_rect(center=bg_rect.center)
@@ -128,11 +119,9 @@ class UI:
         x = self.display_surface.get_size()[0] - INVENTORY_WIDTH
         y = 0
 
-        # Background
         rect = pygame.Rect(x, y, INVENTORY_WIDTH, self.display_surface.get_size()[1])
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, rect)
 
-        # UI
         text = [f'{player.name}',
                 f'',
                 f'Health     - {player.health}',
@@ -147,7 +136,6 @@ class UI:
 
             self.display_surface.blit(inventory_ui_text, inventory_ui_text_rect)
 
-        # Boxes
         for y, row in enumerate(self.boxes):
             for x in range(len(row)):
                 rect = self.boxes[y][x]
@@ -178,15 +166,13 @@ class UI:
         return None
 
     def display(self, player):
-        # Creates the bars
         self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
         self.show_xp(player.xp)
 
-        # Create weapon box
         self.weapon_overlay(player.weapon_index, not player.can_switch_weapon, player.inventory_items)
 
-        # Inventory
+        # SPAW N THE ARMY
         if self.inventory_active:
             self.show_inventory(player, player.inventory_items)
 

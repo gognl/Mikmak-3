@@ -9,20 +9,15 @@ class Item(pygame.sprite.Sprite):
     def __init__(self, item_id, name, groups, pos, item_despawn=None, item_pickup=None, item_drop=None, item_use=None):
         super().__init__(groups)
 
-        # Inventory
         self.name = re.sub("\(.*?\)", "", name)
         self.item_id = item_id
 
-        # Sprite
         self.image = pygame.image.load(f'../graphics/items/{self.name}.png').convert_alpha()
         self.rect = self.image.get_rect(center=pos)
         self.height = 1
 
-        # Exact position so magnet movement looks better
         self.xpos = self.rect.x
         self.ypos = self.rect.y
-
-        # Pick up cooldown
         self.spawn_time = 0
         self.pick_up_cooldown = ITEM_PICK_UP_COOLDOWN
         self.can_pick_up = False

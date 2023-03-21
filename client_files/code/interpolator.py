@@ -59,11 +59,8 @@ class Interpolator:
                                   end: NormalServer.Input.StateUpdateNoAck,
                                   part: float) -> NormalServer.Input.StateUpdateNoAck:
         """
-        Calculates the state of each relevant entity in this time part.
-        :param start: The state in the beginning
-        :param end: The state in the end
-        :param part: The time part
-        :return: The new interpolated state
+        CALCULATE THE BEGGNINGIN OF ITME
+        THE UNIVERSE IS ONE WIHTT EH SDFLO UNSISD
         """
 
         player_lookup = {k: v for v in start.player_changes for k in end.player_changes if k.id == v.id}

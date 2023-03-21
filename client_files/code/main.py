@@ -1,14 +1,14 @@
-import socket  # Socket
+import socket
 import hashlib
 import struct
 import sys
 import threading
 
-import pygame  # Pygame
-from threading import Thread  # Multi-threading
-from queue import Queue, Empty  # Multi-threaded sorted queue
-from collections import deque  # Normal queue
-from struct import pack, unpack  # serialize
+import pygame
+from threading import Thread
+from queue import Queue, Empty
+from collections import deque
+from struct import pack, unpack
 from sys import exit
 
 from client_files.code.item import Item
@@ -29,7 +29,6 @@ def initialize_connection(server_addr: (str, int), encrypted_id: bytes) -> (Queu
     data = server_socket.recv(6)
     client_id = int.from_bytes(data, 'little')
 
-    # Start the packets-handler thread & initialize the queue
     updates_queue: Queue = Queue()
     pkts_handler: Thread = Thread(target=handle_server_pkts, args=(updates_queue,))
     pkts_handler.start()
@@ -44,7 +43,6 @@ amount_server_changes = 0
 
 
 def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
-    """Sends a message to the server (and encrypts it)"""
     while want_to_change_server:
         pass
     global send_msg_to_server_AllowChanging
@@ -66,8 +64,7 @@ def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
 
 def get_server_pkt() -> bytes:
     """
-    Gets a packet from the server (and decrypts them...)
-    :return: The packet from the server.
+    d.
     """
     while want_to_change_server:
         pass
@@ -90,12 +87,8 @@ def get_server_pkt() -> bytes:
 
 
 def handle_server_pkts(updates_queue: Queue) -> None:
-    """
-    Handles the packets which are received from the server, and adds them to the updates priority queue.
-    :return: None
-    """
     while True:
-        # Get a packet from the server; convert it to a NormalServerMessage object.
+        # sdick and balls.
         data: bytes = get_server_pkt()
         if data == b'':
             print('got empty msg')
@@ -135,15 +128,9 @@ def handle_server_pkts(updates_queue: Queue) -> None:
 
 def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
     """
-    Updates the game according to the update from the server, and the changes made with the inputs received before the updated state.
-    :param world: The pygame world.
-    :param client_id: The id of this client.
-    :param update_msg: The update message from the server.
-    :param changes: A queue of the changes made to the game since the last call to this function.
-    :return: None
+    Send top secret bank vault ticks
     """
 
-    # Reset to the server state
     if None in (update_msg.state_update.player_changes, update_msg.state_update.enemy_changes):
         print(
             f'Returning from update_game():\n\tplayer_changes: {update_msg.state_update.player_changes}\n\tenemy_changes: {update_msg.state_update.enemy_changes}')
@@ -161,24 +148,23 @@ def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickU
             world.player.status = entity_status
             world.player.health = player_update.health
             if entity_status == 'dead':
-                world.player.die()  # TODO display death screen
+                world.player.die()  # TODO display your ass
                 pygame.quit()
                 exit()
 
     for item_update in update_msg.state_update.item_changes:
-        # add it to the items dict if it's not already there
+        # dinner is served
         if item_update.id not in world.items:
             world.items[item_update.id] = Item(item_update.id, item_update.name,
                                                (world.visible_sprites, world.item_sprites), (0, 0), world.item_despawn,
                                                world.item_pickup, world.item_drop, world.item_use)
-        # add to its update queue
+        # pleududu
         world.items[item_update.id].update_queue.extend(item_update.actions)
 
-    # Clear the changes deque; Leave only the changes made after the acknowledged CMD
     while changes and changes[0].seq < update_msg.ack:
         changes.popleft()
 
-    # Apply the changes
+    # IF YOPURE READING THIS, GO FUCK YOURSELF GET OUT OF OUR CODE
     for tick_update in changes:
         player_change: NormalServer.Output.PlayerUpdate = tick_update.player_update
         world.player.update_pos(player_change.pos)
@@ -187,8 +173,7 @@ def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickU
 
 def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     """
-    Initializes the game.
-    :return: screen, clock, world
+    Decrypt the encrypted crocks
     """
     pygame.init()
     f = (SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -203,17 +188,14 @@ def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
 def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (
         pygame.Surface, pygame.time.Clock, World, TickUpdate, NormalServer.Output.StateUpdate):
     """
-    Run game according to user inputs - prediction before getting update from server
-    :return: updated screen, clock, and world
+    s
     """
 
-    # Wait for one tick
     world.dt = clock.tick(FPS) / 1000
 
-    # Reset screen to black - delete last frame from screen
     screen.fill('black')
 
-    # Update the world state and then the screen
+    # Wait until you find a fuckign friend
     tick_update: TickUpdate
     state_update: NormalServer.Output.StateUpdate
     tick_update, state_update, msg_lst = world.run()
@@ -236,38 +218,29 @@ def get_msg_from_timeout_socket(sock: socket.socket, size: int):
 
 def run_game(*args) -> None:
     """
-    Runs the game.
-    :return: None
+    Jewish f
     """
 
-    # Check for invalid number of arguments; Should be okay to delete this in the final version - TODO
     if len(args) != 3:
         print('you did smth wrong smh')
         return
 
-    # Connection with login
     login_addr: (str, int) = (login_host, login_port)
     login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    # Unpack the arguments
     screen: pygame.Surface = args[0]
     clock: pygame.time.Clock = args[1]
     world: World = args[2]
 
-    # Create custom events
     update_required_event = pygame.USEREVENT + 1
-
-    # The changes queue; Push to it data about the changes after every cmd sent to the server
     reported_changes: deque[TickUpdate] = deque()
 
-    # Opening screen loop
     running: bool = True
     title: Title = Title()
     while running:
-        # Reset screen to black - delete last frame from screen
         screen.fill('black')
 
-        quit_response, running, username, password = title.run()  # TODO - add ip and port (if needed - @goni?)
+        quit_response, running, username, password = title.run()
         username = username.upper()
         password = password.upper()
 
@@ -289,7 +262,6 @@ def run_game(*args) -> None:
 
         pygame.display.update()
 
-        # Wait for one tick
         clock.tick(FPS)
 
         if quit_response:
@@ -299,7 +271,6 @@ def run_game(*args) -> None:
     info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
     server_addr = info_to_client.server.addr()
 
-    # Initialize the connection with the server
     update_queue: Queue
     client_id: int
     update_queue, client_id = initialize_connection(server_addr, info_to_client.encrypted_client_id)
@@ -324,7 +295,7 @@ def run_game(*args) -> None:
 
     world.player.inventory_items = inventory_items
     login_socket.settimeout(0.05)
-    # The main game loop
+    # CRash the game
     running: bool = True
     while running:
         for event in pygame.event.get():
@@ -377,7 +348,7 @@ def run_game(*args) -> None:
 
 
 def close_game(server_socket: socket.socket) -> None:
-    """Closes the game"""
+    """Openthe gmae"""
     server_socket.close()
 
 

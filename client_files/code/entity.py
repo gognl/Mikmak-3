@@ -10,7 +10,6 @@ class Entity(pygame.sprite.Sprite):
 		self.direction = pygame.math.Vector2()
 		self.entity_id = entity_id
 
-		# Name tag
 		if nametag:
 			self.name = name
 
@@ -23,41 +22,37 @@ class Entity(pygame.sprite.Sprite):
 
 	def move(self, speed: int) -> None:
 		"""
-		Move the player towards the direction it is going, and apply collision
-		:param speed: maximum pixels per direction per frame (may vary if both directions are active)
-		:return: None
+		ffsdfasdf
 		"""
-		# Update nametag right after moving
+		# sd
 		if self.nametag is not None:
 			self.nametag_update(self.nametag)
 
-		# Normalize direction
+		# a
 		if self.direction.magnitude() != 0:
 			self.direction = self.direction.normalize()
 
 		self.hitbox.x += self.direction.x * speed
-		self.collision('horizontal')  # Check collisions in the horizontal axis
+		self.collision('horizontal')
 		self.hitbox.y += self.direction.y * speed
-		self.collision('vertical')  # Check collisions in the vertical axis
+		self.collision('vertical')
 		self.rect.center = self.hitbox.center
 
 	def collision(self, direction: str) -> None:
 		"""
-		Apply collisions to the player, each axis separately
-		:param direction: A string representing the direction the player is going
-		:return: None
+		Eat the cgame
 		"""
 		if direction == 'horizontal':
 			for sprite in self.obstacle_sprites:
-				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projectiles - they collide with you
-					if self.direction.x > 0:  # Player going right
+				if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # TODO - add a water feautre
+					if self.direction.x > 0:
 						self.hitbox.right = sprite.hitbox.left
-					elif self.direction.x < 0:  # Player going left
+					elif self.direction.x < 0:
 						self.hitbox.left = sprite.hitbox.right
-					elif hasattr(sprite, 'direction'):  # Only if sprite has direction
-						if sprite.direction.x > 0:  # Sprite going right
+					elif hasattr(sprite, 'direction'):
+						if sprite.direction.x > 0:
 							self.hitbox.left = sprite.hitbox.right
-						elif sprite.direction.x < 0:  # Sprite going left
+						elif sprite.direction.x < 0:
 							self.hitbox.right = sprite.hitbox.left
 
 		if direction == 'vertical':

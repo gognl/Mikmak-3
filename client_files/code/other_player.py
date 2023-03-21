@@ -84,10 +84,6 @@ class OtherPlayer(Entity):
         self.status = 'down_idle'
 
     def animate(self) -> None:
-        """
-        animate through images
-        :return: None
-        """
         if self.is_fast:
             animation: List[pygame.Surface] = self.speed_animations[self.status]
         else:

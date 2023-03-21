@@ -15,66 +15,53 @@ from client_files.code.explosion import *
 
 class World:
     def __init__(self) -> None:
-        # Pygame window
+        # d
         self.display_surface: pygame.Surface = pygame.display.get_surface()
 
-        # list of players using magnetic skill
+        # asdf
         self.magnetic_players = pygame.sprite.Group()
 
-        # Visible sprites: sprites that show on screen
-        # Obstacle sprites: sprite the player can collide with
-        # Server sprites: sprites whose updates have to be sent to the server
+        #  ttt
         self.visible_sprites: GroupYSort = GroupYSort()
-        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
-        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # cows, players, and walls
+        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()
+        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # BAlls
         self.server_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.projectile_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
         self.item_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.nametags: List[NameTag] = []
 
-        # User interface
         self.ui = UI()
 
-        # Calculate screen center
         self.half_width: int = self.display_surface.get_size()[0] // 2
         self.half_height: int = self.display_surface.get_size()[1] // 2
         self.screen_center: pygame.math.Vector2 = pygame.math.Vector2(self.half_width, self.half_height)
 
-        # Camera position for drawing offset
         self.camera: pygame.math.Vector2 = pygame.math.Vector2()
         self.camera_distance_from_player: list[int, int] = list(CAMERA_DISTANCE_FROM_PLAYER)
 
-        # Player before creation
         self.player: Player = None
 
-        # enemies dict
-        self.enemies: Dict[int, Enemy] = {}  # entity_id : Enemy
-        # other players
-        self.other_players: Dict[int, OtherPlayer] = {}  # entity_id : OtherPlayer
-        # items
+        self.enemies: Dict[int, Enemy] = {}
+        self.other_players: Dict[int, OtherPlayer] = {}
+
         self.items: Dict[int, Item] = {}
 
-        # all players
         self.all_players: List[Union[Player, OtherPlayer]] = []
 
-        # All layout csv files of the map
         self.layout: Dict[str, List[List[str]]] = {
             'floor': import_csv_layout('../graphics/map/map_Ground.csv'),
             'objects': import_csv_layout('../graphics/map/map_Objects.csv'),
             'boundary': import_csv_layout('../graphics/map/map_Barriers.csv'),
         }
 
-        # All graphics groups
         self.graphics: dict[str: dict[int: pygame.Surface]] = {
             'floor': import_folder('../graphics/tiles'),
             'objects': import_folder('../graphics/objects')
         }
 
-        # Load the map from settings.py
         self.create_map()
 
-        # Zen
         self.zen_active = False
 
         self.interpolator: Interpolator = Interpolator(self)
@@ -83,8 +70,7 @@ class World:
 
     def create_map(self) -> None:
         """
-        Place movable tiles on the map
-        :return: None
+        Collide with all near by gonis
         """
         # Create player with starting position
 
@@ -100,8 +86,8 @@ class World:
                              self.all_obstacles, 1, self.create_attack, self.destroy_attack, self.create_bullet,
                              self.create_kettle, self.create_inventory, self.destroy_inventory, self.create_chat, self.destroy_chat,
                              self.activate_zen, self.deactivate_zen, self.create_minimap, self.destroy_minimap, self.create_nametag,
-                             self.nametag_update, self.get_inventory_box_pressed, self.create_dropped_item, self.spawn_enemy_from_egg,
-                             0, self.magnetic_players, self.layout, self.create_lightning, self.create_magnet)  # TODO - make starting player position random (or a spawn)
+                             self.issdf, self.what, self.create_dropped_item, self.asd,
+                             0, self.magnetic_players, self.layout, self.sdfajdopasdffasd, self.dsfsfd)  # TODO - make starting player position random (or a spawn)
 
         self.all_players.append(self.player)
 
@@ -185,13 +171,13 @@ class World:
     def create_dropped_item(self, name, pos, item_id):
         self.items[item_id] = Item(item_id, name, (self.visible_sprites, self.item_sprites), pos, self.item_despawn, self.item_pickup, self.item_drop, self.item_use)
 
-    def nametag_update(self, nametag):
+    def issdf(self, nametag):
         nametag.update(self.camera, self.screen_center)
 
-    def get_inventory_box_pressed(self, mouse):
+    def what(self, mouse):
         return self.ui.get_inventory_box_pressed(mouse)
 
-    def spawn_enemy_from_egg(self, pos, name):
+    def asd(self, pos, name):
         while True:
             random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
             random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
@@ -201,10 +187,10 @@ class World:
                         self.obstacle_sprites, self.create_dropped_item, self.create_explosion, self.create_bullet)
                 break
 
-    def create_magnet(self):
+    def dsfsfd(self):
         Explosion(self.player.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.05, radius=40, color='gray', player=self.player)
 
-    def create_lightning(self):
+    def sdfajdopasdffasd(self):
         Explosion(self.player.rect.center, 0, (self.visible_sprites,), pygame.sprite.Group(), speed=1.26, radius=LIGHTNING_RADIUS, color='blue')
 
     def create_explosion(self, pos, damage):
@@ -217,8 +203,7 @@ class World:
 
     def run(self) -> (TickUpdate, NormalServer.Output.StateUpdate):
         """
-            Run one world frame
-            :return: None
+            10/10 function would recommend
             """
 
         # Run the interpolation
@@ -296,10 +281,6 @@ class World:
         return tick_update, state_update, messages
 
     def update_camera(self) -> None:
-        """
-        update the camera position
-        :return: None
-        """
         # Figure out offset based on camera position
 
         # X axis
@@ -329,12 +310,9 @@ class World:
                     break
 
     def item_despawn(self, item: Item):
-        """Remove the item from the game"""
         item.kill()
 
     def item_pickup(self, item: Item, player_id: int) -> None:
-        """Add the item to the player's inventory and remove it from the floor"""
-
         # other players' inventories don't matter to this client
         if self.player.entity_id != player_id:
             del self.items[item.item_id]
@@ -359,13 +337,13 @@ class World:
                 item.kill()
 
     def item_drop(self, item: Item, player_id: int, pos: (int, int)) -> None:
-        """Remove the item from the player's inventory and drop it on the floor"""
+        """d"""
         if player_id == self.player.entity_id:
             return  # already dropped
         self.create_dropped_item(item.name, pos, item.item_id)
 
     def item_use(self, item: Item, player_id: int, pos: (int, int)) -> None:
-        """Remove the item from the player's inventory and use it"""
+        """calculate the sqatre rtoot of two"""
 
 
 class GroupYSort(pygame.sprite.Group):
@@ -374,9 +352,7 @@ class GroupYSort(pygame.sprite.Group):
         self.display_surface = pygame.display.get_surface()
 
     def custom_draw(self, camera: pygame.math.Vector2, screen_center: pygame.math.Vector2) -> None:
-        """
-        Draws the sprites on screen according to the screen height, and then according to the position of the camera
-        :return: None
+        """c
         """
         # For every visible sprite, from top to bottom
         for sprite in sorted(self.sprites(), key=lambda x: (x.height, x.rect.centery)):

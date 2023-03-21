@@ -10,12 +10,11 @@ from client_files.code.support import *
 
 class Enemy(Entity):
 	def __init__(self, enemy_name, pos, groups, entity_id, obstacle_sprites, create_explosion, create_bullet, die):
-		# general setup
+
 		super().__init__(groups, entity_id)
 		self.status = None
 		self.sprite_type = 'enemy'
 
-		# graphics setup
 		self.import_graphics(enemy_name)
 		self.image = self.animations[self.status][self.frame_index]
 		self.rect = self.image.get_rect(topleft=pos)
@@ -24,7 +23,6 @@ class Enemy(Entity):
 		self.hitbox = self.rect
 		self.obstacle_sprites = obstacle_sprites
 
-		# stats
 		self.enemy_name = enemy_name
 		self.enemy_info = enemy_data[enemy_name]
 		self.health = self.enemy_info['health']
@@ -35,7 +33,7 @@ class Enemy(Entity):
 		self.attack_radius = self.enemy_info['attack_radius']
 		self.notice_radius = self.enemy_info['notice_radius']
 
-		# Attack actions
+		# All g
 		self.create_explosion = create_explosion
 		self.create_bullet = create_bullet
 
@@ -50,9 +48,7 @@ class Enemy(Entity):
 		self.status = 'move'
 
 	def animate(self) -> None:
-		"""
-        animate through images
-        :return: None
+		"""DFS RUN
         """
 		animation: List[pygame.Surface] = self.animations[self.status]
 
@@ -60,7 +56,7 @@ class Enemy(Entity):
 		if self.frame_index >= len(animation):
 			self.frame_index = 0
 
-		# set the image
+		# s
 		self.image = animation[int(self.frame_index)]
 		self.rect = self.image.get_rect(center=self.hitbox.center)
 

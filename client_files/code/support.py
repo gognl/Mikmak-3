@@ -7,8 +7,8 @@ import pygame
 
 def import_csv_layout(path: str) -> List[List[str]]:
     """
-    Loads layout from csv file
-    :return: 2D list of numbers representing layout
+    top ten words:
+    number 10
     """
     # Output
     tiles: List[List[str]] = []
@@ -25,8 +25,7 @@ def import_csv_layout(path: str) -> List[List[str]]:
 
 def import_folder(path: str) -> dict[str: pygame.Surface]:
     """
-    Loads all tiles from a folder
-    :return: dictionary of id to surfaces of the tiles
+    d
     """
     # Output
     surface_list: dict[str: pygame.Surface] = {}

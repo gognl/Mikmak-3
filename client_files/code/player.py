@@ -17,50 +17,37 @@ class Player(Entity):
                  magnetic_players, layout, create_lightning, create_magnet) -> None:
         super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
-        # Player name TODO: might be temporary
         self.name = name
 
-        # sprite group of magnetic players
         self.magnetic_players = magnetic_players
 
-        # Load player sprite from files
         self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
 
-        # Position of player
         self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
 
-        # Height of the player on screen - 0 is background
         self.height: int = height
-
-        # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
         self.hitbox = self.rect.inflate(-20, -26)
 
-        # Obstacle sprites for the player to check collisions
         self.obstacle_sprites: pygame.Group = obstacle_sprites
 
-        # Attacking
         self.attacking: bool = False
         self.attack_cooldown = 0.5
         self.attack_time: int = 0
 
-        # layout
         self.layout = layout
 
-        # weapon
         self.create_attack = create_attack
         self.destroy_attack = destroy_attack
         self.create_bullet = create_bullet
         self.create_kettle = create_kettle
         self.weapon_index = 0
-        self.on_screen = [1, 2]  # Indices of weapons that stay on screen
+        self.on_screen = [1, 2]
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
         self.weapon_switch_time = 0
         self.switch_duration_cooldown = 1.5
-        # attack sprites
         self.current_weapon = None
 
-        # Auto walk
         self.is_auto_walk = False
         self.moves_auto_walk = []
         self.block_cords = []
@@ -78,18 +65,18 @@ class Player(Entity):
         self.auto_count = 0
         self.rand_walk = False
 
-        # Animations
+        # TODO - do liroin
         self.animations: Dict[str, List[pygame.Surface]] = {}
         self.speed_animations: Dict[str, List[pygame.Surface]] = {}
         self.import_player_assets()
         self.status = 'down'
 
-        # Server
+        # sdf
         self.attacks: deque = deque()
         self.item_actions: deque = deque()  # also used as skills update
         self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.status, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
-        # Stats
+        # asdf
         self.stats = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}
         self.health = self.stats['health']
         self.energy = self.stats['energy']
@@ -99,18 +86,18 @@ class Player(Entity):
         self.strength = self.stats['attack']
         self.resistance = 0
 
-        # Nametag
+        # gg
         self.initialize_nametag()
 
-        # Shooting cooldown
+        # dfasdf
         self.can_shoot = True
         self.shoot_time = 0
         self.shoot_cooldown = 1
 
-        # Mouse press
+        # 213
         self.release_mouse = [False, False]
 
-        # Magnet skill
+        # 3
         self.can_magnet = True
         self.is_magnet = False
         self.magnet_start = 0
@@ -118,8 +105,6 @@ class Player(Entity):
         self.magnet_skill_cooldown = 40
         self.magnet_cost = 20
         self.create_magnet = create_magnet
-
-        # Speed skill
         self.can_speed = True
         self.is_fast = False
         self.speed_start = 0
@@ -128,14 +113,14 @@ class Player(Entity):
         self.speed_skill_factor = 2
         self.speed_cost = 40
 
-        # Lightning skill
+        # d
         self.can_lightning = True
         self.lightning_start = 0
         self.lightning_skill_cooldown = 30
         self.lightning_cost = 30
         self.create_lightning = create_lightning
 
-        # Inventory
+        # a
         self.create_inventory = create_inventory
         self.destroy_inventory = destroy_inventory
         self.inventory_active: bool = False
@@ -144,7 +129,7 @@ class Player(Entity):
         self.inventory_cooldown: int = 6
         self.last_inventory: bool = True
 
-        # Chat
+        # sdasd
         self.create_chat = create_chat
         self.destroy_chat = destroy_chat
         self.last_chat = True
@@ -153,7 +138,7 @@ class Player(Entity):
         self.chat_active = False
         self.can_change_chat = True
 
-        # Zen
+        # Zefdedfn
         self.activate_zen = activate_zen
         self.deactivate_zen = deactivate_zen
         self.last_zen = True
@@ -162,7 +147,7 @@ class Player(Entity):
         self.zen_active = False
         self.can_change_zen = True
 
-        # Minimap
+        # dsfasdfZSFD
         self.create_minimap = create_minimap
         self.destroy_minimap = destroy_minimap
         self.last_minimap = True
@@ -171,14 +156,12 @@ class Player(Entity):
         self.minimap_active = False
         self.can_change_minimap = True
 
-        # Items
         self.item_sprites = None
         self.inventory_items: Dict[str, InventorySlot] = {}
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
         self.spawn_enemy_from_egg = spawn_enemy_from_egg
 
-        # Energy
         self.can_energy = True
         self.energy_cooldown = 6
         self.energy_time = 0
@@ -190,10 +173,6 @@ class Player(Entity):
         self.inputs_disabled: bool = False
 
     def import_player_assets(self) -> None:
-        """
-        Import all player assets
-        :return: None
-        """
         path: str = '../graphics/player/'
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
                            'left_idle': [], 'right_idle': []}
@@ -479,10 +458,6 @@ class Player(Entity):
             self.start_auto_walk()
 
     def input(self) -> None:
-        """
-        Get keyboard input and process it
-        :return: None
-        """
 
         keys: Sequence[pygame.Key] = pygame.key.get_pressed()
         mouse: Sequence[bool] = pygame.mouse.get_pressed()
@@ -688,9 +663,7 @@ class Player(Entity):
             self.switch_weapon()
 
     def switch_weapon(self, known_index=None) -> None:
-        """
-        switch current held weapon
-        :return:
+        """Get the last comment in chat
         """
         self.release_mouse[0] = True
 
@@ -721,8 +694,7 @@ class Player(Entity):
 
     def get_status(self) -> None:
         """
-        update player status
-        :return: None
+       auto walk to nearest hoe
         """
 
         # idle
@@ -731,9 +703,7 @@ class Player(Entity):
                 self.status += '_idle'
 
     def cooldowns(self) -> None:
-        """
-        Manage cooldowns
-        :return: None
+        """sad
         """
 
         # Energy
@@ -833,8 +803,7 @@ class Player(Entity):
 
     def animate(self) -> None:
         """
-        animate through images
-        :return: None
+        Add hp to player base in the base of the plaster
         """
         if self.is_fast:
             animation: List[pygame.Surface] = self.speed_animations[self.status]
@@ -851,9 +820,7 @@ class Player(Entity):
 
     def update(self) -> None:
         """
-        Update the player based on input
-        :return: None
-        """
+        Nobody nobdy"""
 
         # Clear the changes dict
         self.attacks: deque = deque()

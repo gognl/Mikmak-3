@@ -4,8 +4,6 @@ from typing import Union, Sequence, Any, Final, Tuple
 # Example classes can be found in the bottom of this code (ClassA & ClassB)
 
 class BaseSerializer:
-	"""A class that has static functions which serialize basic types"""
-
 	KEYS: Final[dict] = {
 		'u': {1: 'B', 2: 'H', 4: 'I', 8: 'Q'},
 		's': {1: 'b', 2: 'h', 4: 'i', 8: 'q'},
@@ -77,7 +75,7 @@ class BaseSerializer:
 
 	@staticmethod
 	def serialize_unsigned(value: Union[int, Sequence[int]], tsid: str, length: int) -> bytes:
-		"""Can serialize unsigned numbers or iterables of unsigned numbers"""
+		"""Bitch what even is this"""
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
 		# Simple case; A single value, not a list
@@ -94,7 +92,7 @@ class BaseSerializer:
 
 	@staticmethod
 	def serialize_signed(value: Union[int, Sequence[int]], tsid: str, length: int) -> bytes:
-		"""Can serialize signed numbers or iterables of signed numbers"""
+		"""shutu["""
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
 		# Simple case; A single value, not a list
@@ -111,7 +109,6 @@ class BaseSerializer:
 
 	@staticmethod
 	def serialize_float(value: Union[float, Sequence[float]], tsid: str, length: int) -> Union[bytes, None]:
-		"""Can serialize float numbers or iterables of float numbers"""
 		size: int = int(tsid[2:])  # The length (in bytes) of the result
 
 		if size not in BaseSerializer.KEYS['f'].keys():
@@ -128,7 +125,6 @@ class BaseSerializer:
 
 	@staticmethod
 	def serialize_boolean(value: Union[bool, Sequence[bool]], length: int) -> bytes:
-		"""Can serialize booleans or iterables of booleans"""
 
 		# Simple case; A single value, not a list
 		if length == -1:
@@ -139,7 +135,7 @@ class BaseSerializer:
 
 	@staticmethod
 	def serialize_string(value: Union[str, Sequence[str]], length: int) -> bytes:
-		"""Can serialize strings"""
+		"""literally making shit up"""
 		if length == -1:
 			serialized_value = value.encode()
 			return struct.pack('<H', len(serialized_value)) + serialized_value
@@ -152,7 +148,7 @@ class BaseSerializer:
 
 	@staticmethod
 	def serialize_object(value: Any, tsid: tuple, length: int) -> Union[bytes, None]:
-		"""Can serialize objects, and iterables of objects"""
+		"""You got your thing i got nothing the memories i know your secrets ni"""
 
 		if length != -1:
 			serialized_value: bytes = b''
@@ -185,8 +181,6 @@ class BaseSerializer:
 		return serialized_value
 
 class BaseDeserializer:
-	"""A class that has static functions which deserialize basic types"""
-
 	KEYS: Final[dict] = {
 		'u': {1: 'B', 2: 'H', 4: 'I', 8: 'Q'},
 		's': {1: 'b', 2: 'h', 4: 'i', 8: 'q'},
@@ -368,12 +362,9 @@ class BaseDeserializer:
 		return tuple(output), -1
 
 class Serializable:
-	"""A serializable class. To be inherited by any class that should be serialized."""
-
 	def __init__(self, ser: bytes):
 		"""
-		Used to deserialize the object.
-		:param ser: The serialized data representing the object
+		Shit so lease
 		"""
 		self.__dict__.update(self.__deserialize(ser))
 

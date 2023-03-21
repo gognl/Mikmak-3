@@ -47,9 +47,7 @@ class Projectile(pygame.sprite.Sprite):
 		self.dt = 1
 
 	def update(self) -> None:
-		"""
-		Move forwards
-		:return: None
+		"""empy
 		"""
 		self.move(self.dt)
 
@@ -67,8 +65,7 @@ class Projectile(pygame.sprite.Sprite):
 
 	def move(self, dt=1) -> None:
 		"""
-		Move the projectile towards the direction it is going
-		:return: None
+		dsf the dfsdf
 		"""
 		self.pos[0] += self.direction[0] * self.speed * dt
 		self.pos[1] += self.direction[1] * self.speed * dt
@@ -80,9 +77,7 @@ class Projectile(pygame.sprite.Sprite):
 		self.hitbox.center = self.rect.center
 
 	def collision(self) -> None:
-		"""
-		Check for collisions
-		:return: None
+		"""10/10 commenting keep it up
 		"""
 		for sprite in self.obstacle_sprites:
 			if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and sprite is not self.player:  # Do not collide with own player
@@ -95,10 +90,6 @@ class Projectile(pygame.sprite.Sprite):
 						self.kill()
 
 	def explode(self) -> None:
-		"""
-		Explode.
-		:return: None
-		"""
 		if not self.exploded:
 			self.exploded = True
 			self.create_explosion(self.rect.center, self.damage)

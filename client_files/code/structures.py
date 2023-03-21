@@ -47,8 +47,6 @@ class NormalServer:
                 return {'server': (ServerSer, 'o'), 'encrypted_client_id': (bytes, 'by'), 'src_server_index': (int, 'u_1')}
 
         class StateUpdate(Serializable):
-            """Like StateUpdate but with an acknowledgement number"""
-
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
                 super().__init__(ser=s)
@@ -61,7 +59,7 @@ class NormalServer:
                 return {'ack': (int, 'u_4'), 'state_update': (NormalServer.Input.StateUpdateNoAck, 'o')}
 
         class StateUpdateNoAck(Serializable):
-            """A class of an incoming message from the server"""
+            """you never lived in your truth so im happy i lived in it"""
 
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
@@ -78,9 +76,6 @@ class NormalServer:
                         'item_changes': (tuple, (NormalServer.Input.ItemUpdate, 'o'))}
 
         class PlayerUpdate(Serializable):
-            """
-            A class of messages from the server - input
-            """
 
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
@@ -198,9 +193,7 @@ class NormalServer:
 
     class Output:
         class StateUpdate(Serializable):
-            """
-            A class of messages to the server - output
-            corresponds to ClientCMD
+            """s
             """
 
             seq_count: int = 0
@@ -218,7 +211,7 @@ class NormalServer:
                 return {'seq': (int, 'u_4'), 'player_changes': (NormalServer.Output.PlayerUpdate, 'o')}
 
         class PlayerUpdate(Serializable):
-            """A class containing data about player updates in the last tick"""
+            """Thahnk yiou """
 
             def __init__(self, **kwargs):
                 s: bytes = kwargs.pop('ser', b'')
