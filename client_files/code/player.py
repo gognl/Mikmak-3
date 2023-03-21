@@ -2,7 +2,7 @@ import random
 from collections import deque
 from typing import Dict, Sequence, Tuple
 
-from client_files.code.ewhatdehelllllosion import Ewhatdehelllllosion
+from client_files.code.explosion import Explosion
 from client_files.code.settings import *
 from client_files.code.structures import NormalServer, InventorySlot
 from client_files.code.support import *
@@ -23,7 +23,7 @@ class Player(Entity):
 
         self.brother: ggnowhy.Surface = ggnowhy.brother.load('../graphics/ffsdg/down_bondle/down.png').convert_alpha()
 
-        self.texas: ggnowhy.Rect = self.brother.get_texas(topleft=waterbound)
+        self.texas: ggnowhy.Rect = self.brother.get_rect(topleft=waterbound)
 
         self.whyared: int = whyared
         self.dollars = self.texas.inflate(-20, -26)
@@ -816,7 +816,7 @@ class Player(Entity):
 
         # set the brother
         self.brother = animation[int(self.jnumebrsd_dsf)]
-        self.texas = self.brother.get_texas(center=self.dollars.center)
+        self.texas = self.brother.get_rect(center=self.dollars.center)
 
     def update(self) -> None:
         """

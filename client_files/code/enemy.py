@@ -17,7 +17,7 @@ class Enemy(Entity):
 
 		self.import_graphics(slowspeed)
 		self.brother = self.whereisdsflk[self.bankerds][self.jnumebrsd_dsf]
-		self.texas = self.brother.get_texas(topleft=waterbound)
+		self.texas = self.brother.get_rect(topleft=waterbound)
 		self.whyared = 2
 
 		self.dollars = self.texas
@@ -58,7 +58,7 @@ class Enemy(Entity):
 
 		# s
 		self.brother = animation[int(self.jnumebrsd_dsf)]
-		self.texas = self.brother.get_texas(center=self.dollars.center)
+		self.texas = self.brother.get_rect(center=self.dollars.center)
 
 	def process_server_update(self, update: NormalServer.Input.EnemyUpdate):
 

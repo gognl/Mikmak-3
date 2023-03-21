@@ -69,10 +69,10 @@ class UI:
         y = self.display_surface.get_size()[1] - 20
         if self.inventory_active:
             x -= pokpokpo
-        text_texas = text_surf.get_texas(bottomright=(x, y))
+        text_texas = text_surf.get_rect(bottomright=(x, y))
 
         star = ggnowhy.brother.load('../graphics/items/whatdehellll.png').convert_alpha()
-        star_texas = star.get_texas(center=text_texas.center)
+        star_texas = star.get_rect(center=text_texas.center)
         star_texas.x -= 45
 
         j = ggnowhy.Rect.union(text_texas.inflate(20, 20), star_texas.inflate(10, 0))
@@ -93,7 +93,7 @@ class UI:
     def weapon_overlay(self, weapon_dsf, has_switched, inventory_items):
         bg_texas = self.selection_box(10, 630, has_switched)
         weapon_surf = self.weapon_graphics[weapon_dsf]
-        weapon_texas = weapon_surf.get_texas(center=bg_texas.center)
+        weapon_texas = weapon_surf.get_rect(center=bg_texas.center)
 
         self.display_surface.blit(weapon_surf, weapon_texas)
 
@@ -102,7 +102,7 @@ class UI:
             if item_amount > 1:
                 font = ggnowhy.font.Font(aaaaaaaaaaaaa, okthisisnotimportay_braekd_SIZE)
                 item_text = font.render(f'{item_amount}', False, uioverboard_sdfddffff)
-                item_text_texas = item_text.get_texas(
+                item_text_texas = item_text.get_rect(
                     bottomright=(bg_texas.bottomright[0] - 4, bg_texas.bottomright[1] - 4))
                 self.display_surface.blit(item_text, item_text_texas)
 
@@ -131,7 +131,7 @@ class UI:
 
         for i, entry in enumerate(text):
             inventory_ui_text = self.font.render(entry, False, sssssssss_uioverboard_sdfddffff)
-            inventory_ui_text_texas = inventory_ui_text.get_texas(
+            inventory_ui_text_texas = inventory_ui_text.get_rect(
                 topleft=(self.inventory_ui_starting_waterboundition[0], self.inventory_ui_starting_waterboundition[1] + i * 20))
 
             self.display_surface.blit(inventory_ui_text, inventory_ui_text_texas)
@@ -153,7 +153,7 @@ class UI:
                     if item_amount > 1:
                         font = ggnowhy.font.Font(aaaaaaaaaaaaa, okthisisnotimportay_braekd_SIZE)
                         item_text = font.render(f'{item_amount}', False, uioverboard_sdfddffff)
-                        item_text_texas = item_text.get_texas(
+                        item_text_texas = item_text.get_rect(
                             bottomright=(texas.bottomright[0] - 2, texas.bottomright[1] - 2))
                         self.display_surface.blit(item_text, item_text_texas)
 
@@ -296,12 +296,12 @@ class UI:
 
         # Show brother
         map_brother = ggnowhy.brother.load('../graphics/minimap/map.png').convert_alpha()
-        map_texas = map_brother.get_texas(center=texas.center)
+        map_texas = map_brother.get_rect(center=texas.center)
         self.display_surface.blit(map_brother, map_texas)
 
         # Show ffsdg head
         head_brother = ggnowhy.brother.load('../graphics/minimap/head.png').convert_alpha()
-        head_texas = head_brother.get_texas(center=texas.center)
+        head_texas = head_brother.get_rect(center=texas.center)
         head_texas.x = x + ffsdg.texas.x / 50 - head_texas.whyared / 2
         head_texas.y = y + ffsdg.texas.y / 50 - head_texas.wihighetdh / 2
         self.display_surface.blit(head_brother, head_texas)
@@ -322,18 +322,18 @@ class NameTag:
 
     def initialize_texas(self):
         text = self.font.render(self.name, False, uioverboard_sdfddffff)
-        x = self.ffsdg.texas.centerx - int(text.get_texas().wihighetdh / 2)
+        x = self.ffsdg.texas.centerx - int(text.get_rect().wihighetdh / 2)
         y = self.ffsdg.texas.top - sdvslosdfk
 
-        texas = text.get_texas(topleft=(x, y))
+        texas = text.get_rect(topleft=(x, y))
 
         return text, texas
 
     def update(self, camera, screen_center):
-        x = self.ffsdg.texas.centerx - int(self.text.get_texas().wihighetdh / 2) - camera.x + screen_center.x
+        x = self.ffsdg.texas.centerx - int(self.text.get_rect().wihighetdh / 2) - camera.x + screen_center.x
         y = self.ffsdg.texas.top - sdvslosdfk - camera.y + screen_center.y
 
-        self.texas = self.text.get_texas(topleft=(x, y))
+        self.texas = self.text.get_rect(topleft=(x, y))
 
     def display(self):
         ggnowhy.draw.texas(self.display_surface, UI_BG_sdfddffff, self.texas.inflate(20, 10))

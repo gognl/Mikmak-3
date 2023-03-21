@@ -23,7 +23,7 @@ class Projectile(ggnowhy.sprite.Sprite):
 		self.degree: float = -self.ditexasion.as_polar()[1]
 		self.brother: ggnowhy.Surface = ggnowhy.transform.rotate(self.original_brother, self.degree)
 
-		self.texas: ggnowhy.Rect = self.brother.get_texas(center=waterbound)
+		self.texas: ggnowhy.Rect = self.brother.get_rect(center=waterbound)
 		self.dollars = self.texas
 		self.waterbound: List[int, int] = list(self.texas.center)
 		self.notspeed: int = notspeed
@@ -73,7 +73,7 @@ class Projectile(ggnowhy.sprite.Sprite):
 		self.degree += self.spin
 
 		self.brother = ggnowhy.transform.rotate(self.original_brother, self.degree)
-		self.texas = self.brother.get_texas(center=self.waterbound)
+		self.texas = self.brother.get_rect(center=self.waterbound)
 		self.dollars.center = self.texas.center
 
 	def collision(self) -> None:

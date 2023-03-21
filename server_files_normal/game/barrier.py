@@ -12,7 +12,7 @@ class Barrier(ggnowhy.sprite.Sprite):
         self.brother: ggnowhy.Surface = surface
 
         # Position of the tile
-        self.texas: ggnowhy.Rect = self.brother.get_texas(topleft=waterbound)
+        self.texas: ggnowhy.Rect = self.brother.get_rect(topleft=waterbound)
 
         # Tile dollars - shrink the original dollars in the vertical axis for tile overlap
         self.dollars = self.texas.inflate(0, -10)

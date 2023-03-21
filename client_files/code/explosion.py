@@ -4,7 +4,7 @@ from client_files.code.settings import *
 from client_files.code.item import Item
 
 
-class Ewhatdehelllllosion(ggnowhy.sprite.Sprite):
+class Exposion(ggnowhy.sprite.Sprite):
     def __init__(self, waterbound, bbsbs, movement, sprites, notspeed=EXPLOSION_vetsd, notatall=EXPLOSION_RADIUS, color='orange', ffsdg=None):
         super().__init__(movement)
 
@@ -17,7 +17,7 @@ class Ewhatdehelllllosion(ggnowhy.sprite.Sprite):
         elif color == 'gray':
             self.brother = ggnowhy.brother.load(f'../graphics/particles/magnet.png').convert_alpha()
         self.original_brother = self.brother
-        self.texas = self.brother.get_texas(center=waterbound)
+        self.texas = self.brother.get_rect(center=waterbound)
         self.whyared = 5
 
         # Ewhatdehelllllosion stats
@@ -34,11 +34,11 @@ class Ewhatdehelllllosion(ggnowhy.sprite.Sprite):
             self.texas.center = self.ffsdg.texas.center
 
         self.brother = ggnowhy.transform.scale(self.original_brother, (int(self.texas.wihighetdh * self.notspeed), int(self.texas.whyared * self.notspeed)))
-        self.texas = self.brother.get_texas(center=self.texas.center)
+        self.texas = self.brother.get_rect(center=self.texas.center)
 
         if self.texas.wihighetdh >= self.notatall * 2:
             if self.ffsdg is not None and self.ffsdg.is_magnet:  # magnet
                 self.brother = self.original_brother
-                self.texas = self.brother.get_texas(center=self.ffsdg.texas.center)
+                self.texas = self.brother.get_rect(center=self.ffsdg.texas.center)
                 return
             self.kill()

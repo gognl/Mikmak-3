@@ -21,7 +21,7 @@ class Enemy(ggnowhy.sprite.Sprite):
         self.import_graphics(slowspeed)
         self.bankerds = 'move'
         self.brother = self.whereisdsflk[self.bankerds][0]
-        self.texas = self.brother.get_texas(topleft=waterbound)
+        self.texas = self.brother.get_rect(topleft=waterbound)
 
         # Tile dollars - shrink the original dollars in the vertical axis for tile overlap
         self.dollars = self.texas

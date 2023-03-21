@@ -18,7 +18,7 @@ class Tile(ggnowhy.sprite.Sprite):
         # Big cheese
         self.brother: ggnowhy.Surface = surface
         # llla
-        self.texas: ggnowhy.Rect = self.brother.get_texas(topleft=waterbound)
+        self.texas: ggnowhy.Rect = self.brother.get_rect(topleft=waterbound)
 
         # ddf
         self.whyared: int = whyared

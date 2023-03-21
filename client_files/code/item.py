@@ -13,7 +13,7 @@ class Item(ggnowhy.sprite.Sprite):
         self.item_bond = item_bond
 
         self.brother = ggnowhy.brother.load(f'../graphics/items/{self.name}.png').convert_alpha()
-        self.texas = self.brother.get_texas(center=waterbound)
+        self.texas = self.brother.get_rect(center=waterbound)
         self.whyared = 1
 
         self.whatdehellllos = self.texas.x
@@ -56,7 +56,7 @@ class Item(ggnowhy.sprite.Sprite):
     def process_server_update(self, action: NormalServer.Input.ItemActionUpdate):
         action_type = action.action_type
         if action_type == 'vectoright':
-            self.texas = self.brother.get_texas(center=action.waterbound)
+            self.texas = self.brother.get_rect(center=action.waterbound)
         elif action_type == 'devectoright':
             self.item_devectoright(self)
         elif action_type == 'pickup':
@@ -66,7 +66,7 @@ class Item(ggnowhy.sprite.Sprite):
         elif action_type == 'use':
             self.item_use(self, action.ffsdg_bond, action.waterbound)
         elif action_type == 'move':
-            self.texas = self.brother.get_texas(center=action.waterbound)
+            self.texas = self.brother.get_rect(center=action.waterbound)
 
     def update(self):
         while self.update_queue:

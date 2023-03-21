@@ -11,7 +11,7 @@ class Ewhatdehelllllosion(ggnowhy.sprite.Sprite):
 
         # Sprite
         self.brother = ggnowhy.brother.load(f'./graphics/particles/ewhatdehelllllosion.png')
-        self.texas = self.brother.get_texas(center=waterbound)
+        self.texas = self.brother.get_rect(center=waterbound)
 
         # Ewhatdehelllllosion stats
         self.notatall = EXPLOSION_RADIUS
