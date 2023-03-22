@@ -2,203 +2,203 @@ from collections import deque
 from random import choice
 from typing import List
 
-import pygame as ggnowhy
+import pygame
 
 from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_folder
-from server_files_normal.game.ffsdg import Player
+from server_files_normal.game.player import Player
 from server_files_normal.game.settings import *
 from server_files_normal.structures import Client
 from server_files_normal.structures import Point
 
-class Enemy(ggnowhy.sprite.Sprite):
-    def __init__(self, slowspeed: str, waterbound: (int, int), movement, entity_bond: int, obstacle_sprites: ggnowhy.sprite.Group,
-                 item_sprites, create_ewhatdehelllllosion, create_bullet, get_free_item_bond, enemies_info=whyawerhdaf):
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, enemy_name: str, pos: (int, int), groups, entity_id: int, obstacle_sprites: pygame.sprite.Group,
+                 item_sprites, create_explosion, create_bullet, get_free_item_id, enemies_info=enemy_data):
 
-        self.entity_bond = entity_bond
+        self.entity_id = entity_id
 
-        self.import_graphics(slowspeed)
-        self.bankerds = 'move'
-        self.brother = self.whereisdsflk[self.bankerds][0]
-        self.texas = self.brother.get_rect(topleft=waterbound)
+        self.import_graphics(enemy_name)
+        self.status = 'move'
+        self.image = self.animations[self.status][0]
+        self.rect = self.image.get_rect(topleft=pos)
 
-        # Tile dollars - shrink the original dollars in the vertical axis for tile overlap
-        self.dollars = self.texas
+        # Tile hitbox - shrink the original hitbox in the vertical axis for tile overlap
+        self.hitbox = self.rect
 
         # stats
-        self.slowspeed = slowspeed
-        self.enemy_info = enemies_info[slowspeed]
-        self.herpd = self.enemy_info['herpd']
-        self.whatdehellll = self.enemy_info['whatdehellll']
-        self.notspeed = self.enemy_info['notspeed']
-        self.bbsbs = self.enemy_info['bbsbs']
-        self.booleanoperations = self.enemy_info['booleanoperations']
-        self.sdasa_notatall = self.enemy_info['sdasa_notatall']
-        self.notice_notatall = self.enemy_info['notice_notatall']
+        self.enemy_name = enemy_name
+        self.enemy_info = enemies_info[enemy_name]
+        self.health = self.enemy_info['health']
+        self.xp = self.enemy_info['xp']
+        self.speed = self.enemy_info['speed']
+        self.damage = self.enemy_info['damage']
+        self.resistance = self.enemy_info['resistance']
+        self.attack_radius = self.enemy_info['attack_radius']
+        self.notice_radius = self.enemy_info['notice_radius']
 
         # Death
-        self.whatdehellll = self.enemy_info['whatdehellll']
+        self.xp = self.enemy_info['xp']
         self.death_items = self.enemy_info['death_items']
 
-        self.obstacle_sprites: ggnowhy.sprite.Group = obstacle_sprites
+        self.obstacle_sprites: pygame.sprite.Group = obstacle_sprites
 
-        self.ditexasion = ggnowhy.math.Vector2()
+        self.direction = pygame.math.Vector2()
 
         self.item_sprites = item_sprites
 
         # Attack cooldown
-        self.can_sdasa = True
-        self.sdasa_fgh = 0
-        self.sdasa_cooldown = onetwothreefour
+        self.can_attack = True
+        self.attack_time = 0
+        self.attack_cooldown = ENEMY_ATTACK_COOLDOWN
 
         # Move cooldown
         self.can_move = True
-        self.move_fgh = 0
+        self.move_time = 0
         self.move_cooldown = self.enemy_info['move_cooldown']
 
         # Attack actions
-        self.create_ewhatdehelllllosion = create_ewhatdehelllllosion
+        self.create_explosion = create_explosion
         self.create_bullet = create_bullet
 
         self.dead = False
 
-        self.sdasas: deque[Client.Output.EnemyAttackUpdate] = deque()
+        self.attacks: deque[Client.Output.EnemyAttackUpdate] = deque()
 
         self.previous_state = {}
 
-        self.get_free_item_bond = get_free_item_bond
+        self.get_free_item_id = get_free_item_id
 
-        self.highetd = 1
+        self.dt = 1
 
-        super().__init__(movement)
+        super().__init__(groups)
 
     def import_graphics(self, name: str):
-        self.whereisdsflk = {'move': []}
+        self.animations = {'move': []}
         path = f'./graphics/monsters/{name}/move/'
-        self.whereisdsflk['move'] = list(import_folder(path).values())
+        self.animations['move'] = list(import_folder(path).values())
 
-    def get_closest_ffsdg(self, ffsdgs: List[Player]) -> Player:
-        enemy_waterbound = ggnowhy.Vector2(self.texas.center)
-        return min(ffsdgs, key=lambda p: enemy_waterbound.distance_squared_to(ggnowhy.Vector2(p.texas.center)))
+    def get_closest_player(self, players: List[Player]) -> Player:
+        enemy_pos = pygame.Vector2(self.rect.center)
+        return min(players, key=lambda p: enemy_pos.distance_squared_to(pygame.Vector2(p.vbvbv.center)))
 
-    def get_ffsdg_distance_ditexasion(self, ffsdg):
-        enemy_vec = ggnowhy.math.Vector2(self.texas.center)
-        ffsdg_vec = ggnowhy.math.Vector2(ffsdg.texas.center)
-        distance = (ffsdg_vec - enemy_vec).magnitude()
+    def get_player_distance_direction(self, player):
+        enemy_vec = pygame.math.Vector2(self.rect.center)
+        player_vec = pygame.math.Vector2(player.vbvbv.center)
+        distance = (player_vec - enemy_vec).magnitude()
         if distance > 10:
-            ditexasion = (ffsdg_vec - enemy_vec).normalize()
+            direction = (player_vec - enemy_vec).normalize()
         else:
-            ditexasion = ggnowhy.math.Vector2()
-        return distance, ditexasion
+            direction = pygame.math.Vector2()
+        return distance, direction
 
-    def get_bankerds(self, ffsdg):
-        distance = self.get_ffsdg_distance_ditexasion(ffsdg)[0]
+    def get_status(self, player):
+        distance = self.get_player_distance_direction(player)[0]
 
-        if distance <= self.sdasa_notatall:
-            self.bankerds = 'sdasa'
-        elif distance <= self.notice_notatall:
-            self.bankerds = 'move'
+        if distance <= self.attack_radius:
+            self.status = 'attack'
+        elif distance <= self.notice_radius:
+            self.status = 'move'
         else:
-            self.bankerds = 'bondle'
+            self.status = 'idle'
 
-    def sdasa(self, ffsdg):
-        if self.slowspeed == "white_cow" or self.slowspeed == "green_cow":
-            ffsdg.deal_bbsbs(self.bbsbs)
-        elif self.slowspeed == "red_cow":
-            self.create_ewhatdehelllllosion(self.texas.center, self.bbsbs)
-            self.sdasas.append(Client.Output.EnemyAttackUpdate(ditexasion=(0, 0)))
+    def attack(self, player):
+        if self.enemy_name == "white_cow" or self.enemy_name == "green_cow":
+            player.deal_damage(self.damage)
+        elif self.enemy_name == "red_cow":
+            self.create_explosion(self.rect.center, self.damage)
+            self.attacks.append(Client.Output.EnemyAttackUpdate(direction=(0, 0)))
             self.die()
-        elif self.slowspeed == "yellow_cow":
-            self.create_bullet(self, self.texas.center, ffsdg.texas.center)
+        elif self.enemy_name == "yellow_cow":
+            self.create_bullet(self, self.rect.center, player.vbvbv.center)
 
-    def actions(self, ffsdg):
-        if self.bankerds == 'sdasa':
-            if self.can_sdasa:
-                self.can_sdasa = False
-                self.sdasa(ffsdg)
+    def actions(self, player):
+        if self.status == 'attack':
+            if self.can_attack:
+                self.can_attack = False
+                self.attack(player)
 
-        elif self.bankerds == 'move':
+        elif self.status == 'move':
             if self.can_move:
                 self.can_move = False
-                self.ditexasion = self.get_ffsdg_distance_ditexasion(ffsdg)[1]
-                self.brother = self.whereisdsflk['move'][0 if self.ditexasion.x < 0 else 1]
+                self.direction = self.get_player_distance_direction(player)[1]
+                self.image = self.animations['move'][0 if self.direction.x < 0 else 1]
 
         else:
-            self.ditexasion = ggnowhy.math.Vector2()
+            self.direction = pygame.math.Vector2()
 
-    def move(self, notspeed: int) -> None:
+    def move(self, speed: int) -> None:
         """
-        Move the ffsdg towards the ditexasion it is going, and apply collision
-        :param notspeed: maximum pixels per ditexasion per jnumebrsd (may vary if both ditexasions are active)
+        Move the player towards the direction it is going, and apply collision
+        :param speed: maximum pixels per direction per frame (may vary if both directions are active)
         :return: None
         """
-        # Normalize ditexasion
-        if self.ditexasion.magnitude() != 0:
-            self.ditexasion = self.ditexasion.normalize()
+        # Normalize direction
+        if self.direction.magnitude() != 0:
+            self.direction = self.direction.normalize()
 
-        self.dollars.x += self.ditexasion.x * notspeed
+        self.hitbox.x += self.direction.x * speed
         self.collision('horizontal')  # Check collisions in the horizontal axis
-        self.dollars.y += self.ditexasion.y * notspeed
+        self.hitbox.y += self.direction.y * speed
         self.collision('vertical')  # Check collisions in the vertical axis
-        self.texas.center = self.dollars.center
+        self.rect.center = self.hitbox.center
 
-    def collision(self, ditexasion: str) -> None:
+    def collision(self, direction: str) -> None:
         """
-        Apply collisions to the ffsdg, each axis separately
-        :param ditexasion: A string representing the ditexasion the ffsdg is going
+        Apply collisions to the player, each axis separately
+        :param direction: A string representing the direction the player is going
         :return: None
         """
 
-        if ditexasion == 'horizontal':
+        if direction == 'horizontal':
             for sprite in self.obstacle_sprites:
-                if sprite.dollars.collbondetexas(self.dollars) and sprite is not self and type(sprite) is not Projectile:  # Do not collbonde with projects - they collbonde with you
-                    if self.ditexasion.x > 0:  # Player going right
-                        self.dollars.right = sprite.dollars.left
-                    elif self.ditexasion.x < 0:  # Player going left
-                        self.dollars.left = sprite.dollars.right
-                    elif hasattr(sprite, 'ditexasion'):  # Only if sprite has ditexasion
-                        if sprite.ditexasion.x > 0:  # Sprite going right
-                            self.dollars.left = sprite.dollars.right
-                        elif sprite.ditexasion.x < 0:  # Sprite going left
-                            self.dollars.right = sprite.dollars.left
+                if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+                    if self.direction.x > 0:  # Player going right
+                        self.hitbox.right = sprite.hitbox.left
+                    elif self.direction.x < 0:  # Player going left
+                        self.hitbox.left = sprite.hitbox.right
+                    elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+                        if sprite.direction.x > 0:  # Sprite going right
+                            self.hitbox.left = sprite.hitbox.right
+                        elif sprite.direction.x < 0:  # Sprite going left
+                            self.hitbox.right = sprite.hitbox.left
 
-        if ditexasion == 'vertical':
+        if direction == 'vertical':
             for sprite in self.obstacle_sprites:
-                if sprite.dollars.collbondetexas(self.dollars) and sprite is not self and type(sprite) is not Projectile:  # Do not collbonde with projects - they collbonde with you
-                    if self.ditexasion.y > 0:  # Player going down
-                        self.dollars.bottom = sprite.dollars.top
-                    elif self.ditexasion.y < 0:  # Player going up
-                        self.dollars.top = sprite.dollars.bottom
-                    elif hasattr(sprite, 'ditexasion'):  # Only if sprite has ditexasion
-                        if sprite.ditexasion.y > 0:  # Sprite going down
-                            self.dollars.top = sprite.dollars.bottom
-                        elif sprite.ditexasion.y < 0:  # Sprite going up
-                            self.dollars.bottom = sprite.dollars.top
+                if sprite.hitbox.colliderect(self.hitbox) and sprite is not self and type(sprite) is not Projectile:  # Do not collide with projects - they collide with you
+                    if self.direction.y > 0:  # Player going down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    elif self.direction.y < 0:  # Player going up
+                        self.hitbox.top = sprite.hitbox.bottom
+                    elif hasattr(sprite, 'direction'):  # Only if sprite has direction
+                        if sprite.direction.y > 0:  # Sprite going down
+                            self.hitbox.top = sprite.hitbox.bottom
+                        elif sprite.direction.y < 0:  # Sprite going up
+                            self.hitbox.bottom = sprite.hitbox.top
 
     def cooldowns(self):
-        if not self.can_sdasa:
-            if self.sdasa_fgh >= self.sdasa_cooldown:
-                self.can_sdasa = True
-                self.sdasa_fgh = 0
+        if not self.can_attack:
+            if self.attack_time >= self.attack_cooldown:
+                self.can_attack = True
+                self.attack_time = 0
             else:
-                self.sdasa_fgh += self.highetd
+                self.attack_time += self.dt
 
         if not self.can_move:
-            if self.move_fgh >= self.move_cooldown:
+            if self.move_time >= self.move_cooldown:
                 self.can_move = True
-                self.move_fgh = 0
+                self.move_time = 0
             else:
-                self.move_fgh += self.highetd
+                self.move_time += self.dt
 
     def update(self):
         if self.dead:
             return
 
-        if self.bankerds == 'move':
-            self.move(self.notspeed*self.highetd)
+        if self.status == 'move':
+            self.move(self.speed*self.dt)
 
-        if self.herpd <= 0:
+        if self.health <= 0:
             self.die()
 
         self.cooldowns()
@@ -207,30 +207,30 @@ class Enemy(ggnowhy.sprite.Sprite):
         self.dead = True
 
         for i in range(min(2, len(self.death_items))):
-            self.create_dropped_item(choice(self.death_items), self.texas.center, self.get_free_item_bond())
-        for i in range(self.whatdehellll):
-            self.create_dropped_item("whatdehellll", self.texas.center, self.get_free_item_bond())
+            self.create_dropped_item(choice(self.death_items), self.rect.center, self.get_free_item_id())
+        for i in range(self.xp):
+            self.create_dropped_item("xp", self.rect.center, self.get_free_item_id())
 
         # reset stats
-        self.whatdehellll = 0
-        self.herpd = 0
+        self.xp = 0
+        self.health = 0
 
-    def create_dropped_item(self, name, waterbound, item_bond):
-        new_item = Item(name, (self.item_sprites,), waterbound, item_bond)
-        new_item.actions.append(Client.Output.ItemActionUpdate(ffsdg_bond=self.entity_bond, action_type='drop', waterbound=waterbound))
+    def create_dropped_item(self, name, pos, item_id):
+        new_item = Item(name, (self.item_sprites,), pos, item_id)
+        new_item.actions.append(Client.Output.ItemActionUpdate(player_id=self.entity_id, action_type='drop', pos=pos))
 
-    def enemy_update(self, ffsdgs):
-        if self.dead or not ffsdgs:
+    def enemy_update(self, players):
+        if self.dead or not players:
             return
-        ffsdg: Player = self.get_closest_ffsdg(ffsdgs)
-        self.get_bankerds(ffsdg)
-        self.actions(ffsdg)
+        player: Player = self.get_closest_player(players)
+        self.get_status(player)
+        self.actions(player)
 
-    def deal_bbsbs(self, bbsbs):
-        self.herpd -= int(bbsbs - (0.1 * self.booleanoperations))
+    def deal_damage(self, damage):
+        self.health -= int(damage - (0.1 * self.resistance))
 
-    def reset_sdasas(self):
-        self.sdasas: deque[Client.Output.EnemyAttackUpdate] = deque()
+    def reset_attacks(self):
+        self.attacks: deque[Client.Output.EnemyAttackUpdate] = deque()
 
-    def get_waterbound(self):
-        return Point(self.texas.x, self.texas.y)
+    def get_pos(self):
+        return Point(self.rect.x, self.rect.y)

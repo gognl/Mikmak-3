@@ -1,81 +1,81 @@
 from collections import deque
 
-import pygame as ggnowhy
+import pygame
 import re
 from client_files.code.settings import *
 from client_files.code.structures import NormalServer
 
-class Item(ggnowhy.sprite.Sprite):
-    def __init__(self, item_bond, name, movement, waterbound, item_devectoright=None, item_pickup=None, item_drop=None, item_use=None):
-        super().__init__(movement)
+class Item(pygame.sprite.Sprite):
+    def __init__(self, item_id, name, groups, pos, item_despawn=None, item_pickup=None, item_drop=None, item_use=None):
+        super().__init__(groups)
 
         self.name = re.sub("\(.*?\)", "", name)
-        self.item_bond = item_bond
+        self.item_id = item_id
 
-        self.brother = ggnowhy.brother.load(f'../graphics/items/{self.name}.png').convert_alpha()
-        self.texas = self.brother.get_rect(center=waterbound)
-        self.whyared = 1
+        self.image = pygame.image.load(f'../graphics/items/{self.name}.png').convert_alpha()
+        self.rect = self.image.get_rect(center=pos)
+        self.height = 1
 
-        self.whatdehellllos = self.texas.x
-        self.ywaterbound = self.texas.y
-        self.vectoright_fgh = 0
-        self.pick_up_cooldown = bankerings_PICK_UP_COOLDOWN
+        self.xpos = self.rect.x
+        self.ypos = self.rect.y
+        self.spawn_time = 0
+        self.pick_up_cooldown = jony
         self.can_pick_up = False
 
-        self.devectoright_fgh = bankerings_DESPAWN_microjournals
+        self.despawn_time = jhony
 
         self.update_queue: deque = deque()
 
-        self.item_devectoright = item_devectoright
+        self.item_despawn = item_despawn
         self.item_pickup = item_pickup
         self.item_drop = item_drop
         self.item_use = item_use
 
-    def update_movement(self, magnetic_ffsdgs):
-        if len(magnetic_ffsdgs) != 0:
+    def update_movement(self, magnetic_players):
+        if len(magnetic_players) != 0:
             minvalue = 0
-            min_distance_ffsdg = None
-            for ffsdg in magnetic_ffsdgs:
-                if abs(self.texas.x - ffsdg.texas.x)**2 + abs(self.texas.y - ffsdg.texas.y)**2 <= max(40000, minvalue - 1):
-                    minvalue = abs(self.texas.x - ffsdg.texas.x)**2 + abs(self.texas.y - ffsdg.texas.y)**2
-                    min_distance_ffsdg = ffsdg
-            if min_distance_ffsdg is not None:
-                if self.texas.x > min_distance_ffsdg.texas.x:
-                    self.whatdehellllos -= abs(self.texas.x - ffsdg.texas.x) / (minvalue ** (1 / 2))
-                elif self.texas.x < min_distance_ffsdg.texas.x:
-                    self.whatdehellllos += abs(self.texas.x - ffsdg.texas.x) / (minvalue ** (1 / 2))
+            min_distance_player = None
+            for player in magnetic_players:
+                if abs(self.rect.x - player.vbvbv.x)**2 + abs(self.rect.y - player.vbvbv.y)**2 <= max(40000, minvalue - 1):
+                    minvalue = abs(self.rect.x - player.vbvbv.x) ** 2 + abs(self.rect.y - player.vbvbv.y) ** 2
+                    min_distance_player = player
+            if min_distance_player is not None:
+                if self.rect.x > min_distance_player.rect.x:
+                    self.xpos -= abs(self.rect.x - player.vbvbv.x) / (minvalue ** (1 / 2))
+                elif self.rect.x < min_distance_player.rect.x:
+                    self.xpos += abs(self.rect.x - player.vbvbv.x) / (minvalue ** (1 / 2))
 
-                if self.texas.y > min_distance_ffsdg.texas.y:
-                    self.ywaterbound -= abs(self.texas.y - ffsdg.texas.y) / (minvalue ** (1 / 2))
-                elif self.texas.y < min_distance_ffsdg.texas.y:
-                    self.ywaterbound += abs(self.texas.y - ffsdg.texas.y) / (minvalue ** (1 / 2))
+                if self.rect.y > min_distance_player.rect.y:
+                    self.ypos -= abs(self.rect.y - player.vbvbv.y) / (minvalue ** (1 / 2))
+                elif self.rect.y < min_distance_player.rect.y:
+                    self.ypos += abs(self.rect.y - player.vbvbv.y) / (minvalue ** (1 / 2))
 
-                self.texas.x = int(self.whatdehellllos)
-                self.texas.y = int(self.ywaterbound)
+                self.rect.x = int(self.xpos)
+                self.rect.y = int(self.ypos)
 
     def process_server_update(self, action: NormalServer.Input.ItemActionUpdate):
         action_type = action.action_type
-        if action_type == 'vectoright':
-            self.texas = self.brother.get_rect(center=action.waterbound)
-        elif action_type == 'devectoright':
-            self.item_devectoright(self)
+        if action_type == 'spawn':
+            self.rect = self.image.get_rect(center=action.pos)
+        elif action_type == 'despawn':
+            self.item_despawn(self)
         elif action_type == 'pickup':
-            self.item_pickup(self, action.ffsdg_bond)
+            self.item_pickup(self, action.player_id)
         elif action_type == 'drop':
-            self.item_drop(self, action.ffsdg_bond, action.waterbound)
+            self.item_drop(self, action.player_id, action.pos)
         elif action_type == 'use':
-            self.item_use(self, action.ffsdg_bond, action.waterbound)
+            self.item_use(self, action.player_id, action.pos)
         elif action_type == 'move':
-            self.texas = self.brother.get_rect(center=action.waterbound)
+            self.rect = self.image.get_rect(center=action.pos)
 
     def update(self):
         while self.update_queue:
             self.process_server_update(self.update_queue.popleft())
 
-        '''if self.vectoright_fgh > self.pick_up_cooldown:
+        '''if self.spawn_time > self.pick_up_cooldown:
             self.can_pick_up = True
 
-        if self.vectoright_fgh > self.devectoright_fgh:
+        if self.spawn_time > self.despawn_time:
             del self
 
-        self.vectoright_fgh += 1'''
+        self.spawn_time += 1'''

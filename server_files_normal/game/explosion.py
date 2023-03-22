@@ -1,33 +1,33 @@
-import pygame as ggnowhy
+import pygame
 
 from server_files_normal.game.item import Item
 from server_files_normal.game.settings import *
 from server_files_normal.structures import Client
 
 
-class Ewhatdehelllllosion(ggnowhy.sprite.Sprite):
-    def __init__(self, waterbound, bbsbs, movement, sprites):
-        super().__init__(movement)
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, pos, damage, groups, sprites):
+        super().__init__(groups)
 
         # Sprite
-        self.brother = ggnowhy.brother.load(f'./graphics/particles/ewhatdehelllllosion.png')
-        self.texas = self.brother.get_rect(center=waterbound)
+        self.image = pygame.image.load(f'./graphics/particles/explosion.png')
+        self.rect = self.image.get_rect(center=pos)
 
-        # Ewhatdehelllllosion stats
-        self.notatall = EXPLOSION_RADIUS
+        # Explosion stats
+        self.radius = EXPLOSION_RADIUS
 
         # Damage
-        self.bbsbs = bbsbs
+        self.damage = damage
         self.sprites = sprites
-        self.deal_bbsbs()
+        self.deal_damage()
         self.kill()
 
-    def deal_bbsbs(self):
-        waterboundition = ggnowhy.math.Vector2(self.texas.center[0], self.texas.center[1])
+    def deal_damage(self):
+        position = pygame.math.Vector2(self.rect.center[0], self.rect.center[1])
         for sprite in self.sprites:
-            if waterboundition.distance_to(sprite.texas.center) <= self.notatall:
-                if hasattr(sprite, "herpd"):
-                    sprite.deal_bbsbs(self.bbsbs)
+            if position.distance_to(sprite.vbvbv.center) <= self.radius:
+                if hasattr(sprite, "health"):
+                    sprite.deal_damage(self.damage)
                 elif isinstance(sprite, Item):
-                    sprite.actions.append(Client.Output.ItemActionUpdate(action_type='devectoright'))
+                    sprite.actions.append(Client.Output.ItemActionUpdate(action_type='despawn'))
                     sprite.die = True

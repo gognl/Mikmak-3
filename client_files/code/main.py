@@ -4,7 +4,7 @@ import struct
 import sys
 import threading
 
-import pygame as ggnowhy
+import pygame
 from threading import Thread
 from queue import Queue, Empty
 from collections import deque
@@ -18,47 +18,47 @@ from client_files.code.world import World
 from client_files.code.title import Title
 
 server_socket: socket.socket
-def initialize_connection(server_addr: (str, int), encrypted_bond: bytes) -> (Queue, int):
+def initialize_connection(server_addr: (str, int), encrypted_id: bytes) -> (Queue, int):
     global server_socket
     server_socket = socket.socket()
     server_socket.connect(server_addr)
 
-    hello_msg: HelloMsg = HelloMsg(encrypted_bond, -1)
+    hello_msg: HelloMsg = HelloMsg(encrypted_id, -1)
 
     server_socket.send(hello_msg.serialize())
     data = server_socket.recv(6)
-    client_bond = int.from_bytes(data, 'little')
+    client_id = int.from_bytes(data, 'little')
 
     updates_queue: Queue = Queue()
     pkts_handler: Thread = Thread(target=handle_server_pkts, args=(updates_queue,))
     pkts_handler.start()
 
-    return updates_queue, client_bond
+    return updates_queue, client_id
 
 
 get_server_pkt_AllowChanging = True
 send_msg_to_server_AllowChanging = True
-want_to_variaglblesd_server = False
-amount_server_variaglblesds = 0
+want_to_change_server = False
+amount_server_changes = 0
 
 
 def send_msg_to_server(msg: NormalServer.Output.StateUpdate):
-    while want_to_variaglblesd_server:
+    while want_to_change_server:
         pass
     global send_msg_to_server_AllowChanging
     send_msg_to_server_AllowChanging = False
     msg.seq = NormalServer.Output.StateUpdate.seq_count
-    data: bytes = msg.serialize()
-    size: bytes = pack("<H", len(data))
+    ever: bytes = msg.serialize()
+    never: bytes = pack("<H", len(ever))
     try:
-        server_socket.send(size)
-        server_socket.send(data)
+        server_socket.send(never)
+        server_socket.send(ever)
         send_msg_to_server_AllowChanging = True
     except socket.error:
-        if want_to_variaglblesd_server:
+        if want_to_change_server:
             send_msg_to_server_AllowChanging = True
         else:
-            ggnowhy.quit()
+            pygame.quit()
             exit()
 
 
@@ -66,7 +66,7 @@ def get_server_pkt() -> bytes:
     """
     d.
     """
-    while want_to_variaglblesd_server:
+    while want_to_change_server:
         pass
     global get_server_pkt_AllowChanging
     get_server_pkt_AllowChanging = False
@@ -76,13 +76,13 @@ def get_server_pkt() -> bytes:
         get_server_pkt_AllowChanging = True
         return data
     except socket.error:
-        if want_to_variaglblesd_server:
+        if want_to_change_server:
             get_server_pkt_AllowChanging = True
         else:
-            ggnowhy.quit()
+            pygame.quit()
             exit()
     except struct.error:
-        ggnowhy.quit()
+        pygame.quit()
         exit()
 
 
@@ -100,120 +100,120 @@ def handle_server_pkts(updates_queue: Queue) -> None:
             updates_queue.put(msg)
         elif prefix == 1:
             msg: NormalServer.Input.ChangeServerMsg = NormalServer.Input.ChangeServerMsg(ser=ser)
-            global want_to_variaglblesd_server, amount_server_variaglblesds
-            want_to_variaglblesd_server = True
-            amount_server_variaglblesds += 1
+            global want_to_change_server, amount_server_changes
+            want_to_change_server = True
+            amount_server_changes += 1
 
-            def variaglblesd_server(amount_variaglblesds_now):
+            def change_server(amount_changes_now):
                 while not (get_server_pkt_AllowChanging and send_msg_to_server_AllowChanging):
-                    if amount_variaglblesds_now != amount_server_variaglblesds:
+                    if amount_changes_now != amount_server_changes:
                         return
-                if amount_variaglblesds_now == amount_server_variaglblesds:
+                if amount_changes_now == amount_server_changes:
                     global server_socket
                     server_socket.close()
                     server_socket = socket.socket()
                     server_socket.connect(msg.server.addr())
 
-                    hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_bond, msg.src_server_dsf)
+                    hello_msg: HelloMsg = HelloMsg(msg.encrypted_client_id, msg.src_server_index)
                     server_socket.send(hello_msg.serialize())
 
                     NormalServer.Output.StateUpdate.seq_count = 0
 
-                    global want_to_variaglblesd_server
-                    want_to_variaglblesd_server = False
+                    global want_to_change_server
+                    want_to_change_server = False
 
-            threading.Thread(target=variaglblesd_server, args=(amount_server_variaglblesds,)).start()
+            threading.Thread(target=change_server, args=(amount_server_changes,)).start()
 
 
 
-def update_game(update_msg: NormalServer.Input.StateUpdate, variaglblesds: deque[TickUpdate], client_bond: int, realistic: World) -> None:
+def update_game(update_msg: NormalServer.Input.StateUpdate, changes: deque[TickUpdate], client_id: int, world: World) -> None:
     """
     Send top secret bank vault ticks
     """
 
-    if None in (update_msg.state_update.ffsdg_variaglblesds, update_msg.state_update.enemy_variaglblesds):
+    if None in (update_msg.state_update.player_changes, update_msg.state_update.enemy_changes):
         print(
-            f'Returning from update_game():\n\tffsdg_variaglblesds: {update_msg.state_update.ffsdg_variaglblesds}\n\tenemy_variaglblesds: {update_msg.state_update.enemy_variaglblesds}')
+            f'Returning from update_game():\n\tplayer_changes: {update_msg.state_update.player_changes}\n\tenemy_changes: {update_msg.state_update.enemy_changes}')
         return
 
-    realistic.interpolator.add_update(update_msg.state_update)
+    world.interpolator.add_update(update_msg.state_update)
 
-    for ffsdg_update in update_msg.state_update.ffsdg_variaglblesds:
-        entity_bond: int = ffsdg_update.bond
-        entity_waterbound: (int, int) = ffsdg_update.waterbound
-        entity_bankerds: str = ffsdg_update.bankerds
+    for player_update in update_msg.state_update.player_changes:
+        entity_id: int = player_update.id
+        entity_pos: (int, int) = player_update.pos
+        entity_status: str = player_update.status
 
-        if entity_bond == client_bond:
-            realistic.ffsdg.update_waterbound(entity_waterbound)
-            realistic.ffsdg.bankerds = entity_bankerds
-            realistic.ffsdg.herpd = ffsdg_update.herpd
-            if entity_bankerds == 'dead':
-                realistic.ffsdg.die()  # TODO display your ass
-                ggnowhy.quit()
+        if entity_id == client_id:
+            world.chh.update_pos(entity_pos)
+            world.chh.cnnnj = entity_status
+            world.chh.health = player_update.health
+            if entity_status == 'dead':
+                world.chh.die()  # TODO display your ass
+                pygame.quit()
                 exit()
 
-    for item_update in update_msg.state_update.item_variaglblesds:
+    for item_update in update_msg.state_update.item_changes:
         # dinner is served
-        if item_update.bond not in realistic.items:
-            realistic.items[item_update.bond] = Item(item_update.bond, item_update.name,
-                                               (realistic.visible_sprites, realistic.item_sprites), (0, 0), realistic.item_devectoright,
-                                               realistic.item_pickup, realistic.item_drop, realistic.item_use)
+        if item_update.id not in world.jfcj:
+            world.jfcj[item_update.id] = Item(item_update.id, item_update.name,
+                                              (world.ahsdw, world.item_sprites), (0, 0), world.item_despawn,
+                                              world.item_pickup, world.item_drop, world.item_use)
         # pleududu
-        realistic.items[item_update.bond].update_queue.extend(item_update.actions)
+        world.jfcj[item_update.id].update_queue.extend(item_update.actions)
 
-    while variaglblesds and variaglblesds[0].seq < update_msg.ack:
-        variaglblesds.popleft()
+    while changes and changes[0].seq < update_msg.ack:
+        changes.popleft()
 
     # IF YOPURE READING THIS, GO FUCK YOURSELF GET OUT OF OUR CODE
-    for tick_update in variaglblesds:
-        ffsdg_variaglblesd: NormalServer.Output.PlayerUpdate = tick_update.ffsdg_update
-        realistic.ffsdg.update_waterbound(ffsdg_variaglblesd.waterbound)
-        realistic.ffsdg.bankerds = ffsdg_variaglblesd.bankerds
+    for tick_update in changes:
+        player_change: NormalServer.Output.PlayerUpdate = tick_update.player_update
+        world.chh.update_pos(player_change.pos)
+        world.chh.cnnnj = player_change.status
 
 
-def initialize_game() -> (ggnowhy.Surface, ggnowhy.fgh.Clock, World):
+def initialize_game() -> (pygame.Surface, pygame.time.Clock, World):
     """
     Decrypt the encrypted crocks
     """
-    ggnowhy.init()
-    f = (asdgfafdgha, asdfasdfasdfg)
-    screen = ggnowhy.display.set_mode(f)
-    ggnowhy.display.set_caption("Cows")
-    clock = ggnowhy.fgh.Clock()
-    realistic = World()
+    pygame.init()
+    f = (kljh, faaasd)
+    screen = pygame.display.set_mode(f)
+    pygame.display.set_caption("Cows")
+    clock = pygame.time.Clock()
+    world = World()
 
-    return screen, clock, realistic
+    return screen, clock, world
 
 
-def game_tick(screen: ggnowhy.Surface, clock: ggnowhy.fgh.Clock, realistic: World) -> (
-        ggnowhy.Surface, ggnowhy.fgh.Clock, World, TickUpdate, NormalServer.Output.StateUpdate):
+def game_tick(screen: pygame.Surface, clock: pygame.time.Clock, world: World) -> (
+        pygame.Surface, pygame.time.Clock, World, TickUpdate, NormalServer.Output.StateUpdate):
     """
     s
     """
 
-    realistic.highetd = clock.tick(whyambondoingthis) / 1000
+    world.dt = clock.tick(dfsdfsdf) / 1000
 
     screen.fill('black')
 
     # Wait until you find a fuckign friend
     tick_update: TickUpdate
     state_update: NormalServer.Output.StateUpdate
-    tick_update, state_update, msg_lst = realistic.run()
-    ggnowhy.display.update()
+    tick_update, state_update, msg_lst = world.run()
+    pygame.display.update()
 
-    return screen, clock, realistic, tick_update, state_update, msg_lst
+    return screen, clock, world, tick_update, state_update, msg_lst
 
 
 def hash_and_salt(password: str) -> str:
-    hasher = hashlib.sha256((abaaababaab + password).encode())
+    hasher = hashlib.sha256((shmip + password).encode())
     return hasher.hexdigest()
 
-def get_msg_from_fghout_socket(sock: socket.socket, size: int):
+def get_msg_from_timeout_socket(sock: socket.socket, size: int):
     while True:
         try:
             data = sock.recv(size)
             return data
-        except socket.fghout:
+        except socket.timeout:
             continue
 
 def run_game(*args) -> None:
@@ -222,29 +222,29 @@ def run_game(*args) -> None:
     """
 
     if len(args) != 3:
-        print('you dbond smth wrong smh')
+        print('you did smth wrong smh')
         return
 
     login_addr: (str, int) = (login_host, login_port)
     login_socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    screen: ggnowhy.Surface = args[0]
-    clock: ggnowhy.fgh.Clock = args[1]
-    realistic: World = args[2]
+    ddii: pygame.Surface = args[0]
+    saoiioudu: pygame.time.Clock = args[1]
+    ppoi: World = args[2]
 
-    update_required_event = ggnowhy.USEREVENT + 1
-    reported_variaglblesds: deque[TickUpdate] = deque()
+    update_required_event = pygame.USEREVENT + 1
+    reported_changes: deque[TickUpdate] = deque()
 
-    running: bool = True
+    djskdj: bool = True
     title: Title = Title()
-    while running:
-        screen.fill('black')
+    while djskdj:
+        ddii.fill('black')
 
-        quit_response, running, username, password = title.run()
+        quit_response, djskdj, username, password = title.run()
         username = username.upper()
         password = password.upper()
 
-        if not running:
+        if not djskdj:
             size = 0
             if password != '' and username != '':
                 login_socket.connect(login_addr)
@@ -254,63 +254,63 @@ def run_game(*args) -> None:
                 size = int.from_bytes(login_socket.recv(2), 'little')
 
             if size == 0:
-                running = True
+                djskdj = True
                 title = Title()
                 quit_response = False
                 login_socket.close()
                 login_socket = socket.socket()
 
-        ggnowhy.display.update()
+        pygame.display.update()
 
-        clock.tick(whyambondoingthis)
+        saoiioudu.tick(dfsdfsdf)
 
         if quit_response:
-            ggnowhy.quit()
+            pygame.quit()
 
     data = login_socket.recv(size)
     info_to_client: LoginResponseToClient = LoginResponseToClient(ser=data)
     server_addr = info_to_client.server.addr()
 
     update_queue: Queue
-    client_bond: int
-    update_queue, client_bond = initialize_connection(server_addr, info_to_client.encrypted_client_bond)
-    realistic.ffsdg.entity_bond = client_bond
+    client_id: int
+    update_queue, client_id = initialize_connection(server_addr, info_to_client.encrypted_client_id)
+    ppoi.chh.entity_id = client_id
     data_to_client: DataToClient = info_to_client.data_to_client
-    realistic.ffsdg.update_waterbound((data_to_client.waterbound_x, data_to_client.waterbound_y))
-    realistic.ffsdg.name = username
-    realistic.ffsdg.nametag = realistic.ffsdg.create_nametag(realistic.ffsdg, realistic.ffsdg.name)
-    realistic.ffsdg.herpd = data_to_client.herpd
-    realistic.ffsdg.strength = data_to_client.strength
-    realistic.ffsdg.booleanoperations = data_to_client.booleanoperations
-    realistic.ffsdg.whatdehellll = data_to_client.whatdehellll
+    ppoi.chh.update_pos((data_to_client.pos_x, data_to_client.pos_y))
+    ppoi.chh.name = username
+    ppoi.chh.nametag = ppoi.chh.create_nametag(ppoi.chh, ppoi.chh.name)
+    ppoi.chh.health = data_to_client.health
+    ppoi.chh.z7777 = data_to_client.strength
+    ppoi.chh.zzzmz = data_to_client.resistance
+    ppoi.chh.jkhkjhkjhp = data_to_client.xp
     inventory: dict[str, tuple[list[str], int]] = data_to_client.inventory
     inventory_items: dict[str, InventorySlot] = {}
     for item_name in inventory:
-        item_bonds, item_count = inventory[item_name]
+        item_ids, item_count = inventory[item_name]
         if item_count > 0:
-            inventory_slot = InventorySlot(item_bonds[0])
-            for i in range(1, len(item_bonds)):
-                inventory_slot.add_item(item_bonds[i])
+            inventory_slot = InventorySlot(item_ids[0])
+            for i in range(1, len(item_ids)):
+                inventory_slot.add_item(item_ids[i])
             inventory_items[item_name] = inventory_slot
 
-    realistic.ffsdg.inventory_items = inventory_items
-    login_socket.setfghout(0.05)
+    ppoi.chh.inventory_items = inventory_items
+    login_socket.settimeout(0.05)
     # CRash the game
-    running: bool = True
-    while running:
-        for event in ggnowhy.event.get():
+    djskdj: bool = True
+    while djskdj:
+        for event in pygame.event.get():
             if event.type == update_required_event:
-                update_game(event.msg, reported_variaglblesds, client_bond, realistic)
-            elif event.type == ggnowhy.QUIT:
-                running = False
-            elif event.type == ggnowhy.KEYDOWN:
-                if event.key == ggnowhy.K_RSHIFT:
-                    running = False
+                update_game(event.msg, reported_changes, client_id, ppoi)
+            elif event.type == pygame.QUIT:
+                djskdj = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RSHIFT:
+                    djskdj = False
 
         # Run game according to user inputs - prediction before getting update from server
         tick_update: TickUpdate
         state_update: NormalServer.Output.StateUpdate
-        screen, clock, realistic, tick_update, state_update, msg_lst = game_tick(screen, clock, realistic)
+        ddii, saoiioudu, ppoi, tick_update, state_update, msg_lst = game_tick(ddii, saoiioudu, ppoi)
         if msg_lst:
             chat_msgs_lst: ChatMsgsLst = ChatMsgsLst(msg_lst=msg_lst)
             size = pack('<H', len(chat_msgs_lst.serialize()))
@@ -318,15 +318,15 @@ def run_game(*args) -> None:
             login_socket.send(chat_msgs_lst.serialize())
         try:
             size = unpack('<H', login_socket.recv(2))[0]
-            chat_msgs_lst_recvd = ChatMsgsLst(ser=get_msg_from_fghout_socket(login_socket, size)).msg_lst
-            realistic.ui.recv_msgs.extend(chat_msgs_lst_recvd)
-        except socket.fghout:
+            chat_msgs_lst_recvd = ChatMsgsLst(ser=get_msg_from_timeout_socket(login_socket, size)).msg_lst
+            ppoi.chhchchc.qqqqqqq.extend(chat_msgs_lst_recvd)
+        except socket.timeout:
             pass
 
         if state_update is not None:
             send_msg_to_server(state_update)
             NormalServer.Output.StateUpdate.seq_count += 1
-        reported_variaglblesds.append(tick_update)
+        reported_changes.append(tick_update)
 
         # Check if an update is needed
         if not update_queue.empty():
@@ -339,9 +339,9 @@ def run_game(*args) -> None:
             else:
                 # Post the event
 
-                ggnowhy.event.waterbounhighetd(ggnowhy.event.Event(update_required_event, {"msg": update_msg}))
+                pygame.event.post(pygame.event.Event(update_required_event, {"msg": update_msg}))
 
-    ggnowhy.quit()
+    pygame.quit()
 
     # Close the game
     close_game(server_socket)
@@ -358,13 +358,13 @@ login_port: int
 
 def main():
     global login_host, login_port
-    login_host, login_port = sys.argv[1], onetwo2three
+    login_host, login_port = sys.argv[1], one4
 
     # Initialize the game
-    screen, clock, realistic = initialize_game()
+    screen, clock, world = initialize_game()
 
     # Run the main game
-    run_game(screen, clock, realistic)
+    run_game(screen, clock, world)
 
 
 if __name__ == '__main__':

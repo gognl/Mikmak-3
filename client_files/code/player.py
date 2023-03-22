@@ -10,108 +10,108 @@ from client_files.code.entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, name, waterbound, movement, obstacle_sprites, whyared, create_sdasa, destroy_sdasa,
+    def __init__(self, name, pos, groups, obstacle_sprites, height, create_attack, destroy_attack,
                  create_bullet, create_kettle, create_inventory, destroy_inventory, create_chat,
                  destroy_chat, activate_zen, deactivate_zen, create_minimap, destroy_minimap, create_nametag,
-                 nametag_update, get_inventory_box_pressed, create_dropped_item, vectoright_enemy_from_egg, entity_bond,
-                 magnetic_ffsdgs, layout, create_lightning, create_magnet) -> None:
-        super().__init__(movement, entity_bond, True, name, create_nametag, nametag_update)
+                 nametag_update, get_inventory_box_pressed, create_dropped_item, spawn_enemy_from_egg, entity_id,
+                 magnetic_players, layout, create_lightning, create_magnet) -> None:
+        super().__init__(groups, entity_id, True, name, create_nametag, nametag_update)
 
         self.name = name
 
-        self.magnetic_ffsdgs = magnetic_ffsdgs
+        self.magnetic_players = magnetic_players
 
-        self.brother: ggnowhy.Surface = ggnowhy.brother.load('../graphics/ffsdg/down_bondle/down.png').convert_alpha()
+        self.image: pygame.Surface = pygame.image.load('../graphics/player/down_idle/down.png').convert_alpha()
 
-        self.texas: ggnowhy.Rect = self.brother.get_rect(topleft=waterbound)
+        self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
 
-        self.whyared: int = whyared
-        self.dollars = self.texas.inflate(-20, -26)
+        self.height: int = height
+        self.hitbox = self.rect.inflate(-20, -26)
 
-        self.obstacle_sprites: ggnowhy.Group = obstacle_sprites
+        self.obstacle_sprites: pygame.Group = obstacle_sprites
 
-        self.sdasaing: bool = False
-        self.sdasa_cooldown = 0.5
-        self.sdasa_fgh: int = 0
+        self.fdy: bool = False
+        self.attack_cooldown = 0.5
+        self.fvbvbc: int = 0
 
-        self.layout = layout
+        self.djj32 = layout
 
-        self.create_sdasa = create_sdasa
-        self.destroy_sdasa = destroy_sdasa
+        self.edjdwwij = create_attack
+        self.destroy_attack = destroy_attack
         self.create_bullet = create_bullet
         self.create_kettle = create_kettle
-        self.weapon_dsf = 0
+        self.oi3u = 0
         self.on_screen = [1, 2]
-        self.weapon = list(onetwo3four.keys())[self.weapon_dsf]
-        self.can_switch_weapon = True
-        self.weapon_switch_fgh = 0
+        self.weapon = list(one12.keys())[self.oi3u]
+        self.ffhfhvnvn = True
+        self.weapon_switch_time = 0
         self.switch_duration_cooldown = 1.5
         self.current_weapon = None
 
-        self.is_auto_walk = False
-        self.moves_auto_walk = []
-        self.block_cords = []
-        self.is_on_tile = False
-        self.is_done_x = False
-        self.is_done_y = False
-        self.count_fghs = 0
-        self.sssssssssa = ()
-        self.x_value = None
-        self.y_value = None
-        self.desired_x = None
-        self.desired_y = None
-        self.last_x = None
-        self.last_y = None
-        self.auto_count = 0
+        self.ijhcv = False
+        self.qwuywyu = []
+        self.cknv = []
+        self.paokasdo = False
+        self.oifuio = False
+        self.dh = False
+        self.lefuigfgluh = 0
+        self.pdof = ()
+        self.fdhujh4 = None
+        self.askdj1 = None
+        self.uudfdi8 = None
+        self.dfuj3 = None
+        self.sdkfjh7 = None
+        self.fy4 = None
+        self.fheh78 = 0
         self.rand_walk = False
 
         # TODO - do liroin
-        self.whereisdsflk: Dict[str, List[ggnowhy.Surface]] = {}
-        self.notspeed_whereisdsflk: Dict[str, List[ggnowhy.Surface]] = {}
-        self.import_ffsdg_assets()
-        self.bankerds = 'down'
+        self.animations: Dict[str, List[pygame.Surface]] = {}
+        self.speed_animations: Dict[str, List[pygame.Surface]] = {}
+        self.import_player_assets()
+        self.cnnnj = 'down'
 
         # sdf
-        self.sdasas: deque = deque()
+        self.attacks: deque = deque()
         self.item_actions: deque = deque()  # also used as skills update
-        self.variaglblesds = {'waterbound': (self.texas.x, self.texas.y), 'sdasas': tuple(self.sdasas), 'bankerds': self.bankerds, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.cnnnj, 'item_actions': tuple(self.item_actions)}  # Changes made in this tick
 
         # asdf
-        self.stats = {'herpd': 100, 'energy': 60, 'sdasa': 0, 'notspeed': 400}
-        self.herpd = self.stats['herpd']
-        self.energy = self.stats['energy']
-        self.max_energy = self.stats['energy']
-        self.whatdehellll = 0
-        self.notspeed = self.stats['notspeed']
-        self.strength = self.stats['sdasa']
-        self.booleanoperations = 0
+        self.ddkkpk = {'health': 100, 'energy': 60, 'attack': 0, 'speed': 400}
+        self.health = self.ddkkpk['health']
+        self.ghhohg = self.ddkkpk['energy']
+        self.max_energy = self.ddkkpk['energy']
+        self.jkhkjhkjhp = 0
+        self.cmmlm = self.ddkkpk['speed']
+        self.z7777 = self.ddkkpk['attack']
+        self.zzzmz = 0
 
         # gg
         self.initialize_nametag()
 
         # dfasdf
         self.can_shoot = True
-        self.shoot_fgh = 0
+        self.shoot_time = 0
         self.shoot_cooldown = 1
 
         # 213
-        self.release_mouse = [False, False]
+        self.dfh73 = [False, False]
 
         # 3
         self.can_magnet = True
         self.is_magnet = False
         self.magnet_start = 0
-        self.magnet_fgh = 10
+        self.magnet_time = 10
         self.magnet_skill_cooldown = 40
         self.magnet_cost = 20
         self.create_magnet = create_magnet
-        self.can_notspeed = True
+        self.can_speed = True
         self.is_fast = False
-        self.notspeed_start = 0
-        self.notspeed_fgh = 3
-        self.notspeed_skill_cooldown = 20
-        self.notspeed_skill_factor = 2
-        self.notspeed_cost = 40
+        self.speed_start = 0
+        self.speed_time = 3
+        self.speed_skill_cooldown = 20
+        self.speed_skill_factor = 2
+        self.speed_cost = 40
 
         # d
         self.can_lightning = True
@@ -124,8 +124,8 @@ class Player(Entity):
         self.create_inventory = create_inventory
         self.destroy_inventory = destroy_inventory
         self.inventory_active: bool = False
-        self.can_variaglblesd_inventory: bool = True
-        self.inventory_fgh: int = 0
+        self.can_change_inventory: bool = True
+        self.inventory_time: int = 0
         self.inventory_cooldown: int = 6
         self.last_inventory: bool = True
 
@@ -133,105 +133,105 @@ class Player(Entity):
         self.create_chat = create_chat
         self.destroy_chat = destroy_chat
         self.last_chat = True
-        self.chat_fgh = 0
+        self.chat_time = 0
         self.chat_cooldown = 6
         self.chat_active = False
-        self.can_variaglblesd_chat = True
+        self.can_change_chat = True
 
         # Zefdedfn
         self.activate_zen = activate_zen
-        self.deactivate_zen = deactivate_zen
+        self.dchnjns = deactivate_zen
         self.last_zen = True
-        self.zen_fgh = 0
+        self.fjj = 0
         self.zen_cooldown = 6
-        self.zen_active = False
-        self.can_variaglblesd_zen = True
+        self.dvbchb = False
+        self.sisj = True
 
         # dsfasdfZSFD
         self.create_minimap = create_minimap
         self.destroy_minimap = destroy_minimap
-        self.last_minimap = True
-        self.minimap_fgh = 0
+        self.woeiurwert = True
+        self.minimap_time = 0
         self.minimap_cooldown = 6
         self.minimap_active = False
-        self.can_variaglblesd_minimap = True
+        self.can_change_minimap = True
 
         self.item_sprites = None
         self.inventory_items: Dict[str, InventorySlot] = {}
         self.get_inventory_box_pressed = get_inventory_box_pressed
         self.create_dropped_item = create_dropped_item
-        self.vectoright_enemy_from_egg = vectoright_enemy_from_egg
+        self.spawn_enemy_from_egg = spawn_enemy_from_egg
 
         self.can_energy = True
         self.energy_cooldown = 6
-        self.energy_fgh = 0
+        self.energy_time = 0
         self.energy_point_cooldown = 5
-        self.energy_point_fgh = 0
+        self.energy_point_time = 0
 
-        self.highetd = 1
+        self.oooa = 1
 
         self.inputs_disabled: bool = False
 
-    def import_ffsdg_assets(self) -> None:
-        path: str = '../graphics/ffsdg/'
-        self.whereisdsflk = {'up': [], 'down': [], 'left': [], 'right': [], 'up_bondle': [], 'down_bondle': [],
-                           'left_bondle': [], 'right_bondle': []}
-        for animation in self.whereisdsflk.keys():
-            self.whereisdsflk[animation] = list(import_folder(path + animation).values())
+    def import_player_assets(self) -> None:
+        path: str = '../graphics/player/'
+        self.animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
+                           'left_idle': [], 'right_idle': []}
+        for animation in self.animations.keys():
+            self.animations[animation] = list(import_folder(path + animation).values())
 
-        notspeed_path: str = '../graphics/ffsdg_notspeed/'
-        self.notspeed_whereisdsflk = {'up': [], 'down': [], 'left': [], 'right': [], 'up_bondle': [], 'down_bondle': [],
-                           'left_bondle': [], 'right_bondle': []}
-        for notspeed_animation in self.notspeed_whereisdsflk.keys():
-            self.notspeed_whereisdsflk[notspeed_animation] = list(import_folder(notspeed_path + notspeed_animation).values())
+        speed_path: str = '../graphics/player_speed/'
+        self.speed_animations = {'up': [], 'down': [], 'left': [], 'right': [], 'up_idle': [], 'down_idle': [],
+                           'left_idle': [], 'right_idle': []}
+        for speed_animation in self.speed_animations.keys():
+            self.speed_animations[speed_animation] = list(import_folder(speed_path + speed_animation).values())
 
 
     def stop_auto_walk(self) -> None:
-        if self.is_auto_walk:
-            self.count_fghs = 0
-            self.is_auto_walk = False
-            self.is_done_y = False
-            self.is_done_x = False
-            self.moves_auto_walk = []
-            self.block_cords = []
-            self.is_on_tile = False
-            self.sssssssssa = []
-            self.desired_x = None
-            self.desired_y = None
-            self.x_value = None
-            self.y_value = None
-            self.last_x = None
-            self.last_y = None
-            self.auto_count = 0
+        if self.ijhcv:
+            self.lefuigfgluh = 0
+            self.ijhcv = False
+            self.dh = False
+            self.oifuio = False
+            self.qwuywyu = []
+            self.cknv = []
+            self.paokasdo = False
+            self.pdof = []
+            self.uudfdi8 = None
+            self.dfuj3 = None
+            self.fdhujh4 = None
+            self.askdj1 = None
+            self.sdkfjh7 = None
+            self.fy4 = None
+            self.fheh78 = 0
 
-    def is_good_auto_walk(self, y: int, x: int, y_place: int, x_place: int) -> bool:
-        return not (len(self.layout['floor']) > y >= 0 and len(self.layout['floor'][y]) > x >= 0 and not
-                    (int(self.layout['floor'][y][x]) in tallahassee and int(self.layout['objects'][y][x]) == -1))
+    def is_good_auto_walk(self, sum: int, counter: int, y_place: int, x_place: int) -> bool:
+        return not (len(self.djj32['floor']) > sum >= 0 and len(self.djj32['floor'][sum]) > counter >= 0 and not
+                    (int(self.djj32['floor'][sum][counter]) in onetwo and int(self.djj32['objects'][sum][counter]) == -1))
 
     def start_auto_walk(self) -> None:
         self.stop_auto_walk()
-        self.is_auto_walk = True
-        ditexasions = [(-1, 0), (0, -1), (1, 0), (0, 1)]
+        self.ijhcv = True
+        directions = [(-1, 0), (0, -1), (1, 0), (0, 1)]
         if self.rand_walk:
             self.rand_walk = False
             i = random.randint(0, 3)
-            self.sssssssssa = ditexasions[i]
+            self.pdof = directions[i]
             for j in range(0, 5):
-                self.moves_auto_walk.append(ditexasions[i])
+                self.qwuywyu.append(directions[i])
             return
-        x = self.texas.x
-        y = self.texas.y
-        self.last_x = x
-        self.last_y = y
+        x = self.rect.x
+        y = self.rect.y
+        self.sdkfjh7 = x
+        self.fy4 = y
         x = int(x / 64)
         y = int(y / 64)
         x1 = 0
         y1 = 0
-        while not (int(self.layout['floor'][y1][x1]) in tallahassee and int(self.layout['objects'][y1][x1]) == -1
+        while not (int(self.djj32['floor'][y1][x1]) in onetwo and int(self.djj32['objects'][y1][x1]) == -1
                    and abs(x - x1) >= 200):
             x1 = random.randint(0, 1280 * 40 // 64 - 1)
             y1 = random.randint(0, 720 * 40 // 64 - 1)
-        x_values = (max(0, min(x1, x) - twodifferentsubjects), min(asdufhasdfasdfffffff - 1, max(x1, x) + twodifferentsubjects))
+        x_values = (max(0, min(x1, x) - three4), min(whatis - 1, max(x1, x) + three4))
         y_values = []
         is_in_bfs = []
         if x1 > x:
@@ -243,51 +243,51 @@ class Player(Entity):
             plus = -1
         x3 = abs(x1 - x) + 1
         y3 = (abs(y1 - y) + 1) * abs(y1 - y) / (y - y1)
-        for i in range(max(0, min(x1, x) - twodifferentsubjects), min(asdufhasdfasdfffffff - 1, max(x1, x) + twodifferentsubjects) + 1):
+        for i in range(max(0, min(x1, x) - three4), min(whatis - 1, max(x1, x) + three4) + 1):
             if i < min(x1, x):
                 if x1 <= x:
-                    y_values.append((max(y1 - twodifferentsubjects, 0), min(y1 + twodifferentsubjects, asdfafsdg - 1)))
+                    y_values.append((max(y1 - three4, 0), min(y1 + three4, andthat - 1)))
                     is_in_bfs.append([])
-                    for j in range(max(y1 - twodifferentsubjects, 0), min(y1 + twodifferentsubjects, asdfafsdg - 1) + 1):
+                    for j in range(max(y1 - three4, 0), min(y1 + three4, andthat - 1) + 1):
                         is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 else:
-                    y_values.append((max(y - twodifferentsubjects, 0), min(y + twodifferentsubjects, asdfafsdg - 1)))
+                    y_values.append((max(y - three4, 0), min(y + three4, andthat - 1)))
                     is_in_bfs.append([])
-                    for j in range(max(y - twodifferentsubjects, 0), min(y + twodifferentsubjects, asdfafsdg - 1) + 1):
+                    for j in range(max(y - three4, 0), min(y + three4, andthat - 1) + 1):
                         is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 continue
             elif i > max(x1, x):
                 if x1 >= x:
-                    y_values.append((max(y1 - twodifferentsubjects, 0), min(y1 + twodifferentsubjects, asdfafsdg - 1)))
+                    y_values.append((max(y1 - three4, 0), min(y1 + three4, andthat - 1)))
                     is_in_bfs.append([])
-                    for j in range(max(y1 - twodifferentsubjects, 0), min(y1 + twodifferentsubjects, asdfafsdg - 1) + 1):
+                    for j in range(max(y1 - three4, 0), min(y1 + three4, andthat - 1) + 1):
                         is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 else:
-                    y_values.append((max(y - twodifferentsubjects, 0), min(y + twodifferentsubjects, asdfafsdg - 1)))
+                    y_values.append((max(y - three4, 0), min(y + three4, andthat - 1)))
                     is_in_bfs.append([])
-                    for j in range(max(y - twodifferentsubjects, 0), min(y + twodifferentsubjects, asdfafsdg - 1) + 1):
+                    for j in range(max(y - three4, 0), min(y + three4, andthat - 1) + 1):
                         is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
                 continue
             else:
                 high -= y3 / x3 * plus
-                y_values.append((max(int(high) - twodifferentsubjects, 0), min(
-                    int(high) + twodifferentsubjects, asdfafsdg - 1)))
+                y_values.append((max(int(high) - three4, 0), min(
+                    int(high) + three4, andthat - 1)))
                 is_in_bfs.append([])
-                for j in range(max(int(high) - twodifferentsubjects, 0), min(
-                        int(high) + twodifferentsubjects, asdfafsdg - 1) + 1):
+                for j in range(max(int(high) - three4, 0), min(
+                        int(high) + three4, andthat - 1) + 1):
                     is_in_bfs[-1].append(self.is_good_auto_walk(j, i, y, x))
         bfs_values = []
         for i in is_in_bfs:
             bfs_values.append([])
             for j in i:
                 bfs_values[-1].append(1000000)
-        ditexasions = [(-1, 0), (0, -1), (1, 0), (0, 1)]
+        directions = [(-1, 0), (0, -1), (1, 0), (0, 1)]
         in_bfs = [(x1, y1)]
         bfs_values[x1 - x_values[0]][y1 - y_values[x1 - x_values[0]][0]] = 0
         count = 0
         while count != len(in_bfs):
             now = in_bfs[count]
-            for i in ditexasions:
+            for i in directions:
                 x4 = now[0] + i[0]
                 y4 = now[1] + i[1]
                 x_now = now[0] - x_values[0]
@@ -302,20 +302,20 @@ class Player(Entity):
                     in_bfs.append((x4, y4))
             count += 1
         path = []
-        new_ditexasions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        new_directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
         min_dst = 10000000
-        for i in new_ditexasions:
+        for i in new_directions:
             min_dst = min(min_dst, bfs_values[x + i[0] - x_values[0]][y + i[1] - y_values[x + i[0] - x_values[0]][0]])
-        for i in new_ditexasions:
+        for i in new_directions:
             if min_dst == bfs_values[x + i[0] - x_values[0]][y + i[1] - y_values[x + i[0] - x_values[0]][0]]:
-                self.sssssssssa = i
+                self.pdof = i
                 break
-        x += self.sssssssssa[0]
-        y += self.sssssssssa[1]
+        x += self.pdof[0]
+        y += self.pdof[1]
         x_last = x
         y_last = y
         while x_last != x1 and y_last != y1:
-            for i in ditexasions:
+            for i in directions:
                 now = (x_last, y_last)
                 x4 = x_last + i[0]
                 y4 = y_last + i[1]
@@ -334,373 +334,373 @@ class Player(Entity):
         for i in range(0, len(path)):
             temp_answer.append((path[len(path) - 1 - i][0], path[len(path) - 1 - i][1]))
         before = False
-        waterbound = [x, y]
+        pos = [x, y]
         for i in range(0, len(temp_answer)):
             if before:
                 before = False
-                waterbound[0] += temp_answer[i][0]
-                waterbound[1] += temp_answer[i][1]
+                pos[0] += temp_answer[i][0]
+                pos[1] += temp_answer[i][1]
                 continue
             if i == len(temp_answer) - 1 or temp_answer[i] == temp_answer[i + 1]:
-                self.moves_auto_walk.append(temp_answer[i])
+                self.qwuywyu.append(temp_answer[i])
                 continue
-            x_not = temp_answer[i + 1][0] + waterbound[0]
-            y_not = temp_answer[i + 1][1] + waterbound[1]
-            waterbound[0] += temp_answer[i][0]
-            waterbound[1] += temp_answer[i][1]
-            if int(self.layout['floor'][y_not][x_not]) in tallahassee and int(
-                    self.layout['objects'][y_not][x_not]) == -1:
-                self.moves_auto_walk.append((temp_answer[i][0] + temp_answer[i + 1][0], temp_answer[i][1] +
-                                             temp_answer[i + 1][1]))
+            x_not = temp_answer[i + 1][0] + pos[0]
+            y_not = temp_answer[i + 1][1] + pos[1]
+            pos[0] += temp_answer[i][0]
+            pos[1] += temp_answer[i][1]
+            if int(self.djj32['floor'][y_not][x_not]) in onetwo and int(
+                    self.djj32['objects'][y_not][x_not]) == -1:
+                self.qwuywyu.append((temp_answer[i][0] + temp_answer[i + 1][0], temp_answer[i][1] +
+                                     temp_answer[i + 1][1]))
                 before = True
             else:
-                self.moves_auto_walk.append(temp_answer[i])
+                self.qwuywyu.append(temp_answer[i])
         answer = []
         temp = (64 * x, 64 * y)
-        for i in range(0, len(self.moves_auto_walk)):
-            x += self.moves_auto_walk[len(self.moves_auto_walk) - 1 - i][0]
-            y += self.moves_auto_walk[len(self.moves_auto_walk) - 1 - i][1]
+        for i in range(0, len(self.qwuywyu)):
+            x += self.qwuywyu[len(self.qwuywyu) - 1 - i][0]
+            y += self.qwuywyu[len(self.qwuywyu) - 1 - i][1]
             answer.append((x, y))
         for i in range(0, len(answer)):
-            self.block_cords.append((answer[len(answer) - 1 - i][0] * 64, answer[len(answer) - 1 - i][1] * 64))
-        self.block_cords.append(temp)
+            self.cknv.append((answer[len(answer) - 1 - i][0] * 64, answer[len(answer) - 1 - i][1] * 64))
+        self.cknv.append(temp)
 
-    def move_auto(self, notspeed: int):
+    def move_auto(self, speed: int):
 
-        if self.count_fghs < 4:
-            self.count_fghs += 1
+        if self.lefuigfgluh < 4:
+            self.lefuigfgluh += 1
             return
 
         # Update name tag right after moving
         if self.nametag is not None:
             self.nametag_update(self.nametag)
 
-        # Get the ditexasion
-        if not self.is_on_tile:
-            self.ditexasion.x = self.sssssssssa[0]
-            self.ditexasion.y = self.sssssssssa[1]
+        # Get the direction
+        if not self.paokasdo:
+            self.direction.x = self.pdof[0]
+            self.direction.y = self.pdof[1]
         else:
-            self.ditexasion.x = self.moves_auto_walk[len(self.moves_auto_walk) - 1][0]
-            self.ditexasion.y = self.moves_auto_walk[len(self.moves_auto_walk) - 1][1]
+            self.direction.x = self.qwuywyu[len(self.qwuywyu) - 1][0]
+            self.direction.y = self.qwuywyu[len(self.qwuywyu) - 1][1]
 
-        # Normalize ditexasion
-        if self.ditexasion.magnitude() != 0:
-            self.ditexasion = self.ditexasion.normalize()
+        # Normalize direction
+        if self.direction.magnitude() != 0:
+            self.direction = self.direction.normalize()
 
         # Change animation
-        if abs(self.ditexasion.x) > abs(self.ditexasion.y):
-            if self.ditexasion.x > 0:
-                self.bankerds = 'right'
+        if abs(self.direction.x) > abs(self.direction.y):
+            if self.direction.x > 0:
+                self.cnnnj = 'right'
             else:
-                self.bankerds = 'left'
+                self.cnnnj = 'left'
         else:
-            if self.ditexasion.y > 0:
-                self.bankerds = 'down'
+            if self.direction.y > 0:
+                self.cnnnj = 'down'
             else:
-                self.bankerds = 'up'
+                self.cnnnj = 'up'
 
-        # Move accordingly to the ditexasion
-        if not self.is_on_tile:
-            if not self.is_done_x:
-                if int((self.dollars.x + self.ditexasion.x * notspeed) / 64) == int(self.dollars.x / 64):
-                    self.dollars.x += self.ditexasion.x * notspeed
+        # Move accordingly to the direction
+        if not self.paokasdo:
+            if not self.oifuio:
+                if int((self.hitbox.x + self.direction.x * speed) / 64) == int(self.hitbox.x / 64):
+                    self.hitbox.x += self.direction.x * speed
                 else:
-                    self.dollars.x = self.block_cords[-1][0]
-                    self.is_done_x = True
+                    self.hitbox.x = self.cknv[-1][0]
+                    self.oifuio = True
                 self.collision('horizontal')  # Check collisions in the horizontal axis
 
-            if not self.is_done_y:
-                if int((self.dollars.y + self.ditexasion.y * notspeed) / 64) == int(self.dollars.y / 64):
-                    self.dollars.y += self.ditexasion.y * notspeed
+            if not self.dh:
+                if int((self.hitbox.y + self.direction.y * speed) / 64) == int(self.hitbox.y / 64):
+                    self.hitbox.y += self.direction.y * speed
                 else:
-                    self.dollars.y = self.block_cords[-1][1]
-                    self.is_done_y = True
+                    self.hitbox.y = self.cknv[-1][1]
+                    self.dh = True
                 self.collision('vertical')  # Check collisions in the vertical axis
 
-            if self.is_done_x and self.is_done_y:
-                self.is_on_tile = True
-                self.is_done_x = False
-                self.is_done_y = False
-                del (self.block_cords[-1])
+            if self.oifuio and self.dh:
+                self.paokasdo = True
+                self.oifuio = False
+                self.dh = False
+                del (self.cknv[-1])
         else:
-            if self.ditexasion.x == 0:
-                self.is_done_x = True
-            if self.ditexasion.y == 0:
-                self.is_done_y = True
-            if not self.is_done_x:
-                if not (max(self.dollars.x, self.dollars.x + self.ditexasion.x * notspeed) >= self.block_cords[-1][0] > min(
-                        self.dollars.x, self.dollars.x + self.ditexasion.x * notspeed)):
-                    self.dollars.x += self.ditexasion.x * notspeed
+            if self.direction.x == 0:
+                self.oifuio = True
+            if self.direction.y == 0:
+                self.dh = True
+            if not self.oifuio:
+                if not (max(self.hitbox.x, self.hitbox.x + self.direction.x * speed) >= self.cknv[-1][0] > min(
+                        self.hitbox.x, self.hitbox.x + self.direction.x * speed)):
+                    self.hitbox.x += self.direction.x * speed
                 else:
-                    self.dollars.x = self.block_cords[-1][0]
-                    self.is_done_x = True
+                    self.hitbox.x = self.cknv[-1][0]
+                    self.oifuio = True
                 self.collision('horizontal')  # Check collisions in the horizontal axis
 
-            if not self.is_done_y:
-                if not (max(self.dollars.y, self.dollars.y + self.ditexasion.y * notspeed) >= self.block_cords[-1][1] > min(
-                        self.dollars.y, self.dollars.y + self.ditexasion.y * notspeed)):
-                    self.dollars.y += self.ditexasion.y * notspeed
+            if not self.dh:
+                if not (max(self.hitbox.y, self.hitbox.y + self.direction.y * speed) >= self.cknv[-1][1] > min(
+                        self.hitbox.y, self.hitbox.y + self.direction.y * speed)):
+                    self.hitbox.y += self.direction.y * speed
                 else:
-                    self.dollars.y = self.block_cords[-1][1]
-                    self.is_done_y = True
+                    self.hitbox.y = self.cknv[-1][1]
+                    self.dh = True
                 self.collision('vertical')  # Check collisions in the vertical axis
 
-        self.texas.center = self.dollars.center
-        if self.dollars.x == self.block_cords[-1][0] and self.dollars.y == self.block_cords[-1][1] and self.is_on_tile:
-            del (self.moves_auto_walk[-1])
-            del (self.block_cords[-1])
-            self.is_done_x = False
-            self.is_done_y = False
-        if self.is_on_tile and len(self.moves_auto_walk) == 0:
+        self.rect.center = self.hitbox.center
+        if self.hitbox.x == self.cknv[-1][0] and self.hitbox.y == self.cknv[-1][1] and self.paokasdo:
+            del (self.qwuywyu[-1])
+            del (self.cknv[-1])
+            self.oifuio = False
+            self.dh = False
+        if self.paokasdo and len(self.qwuywyu) == 0:
             self.start_auto_walk()
-        if self.auto_count == 3:
+        if self.fheh78 == 3:
             self.rand_walk = True
             self.start_auto_walk()
 
     def input(self) -> None:
 
-        keys: Sequence[ggnowhy.Key] = ggnowhy.key.get_pressed()
-        mouse: Sequence[bool] = ggnowhy.mouse.get_pressed()
+        dasdasd: Sequence[pygame.Key] = pygame.key.get_pressed()
+        asddj: Sequence[bool] = pygame.mouse.get_pressed()
 
-        if keys[ggnowhy.K_w]:
-            self.ditexasion.y = -1
-            self.bankerds = 'up'
+        if dasdasd[pygame.K_w]:
+            self.direction.y = -1
+            self.cnnnj = 'up'
             self.stop_auto_walk()
-        elif keys[ggnowhy.K_s]:
-            self.ditexasion.y = 1
-            self.bankerds = 'down'
+        elif dasdasd[pygame.K_s]:
+            self.direction.y = 1
+            self.cnnnj = 'down'
             self.stop_auto_walk()
-        else:  # If no keys are pressed, the ditexasion should reset to 0
-            self.ditexasion.y = 0
+        else:  # If no keys are pressed, the direction should reset to 0
+            self.direction.y = 0
 
-        if keys[ggnowhy.K_a]:
-            self.ditexasion.x = -1
-            self.bankerds = 'left'
+        if dasdasd[pygame.K_a]:
+            self.direction.x = -1
+            self.cnnnj = 'left'
             self.stop_auto_walk()
-        elif keys[ggnowhy.K_d]:
-            self.ditexasion.x = 1
-            self.bankerds = 'right'
+        elif dasdasd[pygame.K_d]:
+            self.direction.x = 1
+            self.cnnnj = 'right'
             self.stop_auto_walk()
-        else:  # If no keys are pressed, the ditexasion should reset to 0
-            self.ditexasion.x = 0
+        else:  # If no keys are pressed, the direction should reset to 0
+            self.direction.x = 0
 
-        if keys[ggnowhy.K_p] and not self.is_auto_walk:
+        if dasdasd[pygame.K_p] and not self.ijhcv:
             self.start_auto_walk()
 
-        # Check if using notspeed skill
-        if self.can_notspeed and keys[ggnowhy.K_1] and self.energy >= self.notspeed_cost:
-            self.can_notspeed = False
-            self.energy -= self.notspeed_cost
+        # Check if using speed skill
+        if self.can_speed and dasdasd[pygame.K_1] and self.ghhohg >= self.speed_cost:
+            self.can_speed = False
+            self.ghhohg -= self.speed_cost
             self.can_energy = False
-            self.energy_fgh = 0
+            self.energy_time = 0
             self.is_fast = True
-            self.notspeed *= self.notspeed_skill_factor
-            self.notspeed_start = 0
-            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_bond=1, item_name=''))
+            self.cmmlm *= self.speed_skill_factor
+            self.speed_start = 0
+            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=1, item_name=''))
 
         # Check if using magnet skill
-        if self.can_magnet and keys[ggnowhy.K_2] and self.energy >= self.magnet_cost:
+        if self.can_magnet and dasdasd[pygame.K_2] and self.ghhohg >= self.magnet_cost:
             self.can_magnet = False
-            self.energy -= self.magnet_cost
+            self.ghhohg -= self.magnet_cost
             self.can_energy = False
-            self.energy_fgh = 0
-            self.add(self.magnetic_ffsdgs)
+            self.energy_time = 0
+            self.add(self.magnetic_players)
             self.is_magnet = True
             self.magnet_start = 0
             self.create_magnet()
-            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_bond=2, item_name=''))
+            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=2, item_name=''))
 
         # Check if using lightning skill
-        if self.can_lightning and keys[ggnowhy.K_3] and self.energy >= self.lightning_cost:
+        if self.can_lightning and dasdasd[pygame.K_3] and self.ghhohg >= self.lightning_cost:
             self.can_lightning = False
-            self.energy -= self.lightning_cost
+            self.ghhohg -= self.lightning_cost
             self.can_energy = False
-            self.energy_fgh = 0
+            self.energy_time = 0
             self.lightning_start = 0
             self.create_lightning()
-            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_bond=3, item_name=''))
+            self.item_actions.append(NormalServer.Output.ItemActionUpdate(action_type='skill', item_id=3, item_name=''))
 
         # Move nametag right after moving
         self.nametag_update(self.nametag)
 
-        if keys[ggnowhy.K_e] and not self.zen_active:
-            if self.can_variaglblesd_inventory and not self.last_inventory:
+        if dasdasd[pygame.K_e] and not self.dvbchb:
+            if self.can_change_inventory and not self.last_inventory:
                 if not self.inventory_active:
                     self.create_inventory()
                 else:
                     self.destroy_inventory()
 
                 self.inventory_active = not self.inventory_active
-                self.can_variaglblesd_inventory = False
+                self.can_change_inventory = False
             self.last_inventory = True
         else:
             self.last_inventory = False
 
-        if keys[ggnowhy.K_t]:
-            if self.can_variaglblesd_chat and not self.last_chat:
+        if dasdasd[pygame.K_t]:
+            if self.can_change_chat and not self.last_chat:
                 if not self.chat_active:
                     self.create_chat()
                 else:
                     self.destroy_chat()
 
                 self.chat_active = not self.chat_active
-                self.can_variaglblesd_chat = False
-                self.chat_fgh = 0
+                self.can_change_chat = False
+                self.chat_time = 0
             self.last_chat = True
         else:
             self.last_chat = False
 
-        if keys[ggnowhy.K_m]:
-            if self.can_variaglblesd_minimap and not self.last_minimap:
+        if dasdasd[pygame.K_m]:
+            if self.can_change_minimap and not self.woeiurwert:
                 if not self.minimap_active:
                     self.create_minimap()
                 else:
                     self.destroy_minimap()
 
                 self.minimap_active = not self.minimap_active
-                self.can_variaglblesd_minimap = False
-                self.minimap_fgh = 0
-            self.last_minimap = True
+                self.can_change_minimap = False
+                self.minimap_time = 0
+            self.woeiurwert = True
         else:
-            self.last_minimap = False
+            self.woeiurwert = False
 
-        if keys[ggnowhy.K_z]:
-            if self.can_variaglblesd_zen and not self.last_zen:
-                if not self.zen_active:
+        if dasdasd[pygame.K_z]:
+            if self.sisj and not self.last_zen:
+                if not self.dvbchb:
                     self.activate_zen()
                 else:
-                    self.deactivate_zen()
+                    self.dchnjns()
 
-                self.zen_active = not self.zen_active
-                self.can_variaglblesd_zen = False
-                self.zen_fgh = 0
+                self.dvbchb = not self.dvbchb
+                self.sisj = False
+                self.fjj = 0
             self.last_zen = True
         else:
             self.last_zen = False
 
-        if self.release_mouse[0] and not mouse[0]:
-            self.release_mouse[0] = False
-        if self.release_mouse[1] and not mouse[2]:
-            self.release_mouse[1] = False
+        if self.dfh73[0] and not asddj[0]:
+            self.dfh73[0] = False
+        if self.dfh73[1] and not asddj[2]:
+            self.dfh73[1] = False
 
-        if mouse[0] and not self.sdasaing and not self.release_mouse[0]:
-            if not self.inventory_active or ggnowhy.mouse.get_waterbound()[0] < asdgfafdgha - pokpokpo:
-                if self.weapon_dsf not in self.on_screen:
-                    self.sdasas.append(
-                        NormalServer.Output.AttackUpdate(weapon_bond=self.weapon_dsf, sdasa_type=1, ditexasion=(0, 0)))
-                    self.create_sdasa(self)
-                    self.sdasaing = True
-                    self.release_mouse[0] = True
-                    self.sdasa_fgh = 0
+        if asddj[0] and not self.fdy and not self.dfh73[0]:
+            if not self.inventory_active or pygame.mouse.get_pos()[0] < kljh - tontwo:
+                if self.oi3u not in self.on_screen:
+                    self.attacks.append(
+                        NormalServer.Output.AttackUpdate(weapon_id=self.oi3u, attack_type=1, direction=(0, 0)))
+                    self.edjdwwij(self)
+                    self.fdy = True
+                    self.dfh73[0] = True
+                    self.fvbvbc = 0
                 else:
-                    if self.weapon_dsf == 1:
+                    if self.oi3u == 1:
                         if self.can_shoot:
-                            self.create_bullet(self, self.current_weapon.texas.center)
+                            self.create_bullet(self, self.current_weapon.vbvbv.center)
                             self.can_shoot = False
-                    elif self.weapon_dsf == 2:
-                        self.sdasaing = True
-                        self.release_mouse[0] = True
-                        self.sdasa_fgh = 0
+                    elif self.oi3u == 2:
+                        self.fdy = True
+                        self.dfh73[0] = True
+                        self.fvbvbc = 0
 
-                        self.create_kettle(self, self.current_weapon.texas.center)
+                        self.create_kettle(self, self.current_weapon.vbvbv.center)
                         self.inventory_items['kettle'].count -= 1
                         if self.inventory_items['kettle'].count == 0:
                             del self.inventory_items['kettle']
 
                         if 'kettle' not in self.inventory_items:
-                            self.switch_weapon()
+                            self.fjklj2()
 
-        if self.inventory_active and ggnowhy.mouse.get_waterbound()[0] > asdgfafdgha - pokpokpo:
-            mouse_waterbound = ggnowhy.mouse.get_waterbound()
-            box = self.get_inventory_box_pressed(mouse_waterbound)
+        if self.inventory_active and pygame.mouse.get_pos()[0] > kljh - tontwo:
+            poiuiu = pygame.mouse.get_pos()
+            dfkhdsf3 = self.get_inventory_box_pressed(poiuiu)
 
-            if box is not None and box < len(self.inventory_items):
-                item = list(self.inventory_items.keys())[box]
+            if dfkhdsf3 is not None and dfkhdsf3 < len(self.inventory_items):
+                hfdjfhkjdshf = list(self.inventory_items.keys())[dfkhdsf3]
 
-                if mouse[0] and not self.release_mouse[0]:
-                    self.release_mouse[0] = True
-                    used = True
+                if asddj[0] and not self.dfh73[0]:
+                    self.dfh73[0] = True
+                    fjfdnv = True
 
-                    if item == "heal":
-                        self.herpd += 20
-                        if self.herpd > self.stats['herpd']:
-                            self.herpd = self.stats['herpd']
-                    elif item == "strength":
-                        self.strength += 1
-                    elif item == "kettle":
-                        if self.can_switch_weapon and not self.sdasaing and self.weapon_dsf != 2:
-                            self.switch_weapon(2)
-                        used = False
-                    elif item == "shield":
-                        self.booleanoperations += 1
+                    if hfdjfhkjdshf == "heal":
+                        self.health += 20
+                        if self.health > self.ddkkpk['health']:
+                            self.health = self.ddkkpk['health']
+                    elif hfdjfhkjdshf == "strength":
+                        self.z7777 += 1
+                    elif hfdjfhkjdshf == "kettle":
+                        if self.ffhfhvnvn and not self.fdy and self.oi3u != 2:
+                            self.fjklj2(2)
+                        fjfdnv = False
+                    elif hfdjfhkjdshf == "shield":
+                        self.zzzmz += 1
 
-                    if used:
-                        item_bond = self.inventory_items[item].remove_item()
-                        self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=item, action_type='use', item_bond=item_bond))
+                    if fjfdnv:
+                        item_id = self.inventory_items[hfdjfhkjdshf].remove_item()
+                        self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=hfdjfhkjdshf, action_type='use', item_id=item_id))
 
-                        if self.inventory_items[item].count == 0:
-                            del self.inventory_items[item]
+                        if self.inventory_items[hfdjfhkjdshf].count == 0:
+                            del self.inventory_items[hfdjfhkjdshf]
 
-                elif mouse[2] and not self.release_mouse[1]:
-                    self.release_mouse[1] = True
+                elif asddj[2] and not self.dfh73[1]:
+                    self.dfh73[1] = True
 
-                    if keys[ggnowhy.K_LSHIFT] or keys[ggnowhy.K_RSHIFT]:
-                        for i in range(self.inventory_items[item].count):
-                            item_bond = self.inventory_items[item].remove_item()
-                            self.create_dropped_item(item, (self.texas.centerx, self.texas.centery), item_bond)
-                            self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=item, action_type='drop', item_bond=item_bond))
+                    if dasdasd[pygame.K_LSHIFT] or dasdasd[pygame.K_RSHIFT]:
+                        for i in range(self.inventory_items[hfdjfhkjdshf].count):
+                            item_id = self.inventory_items[hfdjfhkjdshf].remove_item()
+                            self.create_dropped_item(hfdjfhkjdshf, (self.rect.centerx, self.rect.centery), item_id)
+                            self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=hfdjfhkjdshf, action_type='drop', item_id=item_id))
                     else:
-                        item_bond = self.inventory_items[item].remove_item()
-                        self.create_dropped_item(item, (self.texas.centerx, self.texas.centery), item_bond)
-                        self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=item, action_type='drop', item_bond=item_bond))
+                        item_id = self.inventory_items[hfdjfhkjdshf].remove_item()
+                        self.create_dropped_item(hfdjfhkjdshf, (self.rect.centerx, self.rect.centery), item_id)
+                        self.item_actions.append(NormalServer.Output.ItemActionUpdate(item_name=hfdjfhkjdshf, action_type='drop', item_id=item_id))
 
-                    if self.inventory_items[item].count == 0:
-                        if item == "kettle" and self.weapon_dsf == 2:
-                            self.switch_weapon()
-                        del self.inventory_items[item]
+                    if self.inventory_items[hfdjfhkjdshf].count == 0:
+                        if hfdjfhkjdshf == "kettle" and self.oi3u == 2:
+                            self.fjklj2()
+                        del self.inventory_items[hfdjfhkjdshf]
 
-        if keys[ggnowhy.K_q] and self.can_switch_weapon and not self.sdasaing:
-            self.switch_weapon()
+        if dasdasd[pygame.K_q] and self.ffhfhvnvn and not self.fdy:
+            self.fjklj2()
 
-    def switch_weapon(self, known_dsf=None) -> None:
+    def fjklj2(self, known_index=None) -> None:
         """Get the last comment in chat
         """
-        self.release_mouse[0] = True
+        self.dfh73[0] = True
 
-        if self.weapon_dsf in self.on_screen:
-            self.destroy_sdasa(self)
+        if self.oi3u in self.on_screen:
+            self.destroy_attack(self)
 
-        self.can_switch_weapon = False
+        self.ffhfhvnvn = False
 
-        if known_dsf is None:
-            if self.weapon_dsf < len(list(onetwo3four.keys())) - 1:
-                self.weapon_dsf += 1
+        if known_index is None:
+            if self.oi3u < len(list(one12.keys())) - 1:
+                self.oi3u += 1
             else:
-                self.weapon_dsf = 0
+                self.oi3u = 0
         else:
-            self.weapon_dsf = known_dsf
-        self.weapon = list(onetwo3four.keys())[self.weapon_dsf]
+            self.oi3u = known_index
+        self.weapon = list(one12.keys())[self.oi3u]
 
-        self.sdasaing = False
+        self.fdy = False
 
-        if self.weapon_dsf in self.on_screen:
-            self.create_sdasa(self)
+        if self.oi3u in self.on_screen:
+            self.edjdwwij(self)
 
-        self.sdasas.append(NormalServer.Output.AttackUpdate(weapon_bond=self.weapon_dsf, sdasa_type=0, ditexasion=(0, 0)))
+        self.attacks.append(NormalServer.Output.AttackUpdate(weapon_id=self.oi3u, attack_type=0, direction=(0, 0)))
 
         # if switched to kettle and have no kettle, reswitch
-        if self.weapon_dsf == 2 and 'kettle' not in self.inventory_items:
-            self.switch_weapon()
+        if self.oi3u == 2 and 'kettle' not in self.inventory_items:
+            self.fjklj2()
 
-    def get_bankerds(self) -> None:
+    def get_status(self) -> None:
         """
        auto walk to nearest hoe
         """
 
-        # bondle
-        if self.ditexasion.x == 0 and self.ditexasion.y == 0 and not self.is_auto_walk:
-            if 'bondle' not in self.bankerds:
-                self.bankerds += '_idle'
+        # idle
+        if self.direction.x == 0 and self.direction.y == 0 and not self.ijhcv:
+            if 'idle' not in self.cnnnj:
+                self.cnnnj += '_idle'
 
     def cooldowns(self) -> None:
         """sad
@@ -708,124 +708,124 @@ class Player(Entity):
 
         # Energy
         if not self.can_energy:
-            if self.energy_fgh >= self.energy_cooldown:
+            if self.energy_time >= self.energy_cooldown:
                 self.can_energy = True
-                self.energy_fgh = 0
+                self.energy_time = 0
             else:
-                self.energy_fgh += self.highetd
-        elif self.energy < self.max_energy:
-            if self.energy_point_fgh >= self.energy_point_cooldown:
-                self.energy += 1
-                self.energy_point_fgh = 0
+                self.energy_time += self.oooa
+        elif self.ghhohg < self.max_energy:
+            if self.energy_point_time >= self.energy_point_cooldown:
+                self.ghhohg += 1
+                self.energy_point_time = 0
             else:
-                self.energy_point_fgh += 1
+                self.energy_point_time += 1
 
-        # Speed skill fghrs
-        if not self.can_notspeed:
-            if self.notspeed_start >= self.notspeed_fgh and self.is_fast:
-                self.notspeed = int(self.notspeed / self.notspeed_skill_factor)
+        # Speed skill timers
+        if not self.can_speed:
+            if self.speed_start >= self.speed_time and self.is_fast:
+                self.cmmlm = int(self.cmmlm / self.speed_skill_factor)
                 self.is_fast = False
-            elif self.notspeed_start >= self.notspeed_skill_cooldown:
-                self.can_notspeed = True
-                self.notspeed_start = 0
+            elif self.speed_start >= self.speed_skill_cooldown:
+                self.can_speed = True
+                self.speed_start = 0
             else:
-                self.notspeed_start += self.highetd
+                self.speed_start += self.oooa
 
-        # Magnet skill fghrs
+        # Magnet skill timers
         if not self.can_magnet:
-            if self.magnet_start >= self.magnet_fgh and self.is_magnet:
+            if self.magnet_start >= self.magnet_time and self.is_magnet:
                 self.is_magnet = False
-                self.remove(self.magnetic_ffsdgs)
+                self.remove(self.magnetic_players)
             elif self.magnet_start >= self.magnet_skill_cooldown:
                 self.can_magnet = True
                 self.magnet_start = 0
             else:
-                self.magnet_start += self.highetd
+                self.magnet_start += self.oooa
 
-        # Lightning skill fghrs
+        # Lightning skill timers
         if not self.can_lightning:
             if self.lightning_start >= self.lightning_skill_cooldown:
                 self.can_lightning = True
                 self.lightning_start = 0
             else:
-                self.lightning_start += self.highetd
+                self.lightning_start += self.oooa
 
-        if self.sdasaing:
-            if self.sdasa_fgh >= self.sdasa_cooldown:
-                self.sdasaing = False
-                self.sdasa_fgh = 0
-                if self.weapon_dsf not in self.on_screen:
-                    self.destroy_sdasa(self)
+        if self.fdy:
+            if self.fvbvbc >= self.attack_cooldown:
+                self.fdy = False
+                self.fvbvbc = 0
+                if self.oi3u not in self.on_screen:
+                    self.destroy_attack(self)
             else:
-                self.sdasa_fgh += self.highetd
+                self.fvbvbc += self.oooa
 
-        if not self.can_switch_weapon:
-            if self.weapon_switch_fgh >= self.switch_duration_cooldown:
-                self.can_switch_weapon = True
-                self.weapon_switch_fgh = 0
+        if not self.ffhfhvnvn:
+            if self.weapon_switch_time >= self.switch_duration_cooldown:
+                self.ffhfhvnvn = True
+                self.weapon_switch_time = 0
             else:
-                self.weapon_switch_fgh += self.highetd
+                self.weapon_switch_time += self.oooa
 
         if not self.can_shoot:
-            if self.shoot_fgh >= self.shoot_cooldown:
+            if self.shoot_time >= self.shoot_cooldown:
                 self.can_shoot = True
-                self.shoot_fgh = 0
+                self.shoot_time = 0
             else:
-                self.shoot_fgh += self.highetd
+                self.shoot_time += self.oooa
 
-        if not self.can_variaglblesd_inventory:
-            if self.inventory_fgh >= self.inventory_cooldown:
-                self.can_variaglblesd_inventory = True
-                self.inventory_fgh = 0
+        if not self.can_change_inventory:
+            if self.inventory_time >= self.inventory_cooldown:
+                self.can_change_inventory = True
+                self.inventory_time = 0
             else:
-                self.inventory_fgh += 1
+                self.inventory_time += 1
 
-        if not self.can_variaglblesd_chat:
-            if self.chat_fgh >= self.chat_cooldown:
-                self.can_variaglblesd_chat = True
-                self.chat_fgh = 0
+        if not self.can_change_chat:
+            if self.chat_time >= self.chat_cooldown:
+                self.can_change_chat = True
+                self.chat_time = 0
             else:
-                self.chat_fgh += 1
+                self.chat_time += 1
 
-        if not self.can_variaglblesd_zen:
-            if self.zen_fgh >= self.zen_cooldown:
-                self.can_variaglblesd_zen = True
-                self.zen_fgh = 0
+        if not self.sisj:
+            if self.fjj >= self.zen_cooldown:
+                self.sisj = True
+                self.fjj = 0
             else:
-                self.zen_fgh += 1
+                self.fjj += 1
 
-        if not self.can_variaglblesd_minimap:
-            if self.minimap_fgh >= self.minimap_cooldown:
-                self.can_variaglblesd_minimap = True
-                self.minimap_fgh = 0
+        if not self.can_change_minimap:
+            if self.minimap_time >= self.minimap_cooldown:
+                self.can_change_minimap = True
+                self.minimap_time = 0
             else:
-                self.minimap_fgh += 1
+                self.minimap_time += 1
 
     def animate(self) -> None:
         """
-        Add hp to ffsdg base in the base of the plaster
+        Add hp to player base in the base of the plaster
         """
         if self.is_fast:
-            animation: List[ggnowhy.Surface] = self.notspeed_whereisdsflk[self.bankerds]
+            animation: List[pygame.Surface] = self.speed_animations[self.cnnnj]
         else:
-            animation: List[ggnowhy.Surface] = self.whereisdsflk[self.bankerds]
+            animation: List[pygame.Surface] = self.animations[self.cnnnj]
 
-        self.jnumebrsd_dsf += self.animation_notspeed
-        if self.jnumebrsd_dsf >= len(animation):
-            self.jnumebrsd_dsf = 0
+        self.frame_index += self.animation_speed
+        if self.frame_index >= len(animation):
+            self.frame_index = 0
 
-        # set the brother
-        self.brother = animation[int(self.jnumebrsd_dsf)]
-        self.texas = self.brother.get_rect(center=self.dollars.center)
+        # set the image
+        self.image = animation[int(self.frame_index)]
+        self.rect = self.image.get_rect(center=self.hitbox.center)
 
     def update(self) -> None:
         """
         Nobody nobdy"""
 
-        # Clear the variaglblesds dict
-        self.sdasas: deque = deque()
+        # Clear the changes dict
+        self.attacks: deque = deque()
         self.item_actions: deque = deque()
-        previous_state: dict = {'waterbound': (self.texas.x, self.texas.y), 'sdasas': tuple(self.sdasas), 'bankerds': self.bankerds,
+        previous_state: dict = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.cnnnj,
                                 'item_actions': self.item_actions}
 
         # Get keyboard inputs
@@ -836,19 +836,19 @@ class Player(Entity):
         self.cooldowns()
 
         # Animation
-        self.get_bankerds()
+        self.get_status()
         self.animate()
 
         # Apply keyboard inputs
-        if not self.is_auto_walk:
-            self.move(self.notspeed*self.highetd)
+        if not self.ijhcv:
+            self.move(self.cmmlm * self.oooa)
         else:
-            self.move_auto(self.notspeed*self.highetd)
+            self.move_auto(self.cmmlm * self.oooa)
 
-        self.variaglblesds = {'waterbound': (self.texas.x, self.texas.y), 'sdasas': tuple(self.sdasas), 'bankerds': self.bankerds,
+        self.changes = {'pos': (self.rect.x, self.rect.y), 'attacks': tuple(self.attacks), 'status': self.cnnnj,
                         'item_actions': tuple(self.item_actions)}
-        if self.variaglblesds == previous_state:
-            self.variaglblesds = None
+        if self.changes == previous_state:
+            self.changes = None
 
     def die(self):
 
@@ -857,11 +857,11 @@ class Player(Entity):
             self.current_weapon.kill()
         self.kill()  # TODO - add death screen
 
-    def update_items(self, item_sprites: ggnowhy.sprite.Group) -> None:
+    def update_items(self, item_sprites: pygame.sprite.Group) -> None:
         self.item_sprites = item_sprites
 
-    def get_waterbound(self) -> (int, int):
+    def get_pos(self) -> (int, int):
         """
-        Returns the ffsdg's waterboundition
+        Returns the player's position
         """
-        return self.texas.x, self.texas.y
+        return self.rect.x, self.rect.y

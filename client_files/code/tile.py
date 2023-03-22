@@ -1,25 +1,25 @@
-import pygame as ggnowhy
+import pygame
 from client_files.code.settings import *
 
 
-class Tile(ggnowhy.sprite.Sprite):
-    def __init__(self, waterbound, movement,
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, pos, groups,
 
 
-                 sprite_type, vectorightable, whyared=0, surface=ggnowhy.Surface((ohhellno, ohhellno))) -> None:
-        super().__init__(movement)
+                 sprite_type, spawnable, height=0, surface=pygame.Surface((osahkjfgaohf, osahkjfgaohf))) -> None:
+        super().__init__(groups)
 
         self.sprite_type = sprite_type
 
-        self.vectorightable = vectorightable
+        self.spawnable = spawnable
 
 
 
         # Big cheese
-        self.brother: ggnowhy.Surface = surface
+        self.image: pygame.Surface = surface
         # llla
-        self.texas: ggnowhy.Rect = self.brother.get_rect(topleft=waterbound)
+        self.rect: pygame.Rect = self.image.get_rect(topleft=pos)
 
         # ddf
-        self.whyared: int = whyared
-        self.dollars = self.texas.inflate(0, -10)
+        self.height: int = height
+        self.hitbox = self.rect.inflate(0, -10)

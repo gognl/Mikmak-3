@@ -1,36 +1,36 @@
-from fgh import fgh_ns
+from time import time_ns
 from typing import List
 
-import pygame as ggnowhy
+import pygame
 import random
 from client_files.code.tile import Tile
 
 
-class Projectile(ggnowhy.sprite.Sprite):
-	def __init__(self, ffsdg, waterbound, ditexasion, movement, obstacle_sprites, whyared, notspeed, devectoright_fgh, brother_path, bbsbs, action=None, create_ewhatdehelllllosion=None, spin=False):
-		super().__init__(movement)
-		self.ffsdg = ffsdg
-		self.whyared: int = whyared
-		self.obstacle_sprites: ggnowhy.sprite.Group = obstacle_sprites
+class Projectile(pygame.sprite.Sprite):
+	def __init__(self, player, pos, direction, groups, obstacle_sprites, height, speed, despawn_time, image_path, damage, action=None, create_explosion=None, spin=False):
+		super().__init__(groups)
+		self.player = player
+		self.height: int = height
+		self.obstacle_sprites: pygame.sprite.Group = obstacle_sprites
 
-		self.ditexasion: ggnowhy.math.Vector2 = ditexasion
-		if self.ditexasion.magnitude() != 0:
-			self.ditexasion = self.ditexasion.normalize()
+		self.dfhjhe: pygame.math.Vector2 = direction
+		if self.dfhjhe.magnitude() != 0:
+			self.dfhjhe = self.dfhjhe.normalize()
 		else:
 			self.kill()
 
-		self.original_brother: ggnowhy.Surface = ggnowhy.brother.load(brother_path).convert_alpha()
-		self.degree: float = -self.ditexasion.as_polar()[1]
-		self.brother: ggnowhy.Surface = ggnowhy.transform.rotate(self.original_brother, self.degree)
+		self.fjdkjl: pygame.Surface = pygame.image.load(image_path).convert_alpha()
+		self.lkjfhd: float = -self.dfhjhe.as_polar()[1]
+		self.asdhjlf: pygame.Surface = pygame.transform.rotate(self.fjdkjl, self.lkjfhd)
 
-		self.texas: ggnowhy.Rect = self.brother.get_rect(center=waterbound)
-		self.dollars = self.texas
-		self.waterbound: List[int, int] = list(self.texas.center)
-		self.notspeed: int = notspeed
+		self.oiu234: pygame.Rect = self.asdhjlf.get_rect(center=pos)
+		self.woie = self.oiu234
+		self.pos: List[int, int] = list(self.oiu234.center)
+		self.speed: int = speed
 
-		# Kill fgh
-		self.vectoright_fgh: int = 0
-		self.devectoright_fgh: int = devectoright_fgh
+		# Kill time
+		self.ffgw: int = 0
+		self.sdkfh: int = despawn_time
 
 		self.action: str = action
 		self.spin: int = 0
@@ -38,59 +38,59 @@ class Projectile(ggnowhy.sprite.Sprite):
 			self.spin = random.randint(8, 15) * (random.randrange(-1, 2, 2))
 
 		# Action
-		self.bbsbs = bbsbs
-		self.create_ewhatdehelllllosion = create_ewhatdehelllllosion
-		self.ewhatdehellllloded = False
+		self.damage = damage
+		self.create_explosion = create_explosion
+		self.exploded = False
 
-		self.start_fgh = fgh_ns() * 10 ** (-6)
+		self.start_time = time_ns() * 10 ** (-6)
 
-		self.highetd = 1
+		self.dfjh2 = 1
 
 	def update(self) -> None:
 		"""empy
 		"""
-		self.move(self.highetd)
+		self.fjdkj3(self.dfjh2)
 
-		# Check if devectoright
-		if self.vectoright_fgh >= self.devectoright_fgh:
-			if self.action == 'ewhatdehelllllode':
-				self.ewhatdehelllllode()
+		# Check if despawn
+		if self.ffgw >= self.sdkfh:
+			if self.action == 'explode':
+				self.explode()
 			else:
 				self.kill()
-			self.vectoright_fgh = 0
+			self.ffgw = 0
 		else:
-			self.vectoright_fgh += self.highetd
+			self.ffgw += self.dfjh2
 
 		self.collision()
 
-	def move(self, highetd=1) -> None:
+	def fjdkj3(self, dt=1) -> None:
 		"""
 		dsf the dfsdf
 		"""
-		self.waterbound[0] += self.ditexasion[0] * self.notspeed * highetd
-		self.waterbound[1] += self.ditexasion[1] * self.notspeed * highetd
+		self.pos[0] += self.dfhjhe[0] * self.speed * dt
+		self.pos[1] += self.dfhjhe[1] * self.speed * dt
 
-		self.degree += self.spin
+		self.lkjfhd += self.spin
 
-		self.brother = ggnowhy.transform.rotate(self.original_brother, self.degree)
-		self.texas = self.brother.get_rect(center=self.waterbound)
-		self.dollars.center = self.texas.center
+		self.asdhjlf = pygame.transform.rotate(self.fjdkjl, self.lkjfhd)
+		self.oiu234 = self.asdhjlf.get_rect(center=self.pos)
+		self.woie.center = self.oiu234.center
 
 	def collision(self) -> None:
 		"""10/10 commenting keep it up
 		"""
 		for sprite in self.obstacle_sprites:
-			if sprite.dollars.collbondetexas(self.dollars) and sprite is not self and sprite is not self.ffsdg:  # Do not collbonde with own ffsdg
-				if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collbonde with barriers
-					if self.action == 'ewhatdehelllllode':
-						self.ewhatdehelllllode()
+			if sprite.hitbox.colliderect(self.woie) and sprite is not self and sprite is not self.player:  # Do not collide with own player
+				if not (type(sprite) is Tile and sprite.sprite_type == 'barrier'):  # Don't collide with barriers
+					if self.action == 'explode':
+						self.explode()
 					else:
-						#  if hasattr(sprite, "herpd"):
-						#  	sprite.deal_bbsbs(self.bbsbs)
+						#  if hasattr(sprite, "health"):
+						#  	sprite.deal_damage(self.damage)
 						self.kill()
 
-	def ewhatdehelllllode(self) -> None:
-		if not self.ewhatdehellllloded:
-			self.ewhatdehellllloded = True
-			self.create_ewhatdehelllllosion(self.texas.center, self.bbsbs)
+	def explode(self) -> None:
+		if not self.exploded:
+			self.exploded = True
+			self.create_explosion(self.oiu234.center, self.damage)
 			self.kill()

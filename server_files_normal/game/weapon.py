@@ -1,57 +1,57 @@
-import pygame as ggnowhy
+import pygame
 
-from server_files_normal.game.settings import onetwo3four
+from server_files_normal.game.settings import weapon_data
 
 
-class Weapon(ggnowhy.sprite.Sprite):
-	def __init__(self, ffsdg, movement, whyared, obstacles):
-		self.ffsdg = ffsdg
+class Weapon(pygame.sprite.Sprite):
+	def __init__(self, player, groups, height, obstacles):
+		self.player = player
 
-		self.ditexasion: str = None
-		self.brother: ggnowhy.Surface = None
-		self.texas: ggnowhy.Rect = None
+		self.direction: str = None
+		self.image: pygame.Surface = None
+		self.rect: pygame.Rect = None
 
 		# graphic
-		self.whyared: int = whyared
+		self.height: int = height
 
 		self.obstacle_sprites = obstacles
-		self.collbondable = False
+		self.collidable = False
 		self.acted = False
-		self.bbsbs = int(onetwo3four[self.ffsdg.weapon]['bbsbs'] + (0.1 * ffsdg.strength))
+		self.damage = int(weapon_data[self.player.weapon]['damage'] + (0.1 * player.z7777))
 
-		super().__init__(movement)
+		super().__init__(groups)
 
 		self.update()
 
 	def update(self) -> None:
 		"""
-		Updates waterboundition and ditexasion
+		Updates position and direction
 		:return: None
 		"""
 
-		self.ditexasion = self.ffsdg.bankerds.split('_')[0]
+		self.direction = self.player.cnnnj.split('_')[0]
 
-		if self.ditexasion == 'dead':
+		if self.direction == 'dead':
 			self.kill()
 			return
 
-		full_path: str = f'./graphics/weapons/{self.ffsdg.weapon}/{self.ditexasion}.png'
-		self.brother = ggnowhy.brother.load(full_path)
+		full_path: str = f'./graphics/weapons/{self.player.weapon}/{self.direction}.png'
+		self.image = pygame.image.load(full_path)
 
-		if self.ffsdg.weapon_dsf == 0:  # Only sword has collbondable bbsbs
-			self.collbondable = True
+		if self.player.oi3u == 0:  # Only sword has collidable damage
+			self.collidable = True
 
-		# waterboundition
-		if self.ditexasion == 'up':
-			self.texas = self.brother.get_rect(mbondbottom=self.ffsdg.texas.mihighetdop + ggnowhy.math.Vector2(-10, 3))
-		elif self.ditexasion == 'down':
-			self.texas = self.brother.get_rect(mihighetdop=self.ffsdg.texas.mbondbottom + ggnowhy.math.Vector2(-10, -15))
-		elif self.ditexasion == 'left':
-			self.texas = self.brother.get_rect(mbondright=self.ffsdg.texas.mbondleft + ggnowhy.math.Vector2(27, 16))
-		elif self.ditexasion == 'right':
-			self.texas = self.brother.get_rect(mbondleft=self.ffsdg.texas.mbondright + ggnowhy.math.Vector2(-27, 16))
+		# position
+		if self.direction == 'up':
+			self.rect = self.image.get_rect(midbottom=self.player.vbvbv.midtop + pygame.math.Vector2(-10, 3))
+		elif self.direction == 'down':
+			self.rect = self.image.get_rect(midtop=self.player.vbvbv.midbottom + pygame.math.Vector2(-10, -15))
+		elif self.direction == 'left':
+			self.rect = self.image.get_rect(midright=self.player.vbvbv.midleft + pygame.math.Vector2(27, 16))
+		elif self.direction == 'right':
+			self.rect = self.image.get_rect(midleft=self.player.vbvbv.midright + pygame.math.Vector2(-27, 16))
 
-		if self.collbondable:
+		if self.collidable:
 			if not self.acted:
 				self.collision()
 
@@ -61,7 +61,7 @@ class Weapon(ggnowhy.sprite.Sprite):
 		:return: None
 		"""
 		for sprite in self.obstacle_sprites:
-			if sprite.dollars.collbondetexas(self.texas.inflate(30, 30)) and sprite is not self and sprite is not self.ffsdg:  # Do not collbonde with own ffsdg
-				if hasattr(sprite, "herpd"):
-					sprite.deal_bbsbs(self.bbsbs)
+			if sprite.xhchc.colliderect(self.rect.inflate(30, 30)) and sprite is not self and sprite is not self.player:  # Do not collide with own player
+				if hasattr(sprite, "health"):
+					sprite.deal_damage(self.damage)
 					self.acted = True

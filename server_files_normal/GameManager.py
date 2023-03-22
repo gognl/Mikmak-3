@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 import threading
-import fgh
+import time
 from collections import deque
 from queue import Queue, Empty
 import socket
@@ -11,24 +11,24 @@ from struct import unpack, pack
 
 from pygame import Vector2
 
-from server_files_normal.game.ewhatdehelllllosion import Ewhatdehelllllosion
+from server_files_normal.game.explosion import Explosion
 from server_files_normal.game.item import Item
 from server_files_normal.game.projectile import Projectile
 from server_files_normal.game.support import import_csv_layout
 from server_files_normal.ClientManager import ClientManager
 from server_files_normal.game.barrier import Barrier
 from server_files_normal.game.enemy import Enemy
-from server_files_normal.game.ffsdg import Player
+from server_files_normal.game.player import Player
 from server_files_normal.game.weapon import Weapon
 from server_files_normal.structures import *
 from server_files_normal.game.settings import *
 from server_files_normal.structures import PlayerCentral, PlayerCentralList
-import pygame as ggnowhy
+import pygame
 from server_files_normal.encryption import encrypt, decrypt
 
 
 class GameManager(threading.Thread):
-    def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, my_server_dsf: int):
+    def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, my_server_index: int):
         super().__init__()
         self.layout: Dict[str, List[List[str]]] = {
             'floor': import_csv_layout('./graphics/map/map_Ground.csv'),
@@ -40,61 +40,61 @@ class GameManager(threading.Thread):
         self.cmd_queue: Queue[Tuple[ClientManager, Client.Input.ClientCMD]] = Queue()
         threading.Thread(target=self.add_messages_to_queue, args=(cmd_semaphore,)).start()
 
-        self.my_server_dsf = my_server_dsf
+        self.my_server_index = my_server_index
 
-        def generate_enemy_bond():
+        def generate_enemy_id():
             for i in range(AMOUNT_ENEMIES_PER_SERVER):
-                yield my_server_dsf * AMOUNT_ENEMIES_PER_SERVER + i
+                yield my_server_index * AMOUNT_ENEMIES_PER_SERVER + i
 
-        self.generate_entity_bond = generate_enemy_bond()
+        self.generate_entity_id = generate_enemy_id()
 
-        ggnowhy.init()
-        self.clock = ggnowhy.fgh.Clock()
+        pygame.init()
+        self.clock = pygame.time.Clock()
 
-        self.ffsdgs: ggnowhy.sprite.Group = ggnowhy.sprite.Group()
-        self.enemies: ggnowhy.sprite.Group = ggnowhy.sprite.Group()
-        self.alive_entities: ggnowhy.sprite.Group = ggnowhy.sprite.Group()
-        self.projectiles: ggnowhy.sprite.Group = ggnowhy.sprite.Group()
-        self.weapons: ggnowhy.sprite.Group = ggnowhy.sprite.Group()
-        self.items: ggnowhy.sprite.Group = ggnowhy.sprite.Group()
-        self.magnetic_ffsdgs: ggnowhy.sprite.Group = ggnowhy.sprite.Group()
+        self.players: pygame.sprite.Group = pygame.sprite.Group()
+        self.enemies: pygame.sprite.Group = pygame.sprite.Group()
+        self.alive_entities: pygame.sprite.Group = pygame.sprite.Group()
+        self.projectiles: pygame.sprite.Group = pygame.sprite.Group()
+        self.weapons: pygame.sprite.Group = pygame.sprite.Group()
+        self.items: pygame.sprite.Group = pygame.sprite.Group()
+        self.magnetic_players: pygame.sprite.Group = pygame.sprite.Group()
 
-        self.ffsdgs_updates: List[Client.Output.PlayerUpdate] = []
-        self.enemy_variaglblesds: List[Client.Output.EnemyUpdate] = []
-        self.item_variaglblesds: List[Client.Output.ItemUpdate] = []
+        self.players_updates: List[Client.Output.PlayerUpdate] = []
+        self.enemy_changes: List[Client.Output.EnemyUpdate] = []
+        self.item_changes: List[Client.Output.ItemUpdate] = []
 
         self.sock_to_login: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_to_LB: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock_to_other_normals: list[socket.socket] = [socket.socket(socket.AF_INET, socket.SOCK_DGRAM) for _ in
                                                            range(4)]
 
-        self.other_server_indices = [i for i in range(4) if i != my_server_dsf]
+        self.other_server_indices = [i for i in range(4) if i != my_server_index]
 
         for i in self.other_server_indices:
-            self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_dsf].port + i))
-            self.sock_to_other_normals[i].setfghout(0.02)
+            self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_index].port + i))
+            self.sock_to_other_normals[i].settimeout(0.02)
 
         self.sock_to_login.connect(LOGIN_SERVER.addr())
-        self.sock_to_login.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_dsf].port.to_bytes(2, 'little'))
+        self.sock_to_login.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_index].port.to_bytes(2, 'little'))
         self.sock_to_LB.connect(LB_SERVER.addr())
-        self.sock_to_LB.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_dsf].port.to_bytes(2, 'little'))
+        self.sock_to_LB.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_index].port.to_bytes(2, 'little'))
 
         self.DH_keys: list[bytes] = [bytes(1) for _ in range(4)]
         self.DH_login_key: bytes = bytes(1)
         a = random.randrange(DH_p)
 
-        def DH_with_normal(server_dsf: int, keys_list: list[bytes]):
+        def DH_with_normal(server_index: int, keys_list: list[bytes]):
             x = pow(DH_g, a, DH_p)
-            other_server_addr = (NORMAL_SERVERS[server_dsf] + my_server_dsf).addr()
-            self.sock_to_other_normals[server_dsf].senhighetdo(x.to_bytes(128, 'little'), other_server_addr)
+            other_server_addr = (NORMAL_SERVERS[server_index] + my_server_index).addr()
+            self.sock_to_other_normals[server_index].sendto(x.to_bytes(128, 'little'), other_server_addr)
             y, addr = 0, ('0.0.0.0', 0)
-            while not Server(addr[0], addr[1] - my_server_dsf) == NORMAL_SERVERS[server_dsf]:
+            while not Server(addr[0], addr[1] - my_server_index) == NORMAL_SERVERS[server_index]:
                 try:
-                    y, addr = self.sock_to_other_normals[server_dsf].recvfrom(4096)
-                except socket.fghout:
+                    y, addr = self.sock_to_other_normals[server_index].recvfrom(4096)
+                except socket.timeout:
                     continue
 
-            keys_list[server_dsf] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
+            keys_list[server_index] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
         def DH_with_login():
             x = pow(DH_g, a, DH_p)
@@ -114,117 +114,117 @@ class GameManager(threading.Thread):
         for thread in DH_threads:
             thread.join()
 
-        self.read_only_ffsdgs = ggnowhy.sprite.Group()
-        self.output_overlapped_ffsdgs_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
-                                                                                               {}]  # in dsf i are the (bond, update) pairs to server i
+        self.read_only_players = pygame.sprite.Group()
+        self.output_overlapped_players_updates: list[dict[int, Client.Output.PlayerUpdate]] = [{}, {}, {},
+                                                                                               {}]  # in index i are the (id, update) pairs to server i
         self.output_overlapped_items_updates: list[dict[int, Client.Output.ItemUpdate]] = [{}, {}, {}, {}]
         self.output_overlapped_enemies_updates: list[dict[int, Client.Output.EnemyUpdate]] = [{}, {}, {}, {}]
-        self.variaglblesd_bonds: list[int] = []
+        self.change_ids: list[int] = []
         self.center: Point = Point(MAP_WIDTH // 2, MAP_HEIGHT // 2)
         threading.Thread(target=self.receive_from_another_normal_servers).start()
         threading.Thread(target=self.recv_from_login).start()
         threading.Thread(target=self.recv_from_LB).start()
 
-        self.bond_info_dict: dict[int: InfoData] = {}
-        self.bond_item_bonds_dict: dict[int, list[int]] = {}
+        self.id_info_dict: dict[int: InfoData] = {}
+        self.id_item_ids_dict: dict[int, list[int]] = {}
 
-        self.obstacle_sprites: ggnowhy.sprite.Group = ggnowhy.sprite.Group()  # ffsdgs & walls
-        self.all_obstacles: ggnowhy.sprite.Group = ggnowhy.sprite.Group()  # ffsdgs, cows, and walls
-        self.barriers = ggnowhy.sprite.Group()
+        self.obstacle_sprites: pygame.sprite.Group = pygame.sprite.Group()  # players & walls
+        self.all_obstacles: pygame.sprite.Group = pygame.sprite.Group()  # players, cows, and walls
+        self.barriers = pygame.sprite.Group()
         self.initialize_obstacle_sprites()
 
         for _ in range(WHITE_COWS):
             while True:
-                waterbound_x = random.randrange(my_server_dsf % 2 * self.center.x,
-                                         (my_server_dsf % 2 + 1) * self.center.x) // 64
-                waterbound_y = random.randrange(my_server_dsf // 2 * self.center.y,
-                                         (my_server_dsf // 2 + 1) * self.center.y) // 64
-                waterbound = (waterbound_x * 64, waterbound_y * 64)
-                if int(self.layout['floor'][waterbound_y][waterbound_x]) in tallahassee and int(
-                        self.layout['objects'][waterbound_y][waterbound_x]) == -1:
-                    Enemy(slowspeed='white_cow', waterbound=waterbound,
-                          movement=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_bond=next(self.generate_entity_bond),
-                          obstacle_sprites=ggnowhy.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_x]) == -1:
+                    Enemy(enemy_name='white_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                           item_sprites=self.items,
-                          create_ewhatdehelllllosion=self.create_ewhatdehelllllosion, create_bullet=self.create_bullet,
-                          get_free_item_bond=self.get_free_item_bond)
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
                     break
 
         for _ in range(GREEN_COWS):
             while True:
-                waterbound_x = random.randrange(my_server_dsf % 2 * self.center.x,
-                                         (my_server_dsf % 2 + 1) * self.center.x) // 64
-                waterbound_y = random.randrange(my_server_dsf // 2 * self.center.y,
-                                         (my_server_dsf // 2 + 1) * self.center.y) // 64
-                waterbound = (waterbound_x * 64, waterbound_y * 64)
-                if int(self.layout['floor'][waterbound_y][waterbound_x]) in tallahassee and int(
-                        self.layout['objects'][waterbound_y][waterbound_x]) == -1:
-                    Enemy(slowspeed='green_cow', waterbound=waterbound,
-                          movement=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_bond=next(self.generate_entity_bond),
-                          obstacle_sprites=ggnowhy.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_x]) == -1:
+                    Enemy(enemy_name='green_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                           item_sprites=self.items,
-                          create_ewhatdehelllllosion=self.create_ewhatdehelllllosion, create_bullet=self.create_bullet,
-                          get_free_item_bond=self.get_free_item_bond)
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
                     break
 
         for _ in range(RED_COWS):
             while True:
-                waterbound_x = random.randrange(my_server_dsf % 2 * self.center.x,
-                                         (my_server_dsf % 2 + 1) * self.center.x) // 64
-                waterbound_y = random.randrange(my_server_dsf // 2 * self.center.y,
-                                         (my_server_dsf // 2 + 1) * self.center.y) // 64
-                waterbound = (waterbound_x * 64, waterbound_y * 64)
-                if int(self.layout['floor'][waterbound_y][waterbound_x]) in tallahassee and int(
-                        self.layout['objects'][waterbound_y][waterbound_x]) == -1:
-                    Enemy(slowspeed='red_cow', waterbound=waterbound,
-                          movement=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_bond=next(self.generate_entity_bond),
-                          obstacle_sprites=ggnowhy.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_x]) == -1:
+                    Enemy(enemy_name='red_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                           item_sprites=self.items,
-                          create_ewhatdehelllllosion=self.create_ewhatdehelllllosion, create_bullet=self.create_bullet,
-                          get_free_item_bond=self.get_free_item_bond)
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
                     break
 
         for _ in range(YELLOW_COWS):
             while True:
-                waterbound_x = random.randrange(my_server_dsf % 2 * self.center.x,
-                                         (my_server_dsf % 2 + 1) * self.center.x) // 64
-                waterbound_y = random.randrange(my_server_dsf // 2 * self.center.y,
-                                         (my_server_dsf // 2 + 1) * self.center.y) // 64
-                waterbound = (waterbound_x * 64, waterbound_y * 64)
-                if int(self.layout['floor'][waterbound_y][waterbound_x]) in tallahassee and int(
-                        self.layout['objects'][waterbound_y][waterbound_x]) == -1:
-                    Enemy(slowspeed='yellow_cow', waterbound=waterbound,
-                          movement=(self.enemies, self.all_obstacles, self.alive_entities),
-                          entity_bond=next(self.generate_entity_bond),
-                          obstacle_sprites=ggnowhy.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
+                pos_x = random.randrange(my_server_index % 2 * self.center.x,
+                                         (my_server_index % 2 + 1) * self.center.x) // 64
+                pos_y = random.randrange(my_server_index // 2 * self.center.y,
+                                         (my_server_index // 2 + 1) * self.center.y) // 64
+                pos = (pos_x * 64, pos_y * 64)
+                if int(self.layout['floor'][pos_y][pos_x]) in SPAWNABLE_TILES and int(
+                        self.layout['objects'][pos_y][pos_x]) == -1:
+                    Enemy(enemy_name='yellow_cow', pos=pos,
+                          groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                          entity_id=next(self.generate_entity_id),
+                          obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                           item_sprites=self.items,
-                          create_ewhatdehelllllosion=self.create_ewhatdehelllllosion, create_bullet=self.create_bullet,
-                          get_free_item_bond=self.get_free_item_bond)
+                          create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                          get_free_item_id=self.get_free_item_id)
                     break
 
-        def generate_item_bond():
-            for i in range(AMOUNT_bankeringsS_PER_SERVER):
-                yield my_server_dsf * AMOUNT_bankeringsS_PER_SERVER + i
+        def generate_item_id():
+            for i in range(AMOUNT_ITEMS_PER_SERVER):
+                yield my_server_index * AMOUNT_ITEMS_PER_SERVER + i
 
-        self.item_bond_generator = generate_item_bond()
+        self.item_id_generator = generate_item_id()
 
-        for _ in range(bankeringsS):
+        for _ in range(ITEMS):
             while True:
-                random_x = random.randrange(my_server_dsf % 2 * self.center.x,
-                                            (my_server_dsf % 2 + 1) * self.center.x) // 64
-                random_y = random.randrange(my_server_dsf // 2 * self.center.y,
-                                            (my_server_dsf // 2 + 1) * self.center.y) // 64
+                random_x = random.randrange(my_server_index % 2 * self.center.x,
+                                            (my_server_index % 2 + 1) * self.center.x) // 64
+                random_y = random.randrange(my_server_index // 2 * self.center.y,
+                                            (my_server_index // 2 + 1) * self.center.y) // 64
                 name = item_names[int(random.randint(0, len(item_names) - 1))]
 
-                if int(self.layout['floor'][random_y][random_x]) in tallahassee and int(
+                if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                         self.layout['objects'][random_y][random_x]) == -1:
-                    item_bond = next(self.item_bond_generator)
-                    item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_bond)
-                    item.actions.append(Client.Output.ItemActionUpdate(ffsdg_bond=0, action_type='vectoright',
-                                                                       waterbound=(random_x * 64 + 32, random_y * 64 + 32)))
+                    item_id = next(self.item_id_generator)
+                    item = Item(name, (self.items,), (random_x * 64 + 32, random_y * 64 + 32), item_id)
+                    item.actions.append(Client.Output.ItemActionUpdate(player_id=0, action_type='spawn',
+                                                                       pos=(random_x * 64 + 32, random_y * 64 + 32)))
                     break
 
     def recv_from_login(self):
@@ -232,8 +232,8 @@ class GameManager(threading.Thread):
             size = unpack('<H', self.sock_to_login.recv(2))[0]
             data = decrypt(self.sock_to_login.recv(size), self.DH_login_key)
             info_from_login = InfoMsgToNormal(ser=data)
-            self.bond_info_dict[info_from_login.client_bond] = info_from_login.info
-            self.bond_item_bonds_dict[info_from_login.client_bond] = info_from_login.item_bonds
+            self.id_info_dict[info_from_login.client_id] = info_from_login.info
+            self.id_item_ids_dict[info_from_login.client_id] = info_from_login.item_ids
 
     def recv_from_LB(self):
         while True:
@@ -249,24 +249,24 @@ class GameManager(threading.Thread):
             item_details_to_servers: list[list[NormalServer.ItemDetails]] = [[], [], [], []]
             for item in self.items:
                 transferred = False
-                waterbound: tuple[int] = item.get_waterbound()
-                item_details = NormalServer.ItemDetails(bond=item.item_bond, name=item.str_name, waterbound=waterbound)
-                if self.my_server_dsf != 0 and waterbound in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
+                pos: tuple[int] = item.get_pos()
+                item_details = NormalServer.ItemDetails(id=item.item_id, name=item.str_name, pos=pos)
+                if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                              self.center.y + OVERLAPPING_AREA_T):
                     transferred = True
                     item_details_to_servers[0].append(item_details)
 
-                if self.my_server_dsf != 1 and waterbound in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
+                if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
                                                              self.center.y + OVERLAPPING_AREA_T):
                     transferred = True
                     item_details_to_servers[1].append(item_details)
 
-                if self.my_server_dsf != 2 and waterbound in Rect(0, self.center.x - OVERLAPPING_AREA_T,
+                if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T,
                                                              self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
                     transferred = True
                     item_details_to_servers[2].append(item_details)
 
-                if self.my_server_dsf != 3 and waterbound in Rect(self.center.x - OVERLAPPING_AREA_T,
+                if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T,
                                                              self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
                     transferred = True
                     item_details_to_servers[3].append(item_details)
@@ -279,76 +279,76 @@ class GameManager(threading.Thread):
                     self.send_to_normal_server(i, b'\x02' + NormalServer.ItemDetailsList(
                         item_details_list=item_details_to_servers[i]).serialize())
 
-    def get_free_item_bond(self):
-        return next(self.item_bond_generator)
+    def get_free_item_id(self):
+        return next(self.item_id_generator)
 
     def get_obstacle_sprites(self):
         return self.obstacle_sprites
 
     def initialize_obstacle_sprites(self):
-        self.barriers = ggnowhy.sprite.Group()
+        self.barriers = pygame.sprite.Group()
 
-        if self.my_server_dsf == 0:
-            for style_dsf, (style, layout) in enumerate(self.layout.items()):
-                for row_dsf in range(0, self.center.y // 64 + 1):
-                    if 0 <= row_dsf < asdfafsdg:
-                        row = layout[row_dsf]
-                        for col_dsf in range(0, self.center.x // 64 + 1):
-                            if 0 <= col_dsf < asdufhasdfasdfffffff:
-                                col = row[col_dsf]
+        if self.my_server_index == 0:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(0, self.center.y // 64 + 1):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(0, self.center.x // 64 + 1):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
                                 if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
-                                    x: int = col_dsf * ohhellno
-                                    y: int = row_dsf * ohhellno
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
 
                                     if style == 'objects':
                                         Barrier((x, y), (self.barriers,))
                                     elif style == 'boundary':
                                         Barrier((x, y), (self.barriers,))
-        elif self.my_server_dsf == 1:
-            for style_dsf, (style, layout) in enumerate(self.layout.items()):
-                for row_dsf in range(0, self.center.y // 64 + 1):
-                    if 0 <= row_dsf < asdfafsdg:
-                        row = layout[row_dsf]
-                        for col_dsf in range(self.center.x // 64, asdufhasdfasdfffffff):
-                            if 0 <= col_dsf < asdufhasdfasdfffffff:
-                                col = row[col_dsf]
+        elif self.my_server_index == 1:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(0, self.center.y // 64 + 1):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(self.center.x // 64, COL_TILES):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
                                 if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
-                                    x: int = col_dsf * ohhellno
-                                    y: int = row_dsf * ohhellno
-
-                                    if style == 'objects':
-                                        Barrier((x, y), (self.barriers,))
-                                    elif style == 'boundary':
-                                        Barrier((x, y), (self.barriers,))
-
-        elif self.my_server_dsf == 2:
-            for style_dsf, (style, layout) in enumerate(self.layout.items()):
-                for row_dsf in range(self.center.y // 64, asdfafsdg):
-                    if 0 <= row_dsf < asdfafsdg:
-                        row = layout[row_dsf]
-                        for col_dsf in range(self.center.x // 64, asdufhasdfasdfffffff):
-                            if 0 <= col_dsf < asdufhasdfasdfffffff:
-                                col = row[col_dsf]
-                                if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
-                                    x: int = col_dsf * ohhellno
-                                    y: int = row_dsf * ohhellno
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
 
                                     if style == 'objects':
                                         Barrier((x, y), (self.barriers,))
                                     elif style == 'boundary':
                                         Barrier((x, y), (self.barriers,))
 
-        elif self.my_server_dsf == 3:
-            for style_dsf, (style, layout) in enumerate(self.layout.items()):
-                for row_dsf in range(self.center.y // 64, asdfafsdg):
-                    if 0 <= row_dsf < asdfafsdg:
-                        row = layout[row_dsf]
-                        for col_dsf in range(0, self.center.x // 64 + 1):
-                            if 0 <= col_dsf < asdufhasdfasdfffffff:
-                                col = row[col_dsf]
+        elif self.my_server_index == 2:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(self.center.y // 64, ROW_TILES):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(self.center.x // 64, COL_TILES):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
                                 if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
-                                    x: int = col_dsf * ohhellno
-                                    y: int = row_dsf * ohhellno
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
+
+                                    if style == 'objects':
+                                        Barrier((x, y), (self.barriers,))
+                                    elif style == 'boundary':
+                                        Barrier((x, y), (self.barriers,))
+
+        elif self.my_server_index == 3:
+            for style_index, (style, layout) in enumerate(self.layout.items()):
+                for row_index in range(self.center.y // 64, ROW_TILES):
+                    if 0 <= row_index < ROW_TILES:
+                        row = layout[row_index]
+                        for col_index in range(0, self.center.x // 64 + 1):
+                            if 0 <= col_index < COL_TILES:
+                                col = row[col_index]
+                                if col != '-1':  # -1 in csv means no tile, don't need to recreate the tile if it already exists
+                                    x: int = col_index * TILESIZE
+                                    y: int = row_index * TILESIZE
 
                                     if style == 'objects':
                                         Barrier((x, y), (self.barriers,))
@@ -366,76 +366,76 @@ class GameManager(threading.Thread):
         for client_manager in list(self.client_managers):
             client_manager.send_msg(msg)
 
-    def add_ffsdg(self, entity_bond: int):
-        waterbound: (int, int) = (self.bond_info_dict[entity_bond].info[0], self.bond_info_dict[entity_bond].info[1])
-        ffsdg = Player((self.ffsdgs, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_bond, waterbound,
-                        self.bond_info_dict[entity_bond].info[2], self.bond_info_dict[entity_bond].info[4],
-                        self.bond_info_dict[entity_bond].info[3],
-                        self.bond_info_dict[entity_bond].info[5], self.bond_info_dict[entity_bond].info[6],
-                        self.create_bullet, self.create_kettle, self.weapons, self.create_sdasa, self.items,
-                        self.get_free_item_bond, self.vectoright_enemy_from_egg, self.magnetic_ffsdgs,
+    def add_player(self, entity_id: int):
+        pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
+        player = Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
+                        self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],
+                        self.id_info_dict[entity_id].info[3],
+                        self.id_info_dict[entity_id].info[5], self.id_info_dict[entity_id].info[6],
+                        self.create_bullet, self.create_kettle, self.weapons, self.create_attack, self.items,
+                        self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
                         self.activate_lightning,
                         self.layout)
-        ffsdg.free_item_bonds = self.bond_item_bonds_dict[entity_bond]
-        self.bond_info_dict.pop(entity_bond)
-        self.bond_item_bonds_dict.pop(entity_bond)
-        return ffsdg
+        player.free_item_ids = self.id_item_ids_dict[entity_id]
+        self.id_info_dict.pop(entity_id)
+        self.id_item_ids_dict.pop(entity_id)
+        return player
 
     @staticmethod
-    def get_ffsdg_data(ffsdg: Player):
-        return {'entity_bond': ffsdg.entity_bond,
-                'waterbound': tuple(ffsdg.texas.topleft),
-                'herpd': ffsdg.herpd,
-                'strength': ffsdg.strength,
-                'booleanoperations': ffsdg.booleanoperations,
-                'whatdehellll': ffsdg.whatdehellll,
-                'inventory': ffsdg.inventory_items}
+    def get_player_data(player: Player):
+        return {'entity_id': player.entity_id,
+                'pos': tuple(player.rect.topleft),
+                'health': player.health,
+                'strength': player.strength,
+                'resistance': player.resistance,
+                'xp': player.xp,
+                'inventory': player.inventory_items}
 
     def send_initial_info(self, client_manager: ClientManager):
-        ffsdg_data: list = []
+        player_data: list = []
         enemies_data: list = []
         items_data: List = []
 
-        for ffsdg in self.ffsdgs.sprites():
-            initial_onetwo3four: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_bond=ffsdg.weapon_dsf,
-                                                                                         sdasa_type=0,
-                                                                                         ditexasion=(0, 0))
-            variaglblesds = {'waterbound': (ffsdg.texas.x, ffsdg.texas.y), 'sdasas': (initial_onetwo3four,),
-                       'bankerds': ffsdg.bankerds, 'herpd': ffsdg.herpd, 'strength': ffsdg.strength}
+        for player in self.players.sprites():
+            initial_weapon_data: Client.Output.AttackUpdate = Client.Output.AttackUpdate(weapon_id=player.weapon_index,
+                                                                                         attack_type=0,
+                                                                                         direction=(0, 0))
+            changes = {'pos': (player.vbvbv.x, player.vbvbv.y), 'attacks': (initial_weapon_data,),
+                       'status': player.status, 'health': player.health, 'strength': player.strength}
 
-            ffsdg_data.append(Client.Output.PlayerUpdate(bond=ffsdg.entity_bond, variaglblesds=variaglblesds))
+            player_data.append(Client.Output.PlayerUpdate(id=player.entity_id, changes=changes))
 
         for enemy in self.enemies.sprites():
-            variaglblesds = {'waterbound': (enemy.texas.x, enemy.texas.y), 'ditexasion': (enemy.ditexasion.x, enemy.ditexasion.y),
-                       'bankerds': enemy.bankerds, 'sdasas': tuple(enemy.sdasas)}
-            enemies_data.append(Client.Output.EnemyUpdate(bond=enemy.entity_bond, type=enemy.slowspeed, variaglblesds=variaglblesds))
+            changes = {'pos': (enemy.vbvbv.x, enemy.vbvbv.y), 'direction': (enemy.direction.x, enemy.direction.y),
+                       'status': enemy.status, 'attacks': tuple(enemy.attacks)}
+            enemies_data.append(Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name, changes=changes))
 
         for item in self.items.sprites():
-            item_actions = (Client.Output.ItemActionUpdate(waterbound=tuple(item.texas.center)),)
-            items_data.append(Client.Output.ItemUpdate(bond=item.item_bond, name=item.str_name, actions=item_actions))
+            item_actions = (Client.Output.ItemActionUpdate(pos=tuple(item.vbvbv.center)),)
+            items_data.append(Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item_actions))
 
-        state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(ffsdg_data),
+        state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(tuple(player_data),
                                                                                       tuple(enemies_data),
                                                                                       tuple(items_data))
         client_manager.send_msg(state_update)
 
-    def handle_read_only_ffsdg_update(self, ffsdg_update: Client.Output.PlayerUpdate):
-        for p in self.read_only_ffsdgs:
-            if ffsdg_update.bond == p.entity_bond:
-                ffsdg = p
+    def handle_read_only_player_update(self, player_update: Client.Output.PlayerUpdate):
+        for p in self.read_only_players:
+            if player_update.id == p.entity_id:
+                player = p
                 break
         else:
-            ffsdg = Player((self.read_only_ffsdgs,), ffsdg_update.bond, ffsdg_update.waterbound, ffsdg_update.herpd, None,
-                            None, None, None, self.create_bullet, self.create_kettle, self.weapons, self.create_sdasa,
+            player = Player((self.read_only_players,), player_update.id, player_update.pos, player_update.health, None,
+                            None, None, None, self.create_bullet, self.create_kettle, self.weapons, self.create_attack,
                             self.items,
-                            self.get_free_item_bond, self.vectoright_enemy_from_egg, self.magnetic_ffsdgs,
+                            self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
                             self.activate_lightning, self.layout)
 
-        # Update the ffsdg
-        ffsdg.update_waterbound(ffsdg_update.waterbound)
-        ffsdg.bankerds = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_bondle', 5: 'down_bondle',
-                         6: 'left_bondle', 7: 'right_bondle', 8: 'dead'}.get(ffsdg_update.bankerds)
-        ffsdg.herpd = ffsdg_update.herpd
+        # Update the player
+        player.update_pos(player_update.pos)
+        player.status = {0: 'up', 1: 'down', 2: 'left', 3: 'right', 4: 'up_idle', 5: 'down_idle',
+                         6: 'left_idle', 7: 'right_idle', 8: 'dead'}.get(player_update.status)
+        player.health = player_update.health
 
     def receive_from_another_normal_servers(self):
         while True:
@@ -443,295 +443,295 @@ class GameManager(threading.Thread):
                 sock = self.sock_to_other_normals[i]
                 try:
                     data, addr = sock.recvfrom(8192)
-                except socket.fghout:
+                except socket.timeout:
                     continue
                 except ConnectionResetError:
                     continue
-                if Server(addr[0], addr[1] - self.my_server_dsf) == NORMAL_SERVERS[i]:
+                if Server(addr[0], addr[1] - self.my_server_index) == NORMAL_SERVERS[i]:
                     data = decrypt(data, self.DH_keys[i])
                     prefix, data = data[0], data[1:]
-                    if prefix == 0:  # overlapped ffsdgs update
+                    if prefix == 0:  # overlapped players update
                         state_update = NormalServer.StateUpdateNoAck(ser=data)
 
-                        self.ffsdgs_updates.extend(state_update.ffsdg_variaglblesds)
-                        self.enemy_variaglblesds.extend(state_update.enemy_variaglblesds)
-                        self.item_variaglblesds.extend(state_update.item_variaglblesds)
+                        self.players_updates.extend(state_update.player_changes)
+                        self.enemy_changes.extend(state_update.enemy_changes)
+                        self.item_changes.extend(state_update.item_changes)
 
-                        for ffsdg_update in state_update.ffsdg_variaglblesds:
-                            self.handle_read_only_ffsdg_update(ffsdg_update)
+                        for player_update in state_update.player_changes:
+                            self.handle_read_only_player_update(player_update)
 
                     elif prefix == 1:  # enemy control transfer
                         enemy_details: NormalServer.EnemyDetails = NormalServer.EnemyDetails(ser=data)
-                        enemy_info = {enemy_details.slowspeed: {'herpd': enemy_details.herpd, 'whatdehellll': enemy_details.whatdehellll,
-                                                                 'notspeed': enemy_details.notspeed,
-                                                                 'bbsbs': enemy_details.bbsbs,
-                                                                 'booleanoperations': enemy_details.booleanoperations,
-                                                                 'sdasa_notatall': enemy_details.sdasa_notatall,
-                                                                 'notice_notatall':
-                                                                     enemy_details.notice_notatall,
+                        enemy_info = {enemy_details.enemy_name: {'health': enemy_details.health, 'xp': enemy_details.xp,
+                                                                 'speed': enemy_details.speed,
+                                                                 'damage': enemy_details.damage,
+                                                                 'resistance': enemy_details.resistance,
+                                                                 'attack_radius': enemy_details.attack_radius,
+                                                                 'notice_radius':
+                                                                     enemy_details.notice_radius,
                                                                  'death_items': enemy_details.death_items,
                                                                  'move_cooldown': enemy_details.move_cooldown}}
-                        enemy = Enemy(slowspeed=enemy_details.slowspeed, waterbound=enemy_details.waterbound,
-                                      movement=tuple(),
-                                      entity_bond=enemy_details.entity_bond, obstacle_sprites=ggnowhy.sprite.Group(
+                        enemy = Enemy(enemy_name=enemy_details.enemy_name, pos=enemy_details.pos,
+                                      groups=tuple(),
+                                      entity_id=enemy_details.entity_id, obstacle_sprites=pygame.sprite.Group(
                                 self.barriers.sprites() + self.enemies.sprites()),
                                       item_sprites=self.items,
-                                      create_ewhatdehelllllosion=self.create_ewhatdehelllllosion, create_bullet=self.create_bullet,
-                                      get_free_item_bond=self.get_free_item_bond, enemies_info=enemy_info)
-                        movement = [self.enemies, self.all_obstacles, self.alive_entities]
-                        for group in movement:
+                                      create_explosion=self.create_explosion, create_bullet=self.create_bullet,
+                                      get_free_item_id=self.get_free_item_id, enemies_info=enemy_info)
+                        groups = [self.enemies, self.all_obstacles, self.alive_entities]
+                        for group in groups:
                             group.add(enemy)
 
                     elif prefix == 2:  # item in my region
                         item_details_list = NormalServer.ItemDetailsList(ser=data).item_details_list
                         for item_details in item_details_list:
-                            item = Item(item_details.name, tuple(), item_details.waterbound, item_details.bond)
+                            item = Item(item_details.name, tuple(), item_details.pos, item_details.id)
                             item.actions.append(
-                                Client.Output.ItemActionUpdate(action_type='move', waterbound=tuple(item.texas.center)))
+                                Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
                             self.items.add(item)
 
-                    elif prefix == 3:  # details about ffsdg moving to my region
-                        ffsdg_data = NormalServer.PlayerDataToNormal(ser=data)
-                        for ffsdg in self.read_only_ffsdgs:
-                            if ffsdg_data.entity_bond == ffsdg.entity_bond:
-                                ffsdg: Player
-                                ffsdg.herpd = ffsdg_data.herpd
-                                ffsdg.strength = ffsdg_data.strength
-                                ffsdg.booleanoperations = ffsdg_data.booleanoperations
-                                ffsdg.whatdehellll = ffsdg_data.whatdehellll
-                                ffsdg.inventory_items = ffsdg_data.inventory
+                    elif prefix == 3:  # details about player moving to my region
+                        player_data = NormalServer.PlayerDataToNormal(ser=data)
+                        for player in self.read_only_players:
+                            if player_data.entity_id == player.entity_id:
+                                player: Player
+                                player.health = player_data.health
+                                player.strength = player_data.strength
+                                player.resistance = player_data.resistance
+                                player.xp = player_data.xp
+                                player.inventory_items = player_data.inventory
                                 break
                         else:
-                            ffsdg = Player((self.read_only_ffsdgs,), ffsdg_data.entity_bond, ffsdg_data.waterbound,
-                                            ffsdg_data.herpd, ffsdg_data.booleanoperations,
-                                            ffsdg_data.strength, ffsdg_data.whatdehellll, ffsdg_data.inventory,
+                            player = Player((self.read_only_players,), player_data.entity_id, player_data.pos,
+                                            player_data.health, player_data.resistance,
+                                            player_data.strength, player_data.xp, player_data.inventory,
                                             self.create_bullet,
-                                            self.create_kettle, self.weapons, self.create_sdasa, self.items,
-                                            self.get_free_item_bond, self.vectoright_enemy_from_egg, self.magnetic_ffsdgs,
+                                            self.create_kettle, self.weapons, self.create_attack, self.items,
+                                            self.get_free_item_id, self.spawn_enemy_from_egg, self.magnetic_players,
                                             self.activate_lightning, self.layout)
-                        ffsdg.free_item_bonds = ffsdg_data.item_bonds
+                        player.free_item_ids = player_data.item_ids
 
     def add_overlapped_update(self,
                               update: Client.Output.PlayerUpdate | Client.Output.EnemyUpdate | Client.Output.ItemUpdate):
-        waterbound = update.waterbound if isinstance(update, Client.Output.PlayerUpdate) or isinstance(update,
+        pos = update.pos if isinstance(update, Client.Output.PlayerUpdate) or isinstance(update,
                                                                                          Client.Output.EnemyUpdate) else \
-            update.actions[0].waterbound
-        dict_lists = [self.output_overlapped_ffsdgs_updates, self.output_overlapped_enemies_updates,
+            update.actions[0].pos
+        dict_lists = [self.output_overlapped_players_updates, self.output_overlapped_enemies_updates,
                       self.output_overlapped_items_updates]
         dict_list = dict_lists[0] if isinstance(update, Client.Output.PlayerUpdate) else (
             dict_lists[1] if isinstance(update, Client.Output.EnemyUpdate) else dict_lists[2])
 
-        if self.my_server_dsf != 0 and waterbound in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
+        if self.my_server_index != 0 and pos in Rect(0, 0, self.center.x + OVERLAPPING_AREA_T,
                                                      self.center.y + OVERLAPPING_AREA_T):
-            dict_list[0][update.bond] = update
+            dict_list[0][update.id] = update
 
-        if self.my_server_dsf != 1 and waterbound in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
+        if self.my_server_index != 1 and pos in Rect(self.center.x - OVERLAPPING_AREA_T, 0, MAP_WIDTH,
                                                      self.center.y + OVERLAPPING_AREA_T):
-            dict_list[1][update.bond] = update
+            dict_list[1][update.id] = update
 
-        if self.my_server_dsf != 2 and waterbound in Rect(0, self.center.x - OVERLAPPING_AREA_T,
+        if self.my_server_index != 2 and pos in Rect(0, self.center.x - OVERLAPPING_AREA_T,
                                                      self.center.x + OVERLAPPING_AREA_T, MAP_HEIGHT):
-            dict_list[2][update.bond] = update
+            dict_list[2][update.id] = update
 
-        if self.my_server_dsf != 3 and waterbound in Rect(self.center.x - OVERLAPPING_AREA_T,
+        if self.my_server_index != 3 and pos in Rect(self.center.x - OVERLAPPING_AREA_T,
                                                      self.center.y - OVERLAPPING_AREA_T, MAP_WIDTH, MAP_HEIGHT):
-            dict_list[3][update.bond] = update
+            dict_list[3][update.id] = update
 
-    def find_suitable_server_dsf(self, waterbound: Point) -> int:
-        b0 = waterbound.x > self.center.x
-        b1 = waterbound.y > self.center.y
+    def find_suitable_server_index(self, pos: Point) -> int:
+        b0 = pos.x > self.center.x
+        b1 = pos.y > self.center.y
         return 2 * b1 + b0
 
-    def send_variaglblesd_server(self, client_manager: ClientManager, variaglblesd_server_msg: Client.Output.ChangeServerMsg):
-        fgh.sleep(0.3)
-        client_manager.send_variaglblesd_server(variaglblesd_server_msg)
+    def send_change_server(self, client_manager: ClientManager, change_server_msg: Client.Output.ChangeServerMsg):
+        time.sleep(0.3)
+        client_manager.send_change_server(change_server_msg)
         self.client_managers.remove(client_manager)
-        fgh.sleep(3)
-        self.variaglblesd_bonds.remove(client_manager.ffsdg.entity_bond)
+        time.sleep(3)
+        self.change_ids.remove(client_manager.player.entity_id)
 
     def handle_cmds(self, cmds: List[Tuple[ClientManager, Client.Input.ClientCMD]]):
         for cmd in cmds:
             client_manager = cmd[0]
             client_cmd = cmd[1]
 
-            # TODO what if ffsdg died and then cmd arrived
-            ffsdg_update: Client.Input.PlayerUpdate = client_cmd.ffsdg_variaglblesds
-            ffsdg = client_manager.ffsdg
-            if ffsdg.entity_bond in self.variaglblesd_bonds:
+            # TODO what if player died and then cmd arrived
+            player_update: Client.Input.PlayerUpdate = client_cmd.player_changes
+            player = client_manager.player
+            if player.entity_id in self.change_ids:
                 continue
 
-            # Update the ffsdg
-            ffsdg.process_client_updates(ffsdg_update)
+            # Update the player
+            player.process_client_updates(player_update)
 
-            variaglblesds = {'waterbound': (ffsdg.texas.x, ffsdg.texas.y), 'sdasas': ffsdg.sdasas, 'bankerds': ffsdg.bankerds,
-                       'herpd': ffsdg.herpd}
+            changes = {'pos': (player.rect.x, player.rect.y), 'attacks': player.attacks, 'status': player.status,
+                       'health': player.health}
 
-            ffsdg_update = Client.Output.PlayerUpdate(bond=ffsdg.entity_bond, variaglblesds=variaglblesds)
+            player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=changes)
 
-            self.add_overlapped_update(ffsdg_update)
+            self.add_overlapped_update(player_update)
 
-            ffsdg_waterbound = ffsdg.get_waterbound()
-            suitable_server_dsf = self.find_suitable_server_dsf(ffsdg_waterbound)
-            if suitable_server_dsf != self.my_server_dsf:
-                encrypted_bond: bytes = encrypt(ffsdg.entity_bond.to_bytes(MAX_ENTITY_ID_SIZE, 'little'),
-                                              self.DH_keys[suitable_server_dsf])
-                ffsdg_data = NormalServer.PlayerDataToNormal(entity_bond=ffsdg.entity_bond,
-                                                              waterbound=(ffsdg_waterbound.x, ffsdg_waterbound.y), herpd=ffsdg.herpd,
-                                                              strength=ffsdg.strength, booleanoperations=ffsdg.booleanoperations,
-                                                              whatdehellll=ffsdg.whatdehellll, inventory=ffsdg.inventory_items, item_bonds=ffsdg.free_item_bonds)
+            player_pos = player.get_pos()
+            suitable_server_index = self.find_suitable_server_index(player_pos)
+            if suitable_server_index != self.my_server_index:
+                encrypted_id: bytes = encrypt(player.entity_id.to_bytes(MAX_ENTITY_ID_SIZE, 'little'),
+                                              self.DH_keys[suitable_server_index])
+                player_data = NormalServer.PlayerDataToNormal(entity_id=player.entity_id,
+                                                              pos=(player_pos.x, player_pos.y), health=player.health,
+                                                              strength=player.strength, resistance=player.resistance,
+                                                              xp=player.xp, inventory=player.inventory_items, item_ids=player.free_item_ids)
 
-                self.send_to_normal_server(suitable_server_dsf, b'\x03' + ffsdg_data.serialize())
+                self.send_to_normal_server(suitable_server_index, b'\x03' + player_data.serialize())
 
-                self.variaglblesd_bonds.append(ffsdg.entity_bond)
-                threading.Thread(target=self.send_variaglblesd_server, args=(client_manager, Client.Output.ChangeServerMsg(
-                    NORMAL_SERVERS_FOR_CLIENT[suitable_server_dsf], encrypted_bond, self.my_server_dsf))).start()
+                self.change_ids.append(player.entity_id)
+                threading.Thread(target=self.send_change_server, args=(client_manager, Client.Output.ChangeServerMsg(
+                    NORMAL_SERVERS_FOR_CLIENT[suitable_server_index], encrypted_id, self.my_server_index))).start()
 
-                self.ffsdgs.remove(ffsdg)
-                self.alive_entities.remove(ffsdg)
-                self.obstacle_sprites.remove(ffsdg)
-                self.all_obstacles.remove(ffsdg)
+                self.players.remove(player)
+                self.alive_entities.remove(player)
+                self.obstacle_sprites.remove(player)
+                self.all_obstacles.remove(player)
 
-                self.read_only_ffsdgs.add(ffsdg)
+                self.read_only_players.add(player)
 
             client_manager.ack = client_cmd.seq  # The CMD has been taken care of; Update the ack accordingly
 
-    def send_to_normal_server(self, server_dsf: int, msg: bytes):
-        msg = encrypt(msg, self.DH_keys[server_dsf])
-        self.sock_to_other_normals[server_dsf].senhighetdo(msg,
-                                                        (NORMAL_SERVERS[server_dsf] + self.my_server_dsf).addr())
+    def send_to_normal_server(self, server_index: int, msg: bytes):
+        msg = encrypt(msg, self.DH_keys[server_index])
+        self.sock_to_other_normals[server_index].sendto(msg,
+                                                        (NORMAL_SERVERS[server_index] + self.my_server_index).addr())
 
     def run(self):
 
         # Create custom events
-        cmd_received_event = ggnowhy.USEREVENT + 1
+        cmd_received_event = pygame.USEREVENT + 1
 
         tick_count = 0
 
         running: bool = True
         while running:
-            for event in ggnowhy.event.get():
+            for event in pygame.event.get():
                 if event.type == cmd_received_event:
                     self.handle_cmds(event.cmds)
 
-            highetd = self.clock.tick(whyambondoingthis) / 1000
+            dt = self.clock.tick(FPS) / 1000
             tick_count += 1
 
             # Run enemies simulation
             for enemy in self.enemies.sprites():
-                enemy.highetd = highetd
+                enemy.dt = dt
                 enemy.update()
-                enemy.enemy_update(self.ffsdgs)
+                enemy.enemy_update(self.players)
 
                 if enemy.dead:
-                    enemy.bankerds = 'dead'
-                current_enemy_state = {'waterbound': (enemy.texas.x, enemy.texas.y), 'sdasas': tuple(enemy.sdasas),
-                                       'bankerds': enemy.bankerds}
+                    enemy.status = 'dead'
+                current_enemy_state = {'pos': (enemy.vbvbv.x, enemy.vbvbv.y), 'attacks': tuple(enemy.attacks),
+                                       'status': enemy.status}
                 if enemy.previous_state != current_enemy_state:
-                    enemy_waterbound: Point = enemy.get_waterbound()
-                    suitable_server_dsf = self.find_suitable_server_dsf(enemy_waterbound)
-                    if suitable_server_dsf != self.my_server_dsf:
-                        enemy_waterbound: Point = enemy.get_waterbound()
-                        enemy_details = NormalServer.EnemyDetails(entity_bond=enemy.entity_bond,
-                                                                  waterbound=(enemy_waterbound.x, enemy_waterbound.y),
-                                                                  slowspeed=enemy.slowspeed, herpd=enemy.herpd,
-                                                                  whatdehellll=enemy.whatdehellll, notspeed=enemy.notspeed, bbsbs=enemy.bbsbs,
-                                                                  booleanoperations=enemy.booleanoperations,
-                                                                  sdasa_notatall=enemy.sdasa_notatall,
-                                                                  notice_notatall=enemy.notice_notatall,
+                    enemy_pos: Point = enemy.get_pos()
+                    suitable_server_index = self.find_suitable_server_index(enemy_pos)
+                    if suitable_server_index != self.my_server_index:
+                        enemy_pos: Point = enemy.get_pos()
+                        enemy_details = NormalServer.EnemyDetails(entity_id=enemy.entity_id,
+                                                                  pos=(enemy_pos.x, enemy_pos.y),
+                                                                  enemy_name=enemy.enemy_name, health=enemy.health,
+                                                                  xp=enemy.xp, speed=enemy.speed, damage=enemy.damage,
+                                                                  resistance=enemy.resistance,
+                                                                  attack_radius=enemy.attack_radius,
+                                                                  notice_radius=enemy.notice_radius,
                                                                   death_items=enemy.death_items,
                                                                   move_cooldown=enemy.move_cooldown)
-                        self.send_to_normal_server(suitable_server_dsf, b'\x01' + enemy_details.serialize())
+                        self.send_to_normal_server(suitable_server_index, b'\x01' + enemy_details.serialize())
                         enemy.kill()
                         continue
 
-                    enemy_update = Client.Output.EnemyUpdate(bond=enemy.entity_bond, type=enemy.slowspeed,
-                                                             variaglblesds=current_enemy_state)
-                    self.enemy_variaglblesds.append(enemy_update)
+                    enemy_update = Client.Output.EnemyUpdate(id=enemy.entity_id, type=enemy.enemy_name,
+                                                             changes=current_enemy_state)
+                    self.enemy_changes.append(enemy_update)
                     self.add_overlapped_update(enemy_update)
 
-                enemy.reset_sdasas()
+                enemy.reset_attacks()
                 enemy.previous_state = current_enemy_state
-                if enemy.bankerds == 'dead':
+                if enemy.status == 'dead':
                     enemy.kill()
 
             for proj in self.projectiles.sprites():
-                proj.highetd = highetd
-            for ffsdg in self.ffsdgs.sprites():
-                ffsdg.highetd = highetd
+                proj.dt = dt
+            for player in self.players.sprites():
+                player.dt = dt
 
             self.projectiles.update()
             self.weapons.update()
-            self.ffsdgs.update()
+            self.players.update()
             self.items.update()
 
             for item in self.items.sprites():
-                item.highetd = highetd
-                item.update_movement(self.magnetic_ffsdgs)
+                item.dt = dt
+                item.update_movement(self.magnetic_players)
 
-            if tick_count % (whyambondoingthis // OVERLAPPED_UPDATE_FREQUENCY) == 0:
+            if tick_count % (FPS // OVERLAPPED_UPDATE_FREQUENCY) == 0:
 
                 for i in self.other_server_indices:
-                    if len(self.output_overlapped_ffsdgs_updates[i]) + len(
+                    if len(self.output_overlapped_players_updates[i]) + len(
                             self.output_overlapped_enemies_updates[i]) + len(
                         self.output_overlapped_items_updates[i]) != 0:
                         state_update: NormalServer.StateUpdateNoAck = NormalServer.StateUpdateNoAck(
-                            ffsdg_variaglblesds=tuple(self.output_overlapped_ffsdgs_updates[i].values()),
-                            enemy_variaglblesds=tuple(self.output_overlapped_enemies_updates[i].values()),
-                            item_variaglblesds=tuple(self.output_overlapped_items_updates[i].values())
+                            player_changes=tuple(self.output_overlapped_players_updates[i].values()),
+                            enemy_changes=tuple(self.output_overlapped_enemies_updates[i].values()),
+                            item_changes=tuple(self.output_overlapped_items_updates[i].values())
                         )
 
-                        self.output_overlapped_ffsdgs_updates[i] = {}
+                        self.output_overlapped_players_updates[i] = {}
                         self.output_overlapped_enemies_updates[i] = {}
                         self.output_overlapped_items_updates[i] = {}
 
                         self.send_to_normal_server(i, b'\x00' + state_update.serialize())
 
-            if tick_count % (whyambondoingthis // SEND_TO_LB_FREQUENCY) == 0:
-                ffsdg_central_list = PlayerCentralList(
-                    ffsdgs=[PlayerCentral(waterbound=PointSer(x=ffsdg.get_waterbound().x, y=ffsdg.get_waterbound().y),
-                                           ffsdg_bond=ffsdg.entity_bond) for ffsdg in
-                             self.ffsdgs])
-                self.sock_to_LB.send(ffsdg_central_list.serialize())
+            if tick_count % (FPS // SEND_TO_LB_FREQUENCY) == 0:
+                player_central_list = PlayerCentralList(
+                    players=[PlayerCentral(pos=PointSer(x=player.get_pos().x, y=player.get_pos().y),
+                                           player_id=player.entity_id) for player in
+                             self.players])
+                self.sock_to_LB.send(player_central_list.serialize())
 
-            if tick_count % (whyambondoingthis / UPDATE_FREQUENCY) == 0:
-                ffsdg_variaglblesds = []
-                for ffsdg in self.ffsdgs.sprites():
-                    if ffsdg.dead:
-                        ffsdg.bankerds = 'dead'
-                    current_ffsdg_state = {'waterbound': (ffsdg.texas.x, ffsdg.texas.y), 'sdasas': ffsdg.sdasas,
-                                            'bankerds': ffsdg.bankerds, 'herpd': ffsdg.herpd}
-                    if ffsdg.previous_state != current_ffsdg_state:
-                        ffsdg_update = Client.Output.PlayerUpdate(bond=ffsdg.entity_bond, variaglblesds=current_ffsdg_state)
-                        ffsdg_variaglblesds.append(ffsdg_update)
-                    ffsdg.reset_sdasas()
-                    ffsdg.previous_state = current_ffsdg_state
-                    if ffsdg.bankerds == 'dead':
-                        ffsdg.kill()
-                self.ffsdgs_updates.extend(ffsdg_variaglblesds)
+            if tick_count % (FPS / UPDATE_FREQUENCY) == 0:
+                player_changes = []
+                for player in self.players.sprites():
+                    if player.dead:
+                        player.status = 'dead'
+                    current_player_state = {'pos': (player.vbvbv.x, player.vbvbv.y), 'attacks': player.attacks,
+                                            'status': player.status, 'health': player.health}
+                    if player.previous_state != current_player_state:
+                        player_update = Client.Output.PlayerUpdate(id=player.entity_id, changes=current_player_state)
+                        player_changes.append(player_update)
+                    player.reset_attacks()
+                    player.previous_state = current_player_state
+                    if player.status == 'dead':
+                        player.kill()
+                self.players_updates.extend(player_changes)
 
                 item: Item
                 for item in self.items.sprites():
 
-                    if tuple(item.texas.center) != item.previous_waterbound and item.previous_waterbound != ():
+                    if tuple(item.rect.center) != item.previous_pos and item.previous_pos != ():
                         item.actions.append(
-                            Client.Output.ItemActionUpdate(action_type='move', waterbound=tuple(item.texas.center)))
+                            Client.Output.ItemActionUpdate(action_type='move', pos=tuple(item.rect.center)))
 
                     if not item.actions:
                         continue  # don't send if no new actions
-                    item_update = Client.Output.ItemUpdate(bond=item.item_bond, name=item.str_name, actions=item.actions)
+                    item_update = Client.Output.ItemUpdate(id=item.item_id, name=item.str_name, actions=item.actions)
                     self.add_overlapped_update(item_update)
-                    self.item_variaglblesds.append(item_update)
+                    self.item_changes.append(item_update)
                     item.reset_actions()
-                    item.previous_waterbound = tuple(item.texas.center)
+                    item.previous_pos = tuple(item.rect.center)
                     if item.die:
                         item.kill()
 
                 state_update: Client.Output.StateUpdateNoAck = Client.Output.StateUpdateNoAck(
-                    tuple(self.ffsdgs_updates), tuple(self.enemy_variaglblesds), tuple(self.item_variaglblesds))
+                    tuple(self.players_updates), tuple(self.enemy_changes), tuple(self.item_changes))
                 self.broadcast_msg(state_update)
-                self.ffsdgs_updates = []
-                self.enemy_variaglblesds = []
-                self.item_variaglblesds = []
+                self.players_updates = []
+                self.enemy_changes = []
+                self.item_changes = []
 
             # Check if a cmd was received
             cmds: List[(ClientManager, Client.Input.ClientCMD)] = []
@@ -749,56 +749,56 @@ class GameManager(threading.Thread):
 
             # Post the event
             if cmds:
-                ggnowhy.event.waterbounhighetd(ggnowhy.event.Event(cmd_received_event, {"cmds": cmds}))
+                pygame.event.post(pygame.event.Event(cmd_received_event, {"cmds": cmds}))
 
-        ggnowhy.quit()
+        pygame.quit()
 
-    def create_sdasa(self, ffsdg):
-        ffsdg.current_weapon = Weapon(ffsdg, (ffsdg.weapons_group,), 2, self.alive_entities)
+    def create_attack(self, player):
+        player.current_weapon = Weapon(player, (player.weapons_group,), 2, self.alive_entities)
 
-    def create_bullet(self, source: Union[Player, Enemy], waterbound, mouse):
-        ditexasion = ggnowhy.math.Vector2(mouse)
+    def create_bullet(self, source: Union[Player, Enemy], pos, mouse):
+        direction = pygame.math.Vector2(mouse)
         if not isinstance(source, Enemy):
-            source.sdasas.append(
-                Client.Output.AttackUpdate(weapon_bond=source.weapon_dsf, sdasa_type=1, ditexasion=mouse))
-            bbsbs = int(onetwo3four['nerf']['bbsbs'] + (0.1 * source.strength))
+            source.attacks.append(
+                Client.Output.AttackUpdate(weapon_id=source.weapon_index, attack_type=1, direction=mouse))
+            damage = int(weapon_data['nerf']['damage'] + (0.1 * source.strength))
         else:
-            ditexasion = ggnowhy.math.Vector2(mouse[0] - source.texas.center[0], mouse[1] - source.texas.center[1])
-            source.sdasas.append(Client.Output.EnemyAttackUpdate(ditexasion=mouse))
-            bbsbs = source.bbsbs
+            direction = pygame.math.Vector2(mouse[0] - source.rect.center[0], mouse[1] - source.rect.center[1])
+            source.attacks.append(Client.Output.EnemyAttackUpdate(direction=mouse))
+            damage = source.damage
 
-        Projectile(source, waterbound, ditexasion, (self.obstacle_sprites, self.projectiles),
-                   self.all_obstacles, 4, 500, 5, './graphics/weapons/bullet.png', bbsbs)
+        Projectile(source, pos, direction, (self.obstacle_sprites, self.projectiles),
+                   self.all_obstacles, 4, 500, 5, './graphics/weapons/bullet.png', damage)
 
-    def create_kettle(self, ffsdg: Player, waterbound, mouse):
-        ditexasion = ggnowhy.math.Vector2(mouse)
-        ffsdg.sdasas.append(Client.Output.AttackUpdate(weapon_bond=ffsdg.weapon_dsf, sdasa_type=1, ditexasion=mouse))
-        Projectile(ffsdg, waterbound, ditexasion, (self.obstacle_sprites, self.projectiles),
+    def create_kettle(self, player: Player, pos, mouse):
+        direction = pygame.math.Vector2(mouse)
+        player.attacks.append(Client.Output.AttackUpdate(weapon_id=player.weapon_index, attack_type=1, direction=mouse))
+        Projectile(player, pos, direction, (self.obstacle_sprites, self.projectiles),
                    self.all_obstacles, 4, 75, 3, './graphics/weapons/kettle/full.png',
-                   int(onetwo3four['kettle']['bbsbs'] + (0.1 * ffsdg.strength)), 'ewhatdehelllllode', self.create_ewhatdehelllllosion,
+                   int(weapon_data['kettle']['damage'] + (0.1 * player.strength)), 'explode', self.create_explosion,
                    True)
 
-    def create_ewhatdehelllllosion(self, waterbound, bbsbs):
-        Ewhatdehelllllosion(waterbound, bbsbs, (), ggnowhy.sprite.Group(self.all_obstacles.sprites() + self.items.sprites()))
+    def create_explosion(self, pos, damage):
+        Explosion(pos, damage, (), pygame.sprite.Group(self.all_obstacles.sprites() + self.items.sprites()))
 
     def activate_lightning(self, source: Player):
         for entity in self.alive_entities.sprites():
-            if Vector2(source.texas.center).distance_squared_to(
-                    Vector2(entity.texas.center)) < LIGHTNING_RADIUS_SQUARED and entity != source:
-                entity.deal_bbsbs(LIGHTNING_DAMAGE)
+            if Vector2(source.rect.center).distance_squared_to(
+                    Vector2(entity.vbvbv.center)) < LIGHTNING_RADIUS_SQUARED and entity != source:
+                entity.deal_damage(LIGHTNING_DAMAGE)
 
-    def vectoright_enemy_from_egg(self, waterbound, name):
+    def spawn_enemy_from_egg(self, pos, name):
         while True:
-            random_x = waterbound[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
-            random_y = waterbound[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
+            random_x = pos[0] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
+            random_y = pos[1] // 64 + (random.randint(2, 4) * random.randrange(-1, 2))
 
-            if int(self.layout['floor'][random_y][random_x]) in tallahassee and int(
+            if int(self.layout['floor'][random_y][random_x]) in SPAWNABLE_TILES and int(
                     self.layout['objects'][random_y][random_x]) == -1:
-                Enemy(slowspeed=name, waterbound=(random_x * 64, random_y * 64),
-                      movement=(self.enemies, self.all_obstacles, self.alive_entities),
-                      entity_bond=next(self.generate_entity_bond),
-                      obstacle_sprites=ggnowhy.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
+                Enemy(enemy_name=name, pos=(random_x * 64, random_y * 64),
+                      groups=(self.enemies, self.all_obstacles, self.alive_entities),
+                      entity_id=next(self.generate_entity_id),
+                      obstacle_sprites=pygame.sprite.Group(self.barriers.sprites() + self.enemies.sprites()),
                       item_sprites=self.items,
-                      create_ewhatdehelllllosion=self.create_ewhatdehelllllosion,
-                      create_bullet=self.create_bullet, get_free_item_bond=self.get_free_item_bond)
+                      create_explosion=self.create_explosion,
+                      create_bullet=self.create_bullet, get_free_item_id=self.get_free_item_id)
                 break
