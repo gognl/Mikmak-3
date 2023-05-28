@@ -97,7 +97,7 @@ def handle_server_pkts(updates_queue: Queue) -> None:
     while True:
         # Get a packet from the server; convert it to a NormalServerMessage object.
         data: bytes = get_server_pkt()
-        if data == b'':
+        if data == b'' or None:
             print('got empty msg')
             continue
 
