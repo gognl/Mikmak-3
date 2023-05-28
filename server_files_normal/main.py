@@ -15,6 +15,7 @@ TODO:
 """
 
 import socket
+import sys
 from collections import deque
 from threading import Semaphore
 from _struct import pack
@@ -30,9 +31,8 @@ from server_files_normal.encryption import decrypt
 def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
     while True:
         client_sock, client_addr = server_sock.accept()
-        data = client_sock.recv(1024)
+        data = client_sock.recv(4096)
         hello_msg: HelloMsg = HelloMsg(ser=data)
-
         if hello_msg.src_server_index == -1:  # login
             key = game_manager.DH_login_key
             client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
@@ -40,7 +40,6 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
         else:
             key = game_manager.DH_keys[hello_msg.src_server_index]
             client_id = int.from_bytes(decrypt(hello_msg.encrypted_client_id, key), 'little')
-            print(f"welcome {client_id}")
 
         for player in game_manager.read_only_players:
             if player.entity_id == client_id:
@@ -64,12 +63,11 @@ def accept_new_clients(server_sock, cmd_semaphore: Semaphore):
 
 def disconnect_client_manager(client_manager: ClientManager, DH_key):
     player_data = PlayerData(**game_manager.get_player_data(client_manager.player))
-    print(f'disconnected client. data:\n\t{player_data.__dict__}')
-
-
-    size = pack("<H", len(encrypt(player_data.serialize(), DH_key)))
+    encrypted_player_data = encrypt(player_data.serialize(), DH_key)
+    size = pack("<H", len(encrypted_player_data))
+    game_manager.sock_to_login.send(b'0')
     game_manager.sock_to_login.send(size)
-    game_manager.sock_to_login.send(encrypt(player_data.serialize(), DH_key))
+    game_manager.sock_to_login.send(encrypted_player_data)
     client_managers.remove(client_manager)
 
 

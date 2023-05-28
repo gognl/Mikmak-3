@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import random
 import threading
 import time
@@ -26,6 +27,7 @@ from server_files_normal.structures import PlayerCentral, PlayerCentralList
 import pygame
 from server_files_normal.encryption import encrypt, decrypt
 
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 class GameManager(threading.Thread):
     def __init__(self, client_managers: deque, cmd_semaphore: threading.Semaphore, my_server_index: int):
@@ -74,10 +76,12 @@ class GameManager(threading.Thread):
             self.sock_to_other_normals[i].bind(('0.0.0.0', NORMAL_SERVERS[my_server_index].port + i))
             self.sock_to_other_normals[i].settimeout(0.02)
 
+        my_ip, my_port = NORMAL_SERVERS_FOR_CLIENT[my_server_index].addr()
+        me_server_ser = ServerSer(ip=my_ip, port=my_port).serialize()
         self.sock_to_login.connect(LOGIN_SERVER.addr())
-        self.sock_to_login.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_index].port.to_bytes(2, 'little'))
+        self.sock_to_login.send(me_server_ser)
         self.sock_to_LB.connect(LB_SERVER.addr())
-        self.sock_to_LB.send(NORMAL_SERVERS_FOR_CLIENT[self.my_server_index].port.to_bytes(2, 'little'))
+        self.sock_to_LB.send(me_server_ser)
 
         self.DH_keys: list[bytes] = [bytes(1) for _ in range(4)]
         self.DH_login_key: bytes = bytes(1)
@@ -87,10 +91,13 @@ class GameManager(threading.Thread):
             x = pow(DH_g, a, DH_p)
             other_server_addr = (NORMAL_SERVERS[server_index] + my_server_index).addr()
             self.sock_to_other_normals[server_index].sendto(x.to_bytes(128, 'little'), other_server_addr)
+            self.sock_to_other_normals[server_index].sendto(me_server_ser, other_server_addr)
             y, addr = 0, ('0.0.0.0', 0)
-            while not Server(addr[0], addr[1] - my_server_index) == NORMAL_SERVERS[server_index]:
+            while not Server(addr[0], addr[1]) == NORMAL_SERVERS_FOR_CLIENT[server_index]:
                 try:
-                    y, addr = self.sock_to_other_normals[server_index].recvfrom(4096)
+                    y, addr = self.sock_to_other_normals[server_index].recvfrom(128)
+                    his_addr, addr = self.sock_to_other_normals[server_index].recvfrom(4096)
+                    addr = ServerSer(ser=his_addr).addr()
                 except socket.timeout:
                     continue
 
@@ -235,6 +242,10 @@ class GameManager(threading.Thread):
             self.id_info_dict[info_from_login.client_id] = info_from_login.info
             self.id_item_ids_dict[info_from_login.client_id] = info_from_login.item_ids
 
+            client_id_bytes = info_from_login.client_id.to_bytes(6, 'little')
+            self.sock_to_login.send(b'1')
+            self.sock_to_login.send(encrypt(client_id_bytes, self.DH_login_key))
+
     def recv_from_LB(self):
         while True:
             data = self.sock_to_LB.recv(1024)
@@ -367,6 +378,7 @@ class GameManager(threading.Thread):
             client_manager.send_msg(msg)
 
     def add_player(self, entity_id: int):
+        print(self.id_info_dict)
         pos: (int, int) = (self.id_info_dict[entity_id].info[0], self.id_info_dict[entity_id].info[1])
         player = Player((self.players, self.obstacle_sprites, self.all_obstacles, self.alive_entities), entity_id, pos,
                         self.id_info_dict[entity_id].info[2], self.id_info_dict[entity_id].info[4],

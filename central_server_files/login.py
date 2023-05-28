@@ -34,8 +34,8 @@ def login_main(new_players_q: deque[PlayerCentral], LB_to_login_q: deque[LB_to_l
     send_server_ip_to_client_Thread = threading.Thread(target=send_server_ip_to_client, args=(db, LB_to_login_q))
     threads.append(send_server_ip_to_client_Thread)
 
-    handle_disconnect_Thread = threading.Thread(target=handle_disconnect, args=(db,))
-    threads.append(handle_disconnect_Thread)
+    get_msgs_from_normal_sockets_Thread = threading.Thread(target=get_msgs_from_normal_sockets, args=(db,))
+    threads.append(get_msgs_from_normal_sockets_Thread)
 
     chat_lock = Lock()
     handle_chat_Thread = threading.Thread(target=handle_chat_msgs, args=(chat_lock,))
@@ -54,28 +54,34 @@ def DH_with_normal(normal_sock: socket.socket, server: Server):
     y = normal_sock.recv(1024)
     DH_normal_keys[server] = pow(int.from_bytes(y, 'little'), a, DH_p).to_bytes(128, 'little')
 
-def find_normal_server(ip: str):
-    for server in NORMAL_SERVERS:
-        if server.ip == ip:
-            return server
-    return None
-
+amount_connected = 0
 def initialize_conn_with_normals(sock_to_normals: socket.socket):
-    amount_connected = 0
+    global amount_connected
+    threads = []
     while amount_connected < 4:
         normal_sock, addr = sock_to_normals.accept()
-        port = int.from_bytes(normal_sock.recv(2), 'little')
-        server = Server(addr[0], port)
+        ip, port = ServerSer(ser=normal_sock.recv(100)).addr()
+        server = Server(ip, port)
+
         if server not in NORMAL_SERVERS_FOR_CLIENT:
             normal_sock.close()
             continue
 
         server_serverSocket_dict[server] = normal_sock
 
-        DH_with_normal(normal_sock, server)
-        normal_sock.settimeout(0.02)
+        def do_DH():
+            global amount_connected
+            DH_with_normal(normal_sock, server)
+
+        thread = threading.Thread(target=do_DH)
+        threads.append(thread)
+        thread.start()
 
         amount_connected += 1
+
+    for thread in threads:
+        thread.join()
+
     print("The servers are ready! (Login)")
 
 def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: socket.socket) -> None:
@@ -109,6 +115,7 @@ def look_for_new(new_players_q: deque[PlayerCentral], db: SQLDataBase, sock: soc
         new_players_q.append(PlayerCentral(pos=Point(info_tuple[3], info_tuple[4]), player_id=info_tuple[0]))
 
 next_item_id: int = 4*AMOUNT_ITEMS_PER_SERVER+50
+clients_can_send = set()
 
 def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_msg]):
     while True:
@@ -141,12 +148,19 @@ def send_server_ip_to_client(db: SQLDataBase, LB_to_login_q: deque[LB_to_login_m
                                       strength=info_data.info[3], resistance=info_data.info[4], xp=info_data.info[5], inventory=inventory)
         resp_to_client: LoginResponseToClient = LoginResponseToClient(encrypted_id=encrypt(client_id_bytes, DH_normal_keys[msg.server]), server=ServerSer(ip=msg.server.ip, port=msg.server.port),
                                                                       data_to_client=data_to_client)
-        resp_to_client_bytes = resp_to_client.serialize()
 
         def func():
-            time.sleep(0.3)
+            while client_id_bytes not in clients_can_send:
+                pass
+
+            resp_to_client_bytes = resp_to_client.serialize()
             client_sock.send(pack("<H", len(resp_to_client_bytes)))
             client_sock.send(resp_to_client_bytes)
+
+            try:
+                clients_can_send.remove(client_id_bytes)
+            except Exception:
+                pass
 
         threading.Thread(target=func).start()
 
@@ -159,22 +173,33 @@ def get_msg_from_timeout_socket(sock: socket.socket, size: int):
         except socket.timeout:
             continue
 
-def handle_disconnect(db: SQLDataBase):
+def get_msgs_from_normal_sockets(db: SQLDataBase):
+    for server in server_serverSocket_dict:
+        normal_sock: socket.socket = server_serverSocket_dict[server]
+        normal_sock.settimeout(0.02)
     while True:
         for server in server_serverSocket_dict:
             normal_sock: socket.socket = server_serverSocket_dict[server]
-
             try:
-                size = unpack('<H', normal_sock.recv(2))[0]
+                pref = normal_sock.recv(1)
+                if pref == b'1':
+                    client_id_bytes = decrypt(normal_sock.recv(1024), DH_normal_keys[server])
+                    clients_can_send.add(client_id_bytes)
+                else:
+                    size = unpack('<H', normal_sock.recv(2))[0]
+                    player_data = PlayerData(
+                        ser=decrypt(get_msg_from_timeout_socket(normal_sock, size), DH_normal_keys[server]))
+                    handle_disconnect(db, player_data)
+
             except socket.timeout:
                 continue
 
-            player_data = PlayerData(ser=decrypt(get_msg_from_timeout_socket(normal_sock, size), DH_normal_keys[server]))
-
-            disconnected_client_sock = id_socket_dict[player_data.entity_id]
-            disconnected_client_sock.close()
-            active_players_id.remove(player_data.entity_id)
-            update_user_info(db, player_data)
+def handle_disconnect(db: SQLDataBase, player_data: PlayerData):
+    disconnected_client_sock = id_socket_dict[player_data.entity_id]
+    disconnected_client_sock.close()
+    active_players_id.remove(player_data.entity_id)
+    update_user_info(db, player_data)
+    update_user_info(db, player_data)
 
 
 def handle_chat_msgs(chat_lock: Lock):

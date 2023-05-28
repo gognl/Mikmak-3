@@ -1,0 +1,29 @@
+0. run "docker load -i CentralImage.tar" in cmd
+
+Note: in the first time you need to run "docker pull mysql/mysql-server" in cmd
+1. run the run_database.bat file
+2. enter the following commands:
+
+mysql -u root -p
+1234
+CREATE DATABASE test;
+use test;
+CREATE TABLE data (id int, username varchar(255), password text, pos_x int, pos_y int, health int, strength int, resistance int, xp int, inventory json, PRIMARY KEY(id));
+CREATE TABLE id (current_id int);
+insert into id values(0);
+
+3. now open a new cmd and run the run_docker.bat file
+
+4. edit the file normal_ips.txt to be in this form:
+"""
+ip_of_0th_server_host
+ip_of_1st_server_host
+ip_of_2nd_server_host
+ip_of_3rd_server_host
+ip_of_central_server_host
+-------blank line-------
+"""
+	comments: 
+		a. for editing the file use "cat > normal_ips.txt" and in the end press ctrl+C
+
+5. python3.9 -u main.py

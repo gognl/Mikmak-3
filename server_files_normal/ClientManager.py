@@ -77,11 +77,12 @@ class ClientManager(threading.Thread):
             self.client_sock.send(size)
             self.client_sock.send(pkt)
         except socket.error:
-            self.player.dead = True
-            self.player.disconnected = True
-            self.connected = False
-            self.client_sock.close()
-            self.disconnect(self, self.DH_key)
+            if self.connected:
+                self.player.dead = True
+                self.player.disconnected = True
+                self.connected = False
+                self.client_sock.close()
+                self.disconnect(self, self.DH_key)
 
     def send_msg(self, changes: Client.Output.StateUpdateNoAck):
         if self.player.disconnected:

@@ -1,0 +1,8 @@
+cffi==1.15.1
+cryptography==39.0.2
+greenlet==2.0.2
+numpy==1.24.1
+pycparser==2.21
+pygame==2.1.2
+SQLAlchemy==2.0.6
+typing_extensions==4.5.0

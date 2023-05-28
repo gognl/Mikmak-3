@@ -349,7 +349,7 @@ def run_game(*args) -> None:
             size = unpack('<H', login_socket.recv(2))[0]
             chat_msgs_lst_recvd = ChatMsgsLst(ser=get_msg_from_timeout_socket(login_socket, size)).msg_lst
             world.ui.recv_msgs.extend(chat_msgs_lst_recvd)
-        except socket.timeout:
+        except (socket.timeout, struct.error):
             pass
 
         if state_update is not None:

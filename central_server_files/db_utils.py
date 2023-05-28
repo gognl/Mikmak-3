@@ -1,7 +1,8 @@
+import random
+
 from central_server_files.SQLDataBase import SQLDataBase
 from sqlalchemy import select, delete, update
 from sqlalchemy.dialects.mysql import insert
-from central_server_files.encryption import hash_and_salt
 from central_server_files.Constant import *
 from central_server_files.structures import PlayerData
 
@@ -41,9 +42,13 @@ def delete_user_info(db: SQLDataBase, username: str) -> None:
 
 	return db.exec(statement)
 
+locations = [(100, 100), (700, 100), (95, 350), (700, 350)]
+current_location_index = 0
 def add_new_to_db(db: SQLDataBase, ID: int, username: str, password: str):
-	statement = insert(db.users_table).values(id=ID, username=username, password=password, pos_x=DEFAULT_X, pos_y=DEFAULT_Y, health=DEFAULT_HEALTH, strength=DEFAULT_STRENGTH, resistance=DEFAULT_RESISTANCE, xp=DEFAULT_XP, inventory=DEFAULT_INVENTORY)
-
+	global current_location_index
+	pos_x, pos_y = locations[current_location_index]
+	statement = insert(db.users_table).values(id=ID, username=username, password=password, pos_x=pos_x*TILESIZE, pos_y=pos_y*TILESIZE, health=DEFAULT_HEALTH, strength=DEFAULT_STRENGTH, resistance=DEFAULT_RESISTANCE, xp=DEFAULT_XP, inventory=DEFAULT_INVENTORY)
+	current_location_index = (current_location_index + 1) % 4
 	#TODO: change to random spawn location
 	return db.exec(statement)
 
